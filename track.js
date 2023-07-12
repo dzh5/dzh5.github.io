@@ -304,9 +304,9 @@
           codec_video.slice(0, 1).forEach(function (v) {
             var line = {};
             if (v.width && v.height) line.video = v.width + 'х' + v.height;
-            if (v.codec_name) line.codec = v.codec_name.toUpperCase();
-            if (Boolean(v.is_avc)) line.avc = 'AVC';
-            if (Lampa.Arrays.getKeys(line).length) video.push(line.join(' / '));
+            (v.codec_name) line.codec = v.codec_name.toUpperCase();
+            (Boolean(v.is_avc)) line.avc = 'AVC';
+            (Lampa.Arrays.getKeys(line).length) video.push(line);
           });
           codec_audio.forEach(function (a, i) {
             var line = {
@@ -321,7 +321,7 @@
             if (a.codec_name) line.codec = a.codec_name.toUpperCase();
             if (a.channel_layout) line.channels = a.channel_layout.replace('(side)', '').replace('stereo', '2.0');
             if (a.bit_rate || a.tags.BPS || a.tags["BPS-eng"]) line.rate = Math.round((a.bit_rate || a.tags.BPS || a.tags["BPS-eng"]) / 1000) + ' Kbps';
-            if (Lampa.Arrays.getKeys(line).length) audio.push(line.join(' / '));
+            if (Lampa.Arrays.getKeys(line).length) audio.push(line);
           });
           codec_subs.forEach(function (a, i) {
             var line = {
@@ -333,7 +333,7 @@
             }
 
             line.name = a.tags ? a.tags.title || a.tags.handler_name : '';
-            if (Lampa.Arrays.getKeys(line).length) subs.push(line.join(' / '));
+            if (Lampa.Arrays.getKeys(line).length) subs.push(line);
           });
           var html = Lampa.Template.get('tracks_metainfo', {});
           append('video', video);
