@@ -304,9 +304,9 @@
           codec_video.slice(0, 1).forEach(function (v) {
             var line = {};
             if (v.width && v.height) line.video = v.width + 'х' + v.height;
-            (v.codec_name) line.codec = v.codec_name.toUpperCase();
-            (Boolean(v.is_avc)) line.avc = 'AVC';
-            (Lampa.Arrays.getKeys(line).length) video.push(line);
+            if (v.codec_name) line.codec = v.codec_name.toUpperCase();
+            if (Boolean(v.is_avc)) line.avc = 'AVC';
+            if (Lampa.Arrays.getKeys(line).length) video.push(line);
           });
           codec_audio.forEach(function (a, i) {
             var line = {
