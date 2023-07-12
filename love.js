@@ -591,7 +591,7 @@
                 } else {
                   Lampa.Activity.push({
                     url: '',
-                    title: 'Клуб',
+                    title: 'Клубничка',
                     component: 'sisi_' + Defined.use_api,
                     page: 1
                   });
