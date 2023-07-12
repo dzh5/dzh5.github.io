@@ -4,7 +4,6 @@
     var Defined = {
       use_api: 'lampac',
       localhost: 'https://requred.github.io/plugins/love/love.json',
-      vip_site: 'http://sisi.am/vip',
       framework: ''
     };
 
