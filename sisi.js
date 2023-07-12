@@ -579,7 +579,7 @@
             });
             items = items.concat(data);
             Lampa.Select.show({
-              title: 'Сайты',
+              title: 'Сай',
               items: items,
               onSelect: function onSelect(a) {
                 if (a.playlist_url) {
