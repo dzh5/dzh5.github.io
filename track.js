@@ -278,7 +278,7 @@
                 });
 
                 for (var i in data) {
-                  var div = $('<div class="tracks-metainfo__column--' + i + '"></div>');
+                  var div = $('<span class="tracks-metainfo__column--' + i + '"></span><span> / <span>');
                   div.text(data[i]);
                   item.append(div);
                 }
