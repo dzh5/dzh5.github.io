@@ -412,7 +412,7 @@
       comp.onMore = function (data) {
         Lampa.Activity.push({
           url: data.url,
-          title: data.title,
+          title: 'Клуб',
           component: 'sisi_view_' + Defined.use_api,
           page: 2
         });
@@ -481,7 +481,7 @@
 
               if (a.submenu) {
                 Lampa.Select.show({
-                  title: a.title,
+                  title: 'Клуб',
                   items: a.submenu,
                   onBack: function onBack() {
                     comp.filter();
@@ -591,7 +591,7 @@
                 } else {
                   Lampa.Activity.push({
                     url: '',
-                    title: 'Клубничка',
+                    title: 'Клуб',
                     component: 'sisi_' + Defined.use_api,
                     page: 1
                   });
