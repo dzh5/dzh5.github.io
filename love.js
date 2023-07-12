@@ -3,7 +3,7 @@
 
     var Defined = {
       use_api: 'lampac',
-      localhost: 'https://requred.github.io/plugins/love/',
+      localhost: 'https://requred.github.io/plugins/love/love',
       vip_site: 'http://sisi.am/vip',
       framework: ''
     };
