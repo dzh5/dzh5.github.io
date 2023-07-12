@@ -578,13 +578,13 @@
             });
             items = items.concat(data);
             Lampa.Select.show({
-              title: 'Сай',
+              title: 'Сайты',
               items: items,
               onSelect: function onSelect(a) {
                 if (a.playlist_url) {
                   Lampa.Activity.push({
                     url: a.playlist_url,
-                    title: a.title,
+                    title: 'Клуб',
                     component: 'sisi_view_' + Defined.use_api,
                     page: 1
                   });
