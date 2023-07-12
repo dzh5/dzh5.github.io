@@ -4,6 +4,7 @@
     var Defined = {
       use_api: 'lampac',
       localhost: 'https://requred.github.io/plugins/love/love.json',
+      vip_site: 'http://sisi.am/vip',
       framework: ''
     };
 
@@ -412,7 +413,7 @@
       comp.onMore = function (data) {
         Lampa.Activity.push({
           url: data.url,
-          title: 'Клуб',
+          title: data.title,
           component: 'sisi_view_' + Defined.use_api,
           page: 2
         });
@@ -481,7 +482,7 @@
 
               if (a.submenu) {
                 Lampa.Select.show({
-                  title: 'Клуб',
+                  title: a.title,
                   items: a.submenu,
                   onBack: function onBack() {
                     comp.filter();
@@ -584,14 +585,14 @@
                 if (a.playlist_url) {
                   Lampa.Activity.push({
                     url: a.playlist_url,
-                    title: 'Клуб',
+                    title: a.title,
                     component: 'sisi_view_' + Defined.use_api,
                     page: 1
                   });
                 } else {
                   Lampa.Activity.push({
                     url: '',
-                    title: 'Клуб',
+                    title: 'Клубничка',
                     component: 'sisi_' + Defined.use_api,
                     page: 1
                   });
