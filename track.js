@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var connect_host = 'http://185.204.0.61:8080';
+    var connect_host = 'http://185.204.0.61';
     var list_opened = false;
     function log() {
       console.log.apply(console.log, arguments);
