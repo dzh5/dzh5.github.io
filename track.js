@@ -278,7 +278,7 @@
                 });
 
                 for (var i in data) {
-                  var div = $('');
+                  var div = $('<span></span>');
                   div.text(data[i]);
                   item.append(div);
                 }
