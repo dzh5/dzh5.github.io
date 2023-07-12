@@ -306,7 +306,7 @@
             if (v.width && v.height) line.video = v.width + 'х' + v.height;
             if (v.codec_name) line.codec = v.codec_name.toUpperCase();
             if (Boolean(v.is_avc)) line.avc = 'AVC';
-            if (Lampa.Arrays.getKeys(line).length) video.push(.join(' / '));
+            if (Lampa.Arrays.getKeys(line).length) video.push(line.join(' / '));
           });
           codec_audio.forEach(function (a, i) {
             var line = {
