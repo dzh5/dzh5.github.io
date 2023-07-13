@@ -1,7 +1,7 @@
 {
   "corsehost": "https://cors.bwa.workers.dev",
   "sisi": {
-    "rsize": false,
+    "rsize": true,
 	"heightPicture": 200
   },
   "online": {
@@ -64,7 +64,7 @@
   "PornHub": {
     "host": "https://rt.pornhub.com",
     "enable": true,
-    "corseu": false,
+    "corseu": true,
     "webcorshost": null
   },
   "Xvideos": {
@@ -135,13 +135,13 @@
   "Zetflix": {
     "host": "https://zetfix.online",
     "enable": true,
-    "corseu": false,
+    "corseu": true,
     "webcorshost": null
   },
   "VideoDB": {
     "enable": true,
     "host": "https://kinoplay.site",
-    "corseu": false,
+    "corseu": true,
     "webcorshost": null
   },
   "CDNmovies": {
