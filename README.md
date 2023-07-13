@@ -6,6 +6,6 @@ Lampa
 ---
 > https://requred.github.io/plugins/timecode.js
 ---
-> https://requred.github.io/plugins/track.js.js
+> https://requred.github.io/plugins/track.js
 ---
-> https://requred.github.io/plugins/jackett.js.js
+> https://requred.github.io/plugins/jackett.js
