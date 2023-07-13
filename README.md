@@ -9,3 +9,5 @@ Lampa
 > https://requred.github.io/plugins/track.js
 ---
 > https://requred.github.io/plugins/jackett.js
+---
+> https://requred.github.io/plugins/hotkeys.js
