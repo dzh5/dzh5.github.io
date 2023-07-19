@@ -1,5 +1,8 @@
 (function () {
     'use strict';
+	var link = $('div[data-component="filmix"]');
+	var parent = link.parent();
+	parent.remove();
 	Lampa.Listener.follow('app', function(e) {
 		if(e.type == 'ready') {
 			$('#app > div.head > div > div.head__actions > .open--premium').remove();
@@ -9,9 +12,7 @@
 				location.reload();
 			});
 			
-			var link = $('.settings-folder.selector[data-component="filmix"]');
-			var parent = link.parent();
-			parent.remove();
+			
 			
 			Lampa.Template.add('stlico_css', "\n    <style>\n    div.settings div[data-component='filmix']{display:none;}\n .menu__list li[data-type='book'] .menu__ico {color: red;}\n .menu__list li[data-action='mytorrents'] .menu__ico {color: #00ad00;}\n    </style>\n"); 
     			$('body').append(Lampa.Template.get('stlico_css', {}, true));
