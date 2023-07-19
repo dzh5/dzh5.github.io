@@ -3,7 +3,7 @@
 	var link = $("div").data("component", "filmix");
 	var parent = link.parent();
 	parent.remove();
-	$("div").data("component", "filmix");
+	
 	Lampa.Listener.follow('app', function(e) {
 		if(e.type == 'ready') {
 			$('#app > div.head > div > div.head__actions > .open--premium').remove();
