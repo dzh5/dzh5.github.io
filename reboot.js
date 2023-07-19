@@ -9,7 +9,7 @@
 				location.reload();
 			});
 			
-			$('div.settings  div[data-component="filmix"]').remove();
+			$('div.settings div[data-component="filmix"]').remove();
 			
 			Lampa.Template.add('stlico_css', "\n    <style>\n    .menu__list li[data-type='book'] .menu__ico {color: red;}\n .menu__list li[data-action='mytorrents'] .menu__ico {color: green;}\n    </style>\n"); 
     			$('body').append(Lampa.Template.get('stlico_css', {}, true));
