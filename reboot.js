@@ -8,7 +8,9 @@
 			$('#reboot').on('hover:enter hover:click hover:touch', function() {
 				location.reload();
 			});
-
+			
+			$('#app > div.settings__body > div > div > div > div > div[data-component='filmix']').remove();
+			
 			Lampa.Template.add('stlico_css', "\n    <style>\n    .menu__list li[data-type='book'] .menu__ico {color: red;}\n .menu__list li[data-action='mytorrents'] .menu__ico {color: green;}\n    </style>\n"); 
     			$('body').append(Lampa.Template.get('stlico_css', {}, true));
 		}
