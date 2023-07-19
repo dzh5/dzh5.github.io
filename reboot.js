@@ -9,7 +9,9 @@
 				location.reload();
 			});
 			
-			Lampa.Template.add('stlico_css', "\n    <style>\n    div.settings div[data-component='filmix']{display:none;}\n .menu__list li[data-type='book'] .menu__ico {color: red;}\n .menu__list li[data-action='mytorrents'] .menu__ico {color: green;}\n    </style>\n"); 
+			$('#app > div.settings > div > div.settings__body > div > div > div > div > div.settings-folder').attr('data-component', 'filmix').remove();
+			
+			Lampa.Template.add('stlico_css', "\n    <style>\n    div.settings div[data-component='filmix']{display:none;}\n .menu__list li[data-type='book'] .menu__ico {color: red;}\n .menu__list li[data-action='mytorrents'] .menu__ico {color: #00ad00;}\n    </style>\n"); 
     			$('body').append(Lampa.Template.get('stlico_css', {}, true));
 		}
 	});
