@@ -1,6 +1,6 @@
 # plugins
 Lampa
-> https://requred.github.io/plugins/reboot.js
+> https://requred.github.io/plugins/custom.js
 ---
 > -https://requred.github.io/plugins/love.js
 ---
