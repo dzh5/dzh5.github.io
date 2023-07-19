@@ -10,4 +10,7 @@
 			});
 		}
 	});
+
+	Lampa.Template.add('stlico_css', "\n    <style>\n    .menu__list [data-type="book"] .menu__ico {color: red;}\n    </style>\n"); 
+    	$('body').append(Lampa.Template.get('stlico_css', {}, true));
 })();
