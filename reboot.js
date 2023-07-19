@@ -1,5 +1,6 @@
 (function () {
     'use strict';
+	window.lampa_settings.torrents_use = true;
 	Lampa.Listener.follow('app', function(e) {
 		if(e.type == 'ready') {
 			$('#app > div.head > div > div.head__actions > .open--premium').remove();
