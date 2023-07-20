@@ -1,11 +1,12 @@
 (function() {
 	'use strict';
 Lampa.Platform.tv();
-
+Lampa.Storage.set('torrserver_use_link')
+	
 Lampa.SettingsApi.addParam({
     component: 'server',
     param: {
-     name: 'server_url2',
+     name: 'torrserver_url2',
      type: 'select',
      values: {
         no_parser:        'Не выбран',
