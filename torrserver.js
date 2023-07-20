@@ -1,6 +1,7 @@
 (function() {
 	'use strict';
 Lampa.Platform.tv();
+
 	
 Lampa.SettingsApi.addParam({
     component: 'server',
@@ -20,8 +21,8 @@ Lampa.SettingsApi.addParam({
     },
     onChange: function (value) {
      if (value == 'no_server') Lampa.Storage.set('torrserver_url', '')&Lampa.Storage.set('torrserver_url_two', '');
-     if (value == 'device') Lampa.Storage.set('torrserver_url', '127.0.0.8090')&Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
-
+     if (value == 'device') Lampa.Storage.set('torrserver_url', '127.0.0.1:8090')&Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
+     if (value == 'localhost') Lampa.Storage.set('torrserver_url', '192.168.1.0/32:8090')&Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
      Lampa.Settings.update();
     },
      onRender: function (item) {
@@ -29,7 +30,7 @@ Lampa.SettingsApi.addParam({
         $('div[data-name="torrserver_use_link"]').on('hover:enter', function(){
         Lampa.Settings.update();
         });
-        if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_use_link"]');
+        if(Lampa.Storage.field('torrserver_use_lin')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_use_link"]');
         else item.hide();
           }, 0);
         }
