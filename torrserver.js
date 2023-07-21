@@ -2,6 +2,8 @@
 	'use strict';
 Lampa.Platform.tv();
 	
+Lampa.Storage.set('torrserver_use_link', true)
+	
 Lampa.SettingsApi.addParam({
     component: 'server',
     param: {
@@ -33,7 +35,7 @@ Lampa.SettingsApi.addParam({
      if (value == '3') Lampa.Storage.set('torrserver_url_two', '192.168.1.43:8090');
      if (value == '4') Lampa.Storage.set('torrserver_url_two', 'torr.myftp.biz:8090');
      if (value == '5') Lampa.Storage.set('torrserver_url_two', 'trs.my.to:8595');
-     if (value == '6') Lampa.Storage.set('torrserver_url_two', 'tr.my.to:8595/');
+     if (value == '6') Lampa.Storage.set('torrserver_url_two', 'tr.my.to:8595');
      if (value == '7') Lampa.Storage.set('torrserver_url_two', 'trs.ix.tc:8595');
      if (value == '8') Lampa.Storage.set('torrserver_url_two', '176.124.198.209:8595');
      if (value == '9') Lampa.Storage.set('torrserver_url_two', '5.42.82.10:8090');
@@ -45,7 +47,7 @@ Lampa.SettingsApi.addParam({
     },
      onRender: function (item) {
        setTimeout(function() {
-        $('div[data-name="torrserver_use_link"]').remove();
+        //$('div[data-name="torrserver_use_link"]').remove();
         if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_use_link"]');
         else item.hide();
           }, 0);
