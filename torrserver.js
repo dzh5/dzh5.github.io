@@ -38,13 +38,16 @@ Lampa.SettingsApi.addParam({
      if (value == '8') Lampa.Storage.set('torrserver_url_two', '176.124.198.209:8595');
      if (value == '9') Lampa.Storage.set('torrserver_url_two', '5.42.82.10:8090');
      if (value == '10') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090');
+	//Lampa.Storage.set('torrserver_auth','true');
+	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
+	//Lampa.Storage.set('torrserver_password','ts');
      Lampa.Settings.update();
     },
      onRender: function (item) {
        setTimeout(function() {
-        $('div[data-name="torrserver_use_link"]').on('hover:enter', function(){
-        Lampa.Settings.update();
-        });
+        //$('div[data-name="torrserver_use_link"]').on('hover:enter', function(){
+       // Lampa.Settings.update();
+       // });
         if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_use_link"]');
         else item.hide();
           }, 0);
