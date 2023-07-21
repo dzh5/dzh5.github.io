@@ -18,6 +18,7 @@ Lampa.SettingsApi.addParam({
 	7:	'trs.ix.tc:8595',
 	8:	'176.124.198.209:8595', 
 	9:	'5.42.82.10:8090',
+	10:     '91.193.43.141:8090',
      },
      default: '0'
     },
@@ -36,6 +37,7 @@ Lampa.SettingsApi.addParam({
      if (value == '7') Lampa.Storage.set('torrserver_url_two', 'trs.ix.tc:8595');
      if (value == '8') Lampa.Storage.set('torrserver_url_two', '176.124.198.209:8595');
      if (value == '9') Lampa.Storage.set('torrserver_url_two', '5.42.82.10:8090');
+     if (value == '10') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090');
      Lampa.Settings.update();
     },
      onRender: function (item) {
