@@ -2,7 +2,7 @@
 	'use strict';
 Lampa.Platform.tv();
 	
-Lampa.Storage.set('torrserver_use_link', true)
+Lampa.Storage.set('torrserver_use_link', false)
 	
 Lampa.SettingsApi.addParam({
     component: 'server',
