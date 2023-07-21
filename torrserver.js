@@ -68,7 +68,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
         //$('div[data-name="torrserver_url"] div.settings-param__name, div[data-name="torrserver_url"] div.settings-param__value, div[data-name="torrserver_url"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
+        if(Lampa.Storage.field('torrserver_use_link2')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
         else item.hide();
           }, 0);
         }
@@ -141,7 +141,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
        // $('div[data-name="torrserver_url_two"] div.settings-param__name, div[data-name="torrserver_url_two"] div.settings-param__value, div[data-name="torrserver_url_two"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
+        if(Lampa.Storage.field('torrserver_use_link3')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
         else item.hide();
           }, 0);
         }
