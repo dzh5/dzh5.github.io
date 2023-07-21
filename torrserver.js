@@ -1,7 +1,7 @@
 (function() {
 	'use strict';
 Lampa.Platform.tv();
-Lampa.SettingsApi.Param({
+Lampa.SettingsApi.addParam({
 	component: 'server',
 	param: {
 	 name: 'torrserver_use_link',
