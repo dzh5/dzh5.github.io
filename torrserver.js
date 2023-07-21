@@ -27,17 +27,17 @@ Lampa.SettingsApi.addParam({
      description: 'Дополнительная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == '0') Lampa.Storage.set('torrserver_url_two', '');
-     if (value == '1') Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
-     if (value == '2') Lampa.Storage.set('torrserver_url_two', '192.168.1.72:8090');
-     if (value == '3') Lampa.Storage.set('torrserver_url_two', '192.168.1.43:8090');
-     if (value == '4') Lampa.Storage.set('torrserver_url_two', 'torr.myftp.biz:8090');
-     if (value == '5') Lampa.Storage.set('torrserver_url_two', 'trs.my.to:8595');
-     if (value == '6') Lampa.Storage.set('torrserver_url_two', 'tr.my.to:8595');
-     if (value == '7') Lampa.Storage.set('torrserver_url_two', 'trs.ix.tc:8595');
-     if (value == '8') Lampa.Storage.set('torrserver_url_two', '176.124.198.209:8595');
-     if (value == '9') Lampa.Storage.set('torrserver_url_two', '5.42.82.10:8090');
-     if (value == '10') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090');
+     if (value == '0') Lampa.Storage.set('torrserver_url', '');
+     if (value == '1') Lampa.Storage.set('torrserver_url', 'localhost:8090');
+     if (value == '2') Lampa.Storage.set('torrserver_url', '192.168.1.72:8090');
+     if (value == '3') Lampa.Storage.set('torrserver_url', '192.168.1.43:8090');
+     if (value == '4') Lampa.Storage.set('torrserver_url', 'torr.myftp.biz:8090');
+     if (value == '5') Lampa.Storage.set('torrserver_url', 'trs.my.to:8595');
+     if (value == '6') Lampa.Storage.set('torrserver_url', 'tr.my.to:8595');
+     if (value == '7') Lampa.Storage.set('torrserver_url', 'trs.ix.tc:8595');
+     if (value == '8') Lampa.Storage.set('torrserver_url', '176.124.198.209:8595');
+     if (value == '9') Lampa.Storage.set('torrserver_url', '5.42.82.10:8090');
+     if (value == '10') Lampa.Storage.set('torrserver_url', '91.193.43.141:8090');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
 	//Lampa.Storage.set('torrserver_password','ts');
