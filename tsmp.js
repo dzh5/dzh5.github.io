@@ -1,6 +1,6 @@
 (function () {
 'use strict';
-	document.querySelector("#app > div.settings > div.settings__content.layer--height > div.settings__body > div > div > div > div > div:nth-child(4)").remove
+	$("#app > div.settings > div.settings__content.layer--height > div.settings__body > div > div > div > div > div:nth-child(4)").remove;
 	Lampa.Storage.set('torrserver_url','192.168.1.43:8090');
 	
     	if (Lampa.Platform.is('browser')) {
