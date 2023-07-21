@@ -23,8 +23,8 @@ Lampa.SettingsApi.addParam({
      default: '0'
     },
     field: {
-     name: 'Доп. ссылка из списка',
-     description: 'Дополнительная ссылка TorrServer из списка'
+     name: 'Осн. ссылка из списка',
+     description: 'Основная ссылка TorrServer из списка'
     },
     onChange: function (value) {
      if (value == '0') Lampa.Storage.set('torrserver_url', '');
