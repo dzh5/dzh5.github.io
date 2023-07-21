@@ -37,6 +37,7 @@ Lampa.SettingsApi.addParam({
      if (value == '8') Lampa.Storage.set('torrserver_url', '176.124.198.209:8595');
      if (value == '9') Lampa.Storage.set('torrserver_url', '5.42.82.10:8090');
      if (value == '10') Lampa.Storage.set('torrserver_url', '91.193.43.141:8090');
+     Lampa.Storage.set('torrserver_use_link', (value == '0') ? 'two' : 'one');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
 	//Lampa.Storage.set('torrserver_password','ts');
