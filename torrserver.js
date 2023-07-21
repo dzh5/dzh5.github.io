@@ -67,7 +67,7 @@ Lampa.SettingsApi.addParam({
     },
      onRender: function (item) {
        setTimeout(function() {
-        $('div[data-name="torrserver_url"] div.settings-param__name, div[data-name="torrserver_url"] div.settings-param__value, div[data-name="torrserver_url"] div.settings-param__descr').remove();
+        //$('div[data-name="torrserver_url"] div.settings-param__name, div[data-name="torrserver_url"] div.settings-param__value, div[data-name="torrserver_url"] div.settings-param__descr').remove();
         if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
         else item.hide();
           }, 0);
@@ -140,7 +140,7 @@ Lampa.SettingsApi.addParam({
     },
      onRender: function (item) {
        setTimeout(function() {
-        $('div[data-name="torrserver_url_two"] div.settings-param__name, div[data-name="torrserver_url_two"] div.settings-param__value, div[data-name="torrserver_url_two"] div.settings-param__descr').remove();
+       // $('div[data-name="torrserver_url_two"] div.settings-param__name, div[data-name="torrserver_url_two"] div.settings-param__value, div[data-name="torrserver_url_two"] div.settings-param__descr').remove();
         if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
         else item.hide();
           }, 0);
@@ -159,7 +159,7 @@ Lampa.SettingsApi.addParam({
        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
    })
 
-Lampa.Template.add('torserv1_css', "\n    <style>\n	div.settings-param[data-name='torrserver_url'], div.settings-param[data-name='torrserver_url_two'] {padding:0;}\n	div.settings-param[data-name='torrserver_url'] .settings-param__status, div.settings-param[data-name='torrserver_url_two'] .settings-param__status {top:3.7em;z-index:9;}\n	</style>\n"); 
-$('body').append(Lampa.Template.get('torserv1_css', {}, true));
+//Lampa.Template.add('torserv1_css', "\n    <style>\n	div.settings-param[data-name='torrserver_url'], div.settings-param[data-name='torrserver_url_two'] {padding:0;}\n	div.settings-param[data-name='torrserver_url'] .settings-param__status, div.settings-param[data-name='torrserver_url_two'] .settings-param__status {top:3.7em;z-index:9;}\n	</style>\n"); 
+//$('body').append(Lampa.Template.get('torserv1_css', {}, true));
  
 })();
