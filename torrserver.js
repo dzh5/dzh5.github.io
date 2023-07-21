@@ -2,8 +2,6 @@
 	'use strict';
 Lampa.Platform.tv();
 	
-Lampa.Storage.set('torrserver_use_link', 'torrserver_url_two')
-	
 Lampa.SettingsApi.addParam({
     component: 'server',
     param: {
@@ -48,7 +46,10 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
         //$('div[data-name="torrserver_use_link"]').remove();
-        if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_use_link"]');
+        if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
+        else item.hide();
+          }, 0);
+	if(Lampa.Storage.field('torrserver_use_link')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url_two"]');
         else item.hide();
           }, 0);
         }
