@@ -9,7 +9,7 @@ Lampa.SettingsApi.addParam({
      type: 'select',
      values: {
         0:	'Не выбран',
-        1:	'На этом же устройстве',
+        1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
         4:	'torr.myftp.biz:8090',
