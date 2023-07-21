@@ -1,7 +1,6 @@
 (function() {
-	'use strict';
+'use strict';
 Lampa.Platform.tv();
-	
 Lampa.SettingsApi.addParam({
     component: 'server',
     param: {
