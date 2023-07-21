@@ -115,7 +115,7 @@ Lampa.SettingsApi.addParam({
        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
    })
 
-Lampa.Template.add('torserv1_css', "\n    <style>\n	div.settings-param[data-name="torrserver_url_two"] {padding:0;}\n	.settings-param__status {top: 3.7em;}\n	</style>\n"); 
-$('body').append(Lampa.Template.get('torserv1_css', {}, true));
+//Lampa.Template.add('torserv1_css', "\n    <style>\n	div.settings-param[data-name="torrserver_url_two"] {padding:0;}\n	.settings-param__status {top: 3.7em;}\n	</style>\n"); 
+//$('body').append(Lampa.Template.get('torserv1_css', {}, true));
  
 })();
