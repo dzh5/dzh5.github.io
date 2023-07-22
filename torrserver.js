@@ -37,7 +37,7 @@ Lampa.SettingsApi.addParam({
      description: 'Основная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == '0') Lampa.Storage.set('torrserver_url', '');
+     if (value == '0') Lampa.Storage.set('torrserver_url', '1');
      if (value == '1') Lampa.Storage.set('torrserver_url', 'localhost:8090');
      if (value == '2') Lampa.Storage.set('torrserver_url', '192.168.1.72:8090');
      if (value == '3') Lampa.Storage.set('torrserver_url', '192.168.1.43:8090');
