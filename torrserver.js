@@ -7,7 +7,7 @@ Lampa.SettingsApi.addParam({
      name: 'torrserver_use_link2',
      type: 'select',
      values: {
-        0:	'Не выбран',
+        00:	'Не выбран',
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
@@ -30,14 +30,14 @@ Lampa.SettingsApi.addParam({
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
      },
-     default: '0'
+     default: '00'
     },
     field: {
      name: 'Осн. ссылка из списка',
      description: 'Основная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == '0') Lampa.Storage.set('torrserver_url', '');
+     if (value == '00') Lampa.Storage.set('torrserver_url', '');
      if (value == '1') Lampa.Storage.set('torrserver_url', 'localhost:8090');
      if (value == '2') Lampa.Storage.set('torrserver_url', '192.168.1.72:8090');
      if (value == '3') Lampa.Storage.set('torrserver_url', '192.168.1.43:8090');
@@ -80,7 +80,7 @@ Lampa.SettingsApi.addParam({
      name: 'torrserver_use_link3',
      type: 'select',
      values: {
-        0:	'Не выбран',
+        00:	'Не выбран',
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
@@ -103,14 +103,14 @@ Lampa.SettingsApi.addParam({
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
      },
-     default: '0'
+     default: '00'
     },
     field: {
      name: 'Доп. ссылка из списка',
      description: 'Дополнительная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == '0') Lampa.Storage.set('torrserver_url_two', '');
+     if (value == '00') Lampa.Storage.set('torrserver_url_two', '');
      if (value == '1') Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
      if (value == '2') Lampa.Storage.set('torrserver_url_two', '192.168.1.72:8090');
      if (value == '3') Lampa.Storage.set('torrserver_url_two', '192.168.1.43:8090');
