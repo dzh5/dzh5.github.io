@@ -59,7 +59,7 @@ Lampa.SettingsApi.addParam({
      if (value == '19') Lampa.Storage.set('torrserver_url', '95.141.184.39:8090');
      if (value == '20') Lampa.Storage.set('torrserver_url', '37.194.21.202:8090');
      if (value == '21') Lampa.Storage.set('torrserver_url', '91.193.43.141:8090');
-     Lampa.Storage.set('torrserver_use_link', 'one');
+     //Lampa.Storage.set('torrserver_use_link', 'one');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
 	//Lampa.Storage.set('torrserver_password','ts');
@@ -68,7 +68,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
         //$('div[data-name="torrserver_url"] div.settings-param__name, div[data-name="torrserver_url"] div.settings-param__value, div[data-name="torrserver_url"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_use_link2')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
+        if(Lampa.Storage.field('server')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
         else item.hide();
           }, 0);
         }
@@ -132,7 +132,7 @@ Lampa.SettingsApi.addParam({
      if (value == '19') Lampa.Storage.set('torrserver_url_two', '95.141.184.39:8090');
      if (value == '20') Lampa.Storage.set('torrserver_url_two', '37.194.21.202:8090');
      if (value == '21') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090');
-     Lampa.Storage.set('torrserver_use_link', 'two');
+     //Lampa.Storage.set('torrserver_use_link', 'two');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
 	//Lampa.Storage.set('torrserver_password','ts');
@@ -141,7 +141,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
        // $('div[data-name="torrserver_url_two"] div.settings-param__name, div[data-name="torrserver_url_two"] div.settings-param__value, div[data-name="torrserver_url_two"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_use_link3')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
+        if(Lampa.Storage.field('server')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
         else item.hide();
           }, 0);
         }
