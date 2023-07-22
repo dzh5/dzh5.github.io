@@ -7,7 +7,7 @@ Lampa.SettingsApi.addParam({
      name: 'torrserver_use_link2',
      type: 'select',
      values: {
-        none:	'Не выбран',
+        0:	'Не выбран',
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
@@ -30,14 +30,14 @@ Lampa.SettingsApi.addParam({
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
      },
-     default: 'none'
+     default: '0'
     },
     field: {
      name: 'Осн. ссылка из списка',
      description: 'Основная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == 'none') Lampa.Storage.set('torrserver_url', '');
+     if (value == '0') Lampa.Storage.set('torrserver_url', '');
      if (value == '1') Lampa.Storage.set('torrserver_url', 'localhost:8090');
      if (value == '2') Lampa.Storage.set('torrserver_url', '192.168.1.72:8090');
      if (value == '3') Lampa.Storage.set('torrserver_url', '192.168.1.43:8090');
@@ -68,7 +68,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
         //$('div[data-name="torrserver_url"] div.settings-param__name, div[data-name="torrserver_url"] div.settings-param__value, div[data-name="torrserver_url"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_url')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
+        if(Lampa.Storage.field('server')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link2"]').insertAfter('div[data-name="torrserver_url"]');
         else item.hide();
           }, 0);
         }
@@ -80,7 +80,7 @@ Lampa.SettingsApi.addParam({
      name: 'torrserver_use_link3',
      type: 'select',
      values: {
-        none:	'Не выбран',
+        0:	'Не выбран',
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
@@ -103,14 +103,14 @@ Lampa.SettingsApi.addParam({
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
      },
-     default: 'none'
+     default: '0'
     },
     field: {
      name: 'Доп. ссылка из списка',
      description: 'Дополнительная ссылка TorrServer из списка'
     },
     onChange: function (value) {
-     if (value == 'none') Lampa.Storage.set('torrserver_url_two', '');
+     if (value == '0') Lampa.Storage.set('torrserver_url_two', '');
      if (value == '1') Lampa.Storage.set('torrserver_url_two', 'localhost:8090');
      if (value == '2') Lampa.Storage.set('torrserver_url_two', '192.168.1.72:8090');
      if (value == '3') Lampa.Storage.set('torrserver_url_two', '192.168.1.43:8090');
@@ -141,7 +141,7 @@ Lampa.SettingsApi.addParam({
      onRender: function (item) {
        setTimeout(function() {
        // $('div[data-name="torrserver_url_two"] div.settings-param__name, div[data-name="torrserver_url_two"] div.settings-param__value, div[data-name="torrserver_url_two"] div.settings-param__descr').remove();
-        if(Lampa.Storage.field('torrserver_url_two')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
+        if(Lampa.Storage.field('server')) item.show()&$('.settings-param__name', item).css('color','f3d900')&$('div[data-name="torrserver_use_link3"]').insertAfter('div[data-name="torrserver_url_two"]');
         else item.hide();
           }, 0);
         }
