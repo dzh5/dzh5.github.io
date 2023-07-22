@@ -1,6 +1,7 @@
 (function () {
 	'use strict';
-  
+ Lampa.Listener.follow('full', function(e) {
+        if (e.type == 'complite') { 
 var qu = data.quality || data.release_quality;
 
 if (qu && Storage.field('card_quality')) {
@@ -11,5 +12,6 @@ if (qu && Storage.field('card_quality')) {
   quality.appendChild(quality_inner);
   this.card.querySelector('.full-start-new__poster').appendChild(quality);
 }
-
+  }
+    })
  })();
