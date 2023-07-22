@@ -10,7 +10,7 @@ if (qu && Storage.field('card_quality')) {
   var quality_inner = document.createElement('div');
   quality_inner.innerText = qu;
   quality.appendChild(quality_inner);
-  this.card.querySelector('.full-start-new__poster').appendChild(quality);
+  $('.full-start-new__poster').appendChild(quality);
 }
   }
     })
