@@ -1,14 +1,26 @@
 # plugins
 Lampa
-> https://requred.github.io/plugins/custom.js
+- Кастом под себя
+> https://dzh5.github.io/plugins/custom.js
 ---
-> -https://requred.github.io/plugins/love.js
+- Рейтинг Фильмов
+> https://dzh5.github.io/plugins/rating.js
 ---
-> -https://requred.github.io/plugins/timecode.js
+- Севрер из списка
+> https://dzh5.github.io/plugins/torrserver.js
 ---
-> https://requred.github.io/plugins/track.js
+- Мета торрент
+> https://dzh5.github.io/plugins/track.js
 ---
-> https://requred.github.io/plugins/jackett.js
+- Жакет
+> https://dzh5.github.io/plugins/jackett.js
 ---
-> https://requred.github.io/plugins/hotkeys.js
+- Кнопки на пульте для плеера
+> https://dzh5.github.io/plugins/hotkeys.js
+---
+- Прокси
+> https://dzh5.github.io/plugins/tmdb-proxy.js
+---
+- ТоррСеврер из списка онли паб
+> https://dzh5.github.io/plugins/tmdb-proxy.js
 
