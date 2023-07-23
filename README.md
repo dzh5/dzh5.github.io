@@ -18,8 +18,8 @@
 - Прокси
 > https://dzh5.github.io/plugins/tmdb-proxy.js
 ---
-- ТоррСеврер из списка онли паб
-> https://dzh5.github.io/plugins/tmdb-proxy.js
+- ТоррСервер из списка онли паб
+> https://dzh5.github.io/plugins/tspub.js
 ---
-- ТоррСеврер из списка паб + локал
+- ТоррСервер из списка паб + локал
 > https://dzh5.github.io/plugins/torrserver.js
