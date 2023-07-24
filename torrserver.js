@@ -11,7 +11,7 @@ Lampa.SettingsApi.addParam({
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
-	4:	'Torrserver 5',
+	4:	'Torrserver 4',
 	5:	'Torrserver 5',
 	6:	'Torrserver 6',
 	7:	'Torrserver 7',
@@ -29,6 +29,19 @@ Lampa.SettingsApi.addParam({
 	19:	'Torrserver 19',
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
+	22:	'Torrserver 22',
+	23:	'Torrserver 23',
+	24:	'Torrserver 24',
+	25:	'Torrserver 25',
+	26:	'Torrserver 26',
+	27:	'Torrserver 27',
+	28:	'Torrserver 28',
+	29:	'Torrserver 29',
+	30:	'Torrserver 30',
+	31:	'Torrserver 31',
+	32:	'Torrserver 32',
+	33:	'Torrserver 33',
+	34:	'Torrserver 34',
      },
      default: '0'
     },
@@ -59,6 +72,20 @@ Lampa.SettingsApi.addParam({
      if (value == '19') Lampa.Storage.set('torrserver_url', '95.141.184.39:8090');
      if (value == '20') Lampa.Storage.set('torrserver_url', '37.194.21.202:8090');
      if (value == '21') Lampa.Storage.set('torrserver_url', '91.193.43.141:8090');
+     if (value == '22') Lampa.Storage.set('torrserver_url', '77.39.15.165:8090');
+     if (value == '23') Lampa.Storage.set('torrserver_url', '46.46.0.14:8090');
+     if (value == '24') Lampa.Storage.set('torrserver_url', '77.82.90.220:8090'); 
+     if (value == '25') Lampa.Storage.set('torrserver_url', '77.223.96.247:8090'); 
+     if (value == '26') Lampa.Storage.set('torrserver_url', '5.130.142.32:8090'); 
+     if (value == '27') Lampa.Storage.set('torrserver_url', '46.181.245.74:8090'); 
+     if (value == '28') Lampa.Storage.set('torrserver_url', '31.40.34.101:8090'); 
+     if (value == '29') Lampa.Storage.set('torrserver_url', '46.242.39.238:8090'); 
+     if (value == '30') Lampa.Storage.set('torrserver_url', '78.36.198.165:8090'); 
+     if (value == '31') Lampa.Storage.set('torrserver_url', '77.51.204.228:8090'); 
+     if (value == '32') Lampa.Storage.set('torrserver_url', '95.141.184.39:8090'); 
+     if (value == '33') Lampa.Storage.set('torrserver_urlo', '62.76.93.19:8090'); 
+     if (value == '34') Lampa.Storage.set('torrserver_url', '91.193.43.141:8090'); 
+	    
      Lampa.Storage.set('torrserver_use_link', (value == '0') ? 'two' : 'one');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
@@ -84,7 +111,7 @@ Lampa.SettingsApi.addParam({
         1:	'localhost:8090',
 	2:	'192.168.1.72:8090',
 	3:	'192.168.1.43:8090',
-	4:	'Torrserver 5',
+	4:	'Torrserver 4',
 	5:	'Torrserver 5',
 	6:	'Torrserver 6',
 	7:	'Torrserver 7',
@@ -102,6 +129,19 @@ Lampa.SettingsApi.addParam({
 	19:	'Torrserver 19',
 	20:	'Torrserver 20',
 	21:	'Torrserver 21',
+	22:	'Torrserver 22',
+	23:	'Torrserver 23',
+	24:	'Torrserver 24',
+	25:	'Torrserver 25',
+	26:	'Torrserver 26',
+	27:	'Torrserver 27',
+	28:	'Torrserver 28',
+	29:	'Torrserver 29',
+	30:	'Torrserver 30',
+	31:	'Torrserver 31',
+	32:	'Torrserver 32',
+	33:	'Torrserver 33',
+	34:	'Torrserver 34',
      },
      default: '0'
     },
@@ -132,6 +172,20 @@ Lampa.SettingsApi.addParam({
      if (value == '19') Lampa.Storage.set('torrserver_url_two', '95.141.184.39:8090');
      if (value == '20') Lampa.Storage.set('torrserver_url_two', '37.194.21.202:8090');
      if (value == '21') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090');
+     if (value == '22') Lampa.Storage.set('torrserver_url_two', '77.39.15.165:8090');
+     if (value == '23') Lampa.Storage.set('torrserver_url_two', '46.46.0.14:8090');
+     if (value == '24') Lampa.Storage.set('torrserver_url_two', '77.82.90.220:8090'); 
+     if (value == '25') Lampa.Storage.set('torrserver_url_two', '77.223.96.247:8090'); 
+     if (value == '26') Lampa.Storage.set('torrserver_url_two', '5.130.142.32:8090'); 
+     if (value == '27') Lampa.Storage.set('torrserver_url_two', '46.181.245.74:8090'); 
+     if (value == '28') Lampa.Storage.set('torrserver_url_two', '31.40.34.101:8090'); 
+     if (value == '29') Lampa.Storage.set('torrserver_url_two', '46.242.39.238:8090'); 
+     if (value == '30') Lampa.Storage.set('torrserver_url_two', '78.36.198.165:8090'); 
+     if (value == '31') Lampa.Storage.set('torrserver_url_two', '77.51.204.228:8090'); 
+     if (value == '32') Lampa.Storage.set('torrserver_url_two', '95.141.184.39:8090'); 
+     if (value == '33') Lampa.Storage.set('torrserver_url_two', '62.76.93.19:8090'); 
+     if (value == '34') Lampa.Storage.set('torrserver_url_two', '91.193.43.141:8090'); 	    
+     
      Lampa.Storage.set('torrserver_use_link', (value == '0') ? 'one' : 'two');
 	//Lampa.Storage.set('torrserver_auth','true');
 	//Lampa.Storage.set('torrserver_login',Lampa.Storage.get('account_email') || 'ts');
