@@ -3467,7 +3467,7 @@
       }
 
       var secret = decodeSecretToken();
-      var token = secret ? '' : Lampa.Storage.get('filmix_token', '');
+      var token = secret ? '' : Lampa.Storage.get('filmix_token', '3b3a57fa5e8d007eb396afee8e25626c');
 
       if (secret) {
         window.filmix = {
