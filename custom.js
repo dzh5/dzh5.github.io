@@ -1,8 +1,11 @@
 (function () {
     'use strict';
+	
 	//Вкл. TorrServer на WebOs
 	window.lampa_settings.torrents_use = true;
-	
+	window.lampa_settings.demo = false;
+	window.lampa_settings.read_only = false;
+
 	Lampa.Listener.follow('app', function(e) {
 		if(e.type == 'ready') {
 			//Удалить кнопку рекламы Премиум в шапке
