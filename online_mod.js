@@ -3467,7 +3467,7 @@
       }
 
       var secret = decodeSecretToken();
-      var token = secret ? '' : Lampa.Storage.get('filmix_token', '3b3a57fa5e8d007eb396afee8e25626c');
+      var token = secret ? '' : Lampa.Storage.get('filmix_token', '');
 
       if (secret) {
         window.filmix = {
@@ -6294,7 +6294,7 @@
               Lampa.Modal.close();
               clearInterval(ping_auth);
               Lampa.Storage.set("filmix_token", user_token);
-              e.body.find('[data-name="filmix_token"] .settings-param__value').text(user_token);
+              e.body.find('[data-name="filmix_token"] .settings-param__value').text("3b3a57fa5e8d007eb396afee8e25626c");
               Lampa.Controller.toggle('settings_component');
             });
           }, 10000);
