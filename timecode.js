@@ -1,7 +1,27 @@
 (function ( backendhost, backendver ) {
     'use strict';
-Lampa.SettingsApi.addParam({
+      Lampa.Template.add('settings_pva_sync_menu1', "<div>\n           </div>");
+      Lampa.SettingsApi.addParam({
         component: 'account',
+        param: {
+          name: 'pva_sync_menu1',
+          type: 'static', //доступно select,input,trigger,title,static
+          default: ''
+        },
+        field: {
+          name: Lampa.Lang.translate('settings_cub_sync'),
+        },
+        onRender: function (item) {
+          item.on('hover:enter', function () {          
+            Lampa.Settings.create('pva_sync_menu1');
+            Lampa.Controller.enabled().controller.back = function(){
+              Lampa.Settings.create('filmix');
+            }
+          })
+        }
+      });
+Lampa.SettingsApi.addParam({
+        component: 'pva_sync_menu1',
         param: {
           name: 'pva_timeline',
           type: 'trigger', //доступно select,input,trigger,title,static
