@@ -2899,26 +2899,6 @@
 
       Lampa.Template.add('settings_pva_sync_menu', "<div>\n           </div>");
       Lampa.SettingsApi.addParam({
-        component: 'filmix',
-        param: {
-          name: 'pva_sync_menu',
-          type: 'static', //доступно select,input,trigger,title,static
-          default: ''
-        },
-        field: {
-          name: Lampa.Lang.translate('settings_cub_sync'),
-        },
-        onRender: function (item) {
-          item.on('hover:enter', function () {          
-            Lampa.Settings.create('pva_sync_menu');
-            Lampa.Controller.enabled().controller.back = function(){
-              Lampa.Settings.create('filmix');
-            }
-          })
-        }
-      });
-
-      Lampa.SettingsApi.addParam({
         component: 'pva_sync_menu',
         param: {
           name: 'pva_backup',
