@@ -122,4 +122,10 @@ Lampa.SettingsApi.addParam({
         Lampa.timecode.destroy(); 
       }
     }
+
+        if (!window.plugin_FilmixPVA) {
+      var app_js = window.localStorage.getItem('app.js', '');
+      if (app_js != undefined && app_js.length > 0) { window.localStorage.setItem('app.js', ''); console.log('DB', 'localStorage', 'delete', 'app.js'); }
+      startTimecode();
+    }
   })();
