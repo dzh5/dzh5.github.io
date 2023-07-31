@@ -15,7 +15,7 @@
           item.on('hover:enter', function () {          
             Lampa.Settings.create('pva_sync_menu1');
             Lampa.Controller.enabled().controller.back = function(){
-              Lampa.Settings.create('filmix');
+              Lampa.Settings.create('account');
             }
           })
         }
