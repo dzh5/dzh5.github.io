@@ -3239,7 +3239,7 @@
     function startSources(destroy) {
       if (window.plugin_FilmixPVA.mini || window.plugin_sources_ready) return;    
       if (Lampa.Storage.get('pva_sources', false)) { 
-        var ScriptItem = 'https://dzh5.github.io/plugins/Sources.js';
+        var ScriptItem = 'https://dzh5.github.io/plugins/off/Sources.js';
         Lampa.Utils.putScriptAsync([ScriptItem], function () { }, function (u) { console.log('Plugins', 'error:', ScriptItem); }, function (u) { console.log('Plugins', 'include:', ScriptItem); }, false );
       }
     }
