@@ -1,4 +1,4 @@
-(function () {
+(function ( backendhost, backendver ) {
     'use strict';
 Lampa.SettingsApi.addParam({
         component: 'account',
