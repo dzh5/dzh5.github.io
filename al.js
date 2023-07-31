@@ -1,26 +1,20 @@
 (function () {
     'use strict';
     var catalogs_alist;
-    if (Lampa.Storage.get('alist_site_json')) {
-        $.ajax({
-            url: Lampa.Storage.field('alist_site_json') + '?v=' + Math.random(),
-            type: 'GET',
-            async: false,
-            dataType: 'json',
-            success: function success(j) {
-                if (j.length > 0) {
-                    catalogs_alist = j;
-                } else {
-                    Lampa.Noty.show('Alsit配置无法加载，请检查JSON地址。');
-                }
-            },
-            error: function error() {
-                Lampa.Noty.show('Alist配置无法加载，请检查JSON地址。');
-            }
-        });
-  } else {
-    //Lampa.Noty.show('Alist配置无法加载，请检查JSON地址。');
-  };
+
+    // network["native"](Lampa.Storage.field('alist_site_json') + '?v=' + Math.random(), function (j) {
+    //     if (j) {
+    //         if (j.length > 0) {
+    //             catalogs_alist = j;
+    //         } else {
+    //             Lampa.Noty.show('Alsit配置无法加载，请检查JSON地址。');
+    //         }
+    //         console.log(j)
+    //     }
+    // }, false, false, {
+    //     dataType: 'json'
+    // });
+
   function component(object) {
     var network = new Lampa.Reguest();
     var scroll = new Lampa.Scroll({
@@ -66,80 +60,32 @@
         this.activity.loader(true);
         Lampa.Background.immediately(Lampa.Utils.cardImgBackground(object.movie));
 
-          var getlink = object.url;
-          
-            if (getlink.endsWith("/")) {
-                getlink = getlink;
-            } else {
-                getlink = (getlink + "/");
-            };
-            url = getlink;
-            var baseurl = getlink.match(/http.*:\/\/.*?\//, getlink)[0];
-            (baseurl.indexOf('http://') !== -1) ? baseurl = cors_https + baseurl : baseurl;
-        
-            $.ajax({
-                url: baseurl + "api/public/settings",
-                type: 'GET',
-                async: false,
-                dataType: 'json',
-                success: function success(json) {
-                    if (json.message == "success") {
-                        var url;
-                        var ver = typeof json.data.version !== 'undefined' ? ver = 3 : ver = 2;
-                        var pat = getlink.replace(baseurl, "");
-                        var param = {
-                            "path": "/" + pat
-                        };
-                        
-                        (ver == 3) ? url = baseurl + "api/fs/list" : url = baseurl + "api/public/path";
-                        network["native"](url, function (json) {
-                            if (json.message == "success") {
-                              var datatype;
-                              (ver == 3) ? datatype = json.data.content : datatype = json.data.files;
-                              
-                              datatype.forEach(function (item, index) {
-                                  //if (item.type ==1 || item.type ==3) {
-                                    listlink.data[0].media.push({
-                                      translation_id: item.name,
-                                      max_quality: item.type == 1 ? '文件夹' : item.name.substr(item.name.lastIndexOf('.') + 1).toUpperCase() + ' / ' + get_size(item.size),
-                                      title: item.name.replace("\.mp4", "").replace("\.mkv", ""),
-                                      type: item.type,
-                                      drive_id: item.type,
-                                      file_id: item.thumb || item.url,
-                                      share_id: ''
-                                    });
-                                //}
-                                });
-                              
-                                results = listlink.data;
+        var getlink = object.url;
 
-                                _this.build();
-              
-                                _this.activity.loader(false);
-              
-                                _this.activity.toggle();
-                            } else {
-                                _this.empty('哦: ' + json.message);
-                            }
-                          }, function (a, c) {
-                            //console.log(a.responseText,a.status)
-                            _this.empty('哦: ' + network.errorDecode(a, c));
-                        }, JSON.stringify(param), {
-                            dataType: "json",
-                            headers: {
-                                "content-type": "application/json",
-                            }
-                        });
-                  } else {
-                    if (json && json.error) Lampa.Noty.show(json.message);
-                  }
-                },
-                error: function error() {
-                  //Lampa.Noty.show('访问Alist网站出现问题。');
-                  _this.empty('访问 ' + object.title + ' 遇到问题。');
-                }
-              });
-            
+        if (getlink.endsWith("/")) {
+            getlink = getlink;
+        } else {
+            getlink = (getlink + "/");
+        };
+        url = getlink;
+        var baseurl = getlink.match(/http.*:\/\/.*?\//, getlink)[0];
+        (baseurl.indexOf('http://') !== -1) ? baseurl = cors_https + baseurl : baseurl;
+        
+        
+        network["native"](baseurl + "api/public/settings", function (json) {
+            var url;
+            var ver = typeof json.data.version !== 'undefined' ? ver = 3 : ver = 2;
+            var pat = getlink.replace(baseurl, "");
+            var param = {
+                "path": "/" + pat
+            };
+
+            (ver == 3) ? url = baseurl + "api/fs/list" : url = baseurl + "api/public/path";
+            _this.dolist (_this,ver,url,param);
+
+        }, false, false, {
+            dataType: 'json'
+        });
 
         filter.onSearch = function (value) {
           Lampa.Activity.replace({
@@ -158,11 +104,54 @@
         return this.render();
       };
 
+      this.dolist = function (_this,ver,url,param) {
+        // console.log('param',param)
+        network["native"](url, function (json) {
+            if (json.message == "success") {
+                var datatype;
+                (ver == 3) ? datatype = json.data.content : datatype = json.data.files;
+                
+                datatype.forEach(function (item, index) {
+                    //if (item.type ==1 || item.type ==3) {
+                    listlink.data[0].media.push({
+                        translation_id: item.name,
+                        max_quality: item.type == 1 ? '文件夹' : item.name.substr(item.name.lastIndexOf('.') + 1).toUpperCase() + ' / ' + get_size(item.size),
+                        title: item.name.replace("\.mp4", "").replace("\.mkv", ""),
+                        type: item.type,
+                        drive_id: item.type,
+                        file_id: item.thumb || item.url || item.name,
+                        share_id: ''
+                    });
+                    //}
+                });
+
+                results = listlink.data;
+
+                _this.build();
+
+                _this.activity.loader(false);
+
+                _this.activity.toggle();
+            } else {
+                _this.empty('哦: ' + json.message);
+            }
+        }, function (a, c) {
+            //console.log(a.responseText,a.status)
+            _this.empty('哦: ' + network.errorDecode(a, c));
+        }, JSON.stringify(param), {
+            dataType: "json",
+            headers: {
+                "content-type": "application/json",
+            }
+        });
+      }
+
       this.empty = function (descr) {
         var empty = new Lampa.Empty({
           descr: descr
         });
-        files.append(empty.render(filter.empty()));
+        // filter.empty()
+        files.append(empty.render());
         this.start = empty.start;
         this.activity.loader(false);
         this.activity.toggle();
@@ -359,6 +348,47 @@
         scroll.clear();
       };
 
+      this.doview = function (url,file,element,view) {
+        // console.log('param',param)
+        network["native"](url+'/api/fs/get', function (j) {
+            if (j.message == "success") {
+                var playlist = [];
+                var first = {
+                  url: j.data.raw_url,
+                  timeline: view,
+                  title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
+                };
+                Lampa.Player.play(first);
+
+                playlist.push(first);
+                Lampa.Player.playlist(playlist);
+              } else {
+                  //Lampa.Noty.show('获取Alsit播放地址失败。');
+                  var playlist = [];
+                  var first = {
+                    url: file1,
+                    timeline: view,
+                    title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
+                  };
+                  Lampa.Player.play(first);
+
+                  playlist.push(first);
+                  Lampa.Player.playlist(playlist);
+              }
+        }, function (a, c) {
+            //console.log(a.responseText,a.status)
+            _this.empty('哦: ' + network.errorDecode(a, c));
+        }, JSON.stringify({
+            "path": file.replace(url+'/',''),
+            "password": ""
+          }), {
+            dataType: "json",
+            headers: {
+                "content-type": "application/json",
+            }
+        });
+      }
+
       this.append = function (items) {
         var _this4 = this;
         var viewed = Lampa.Storage.cache('online_view', 5000, []);
@@ -393,7 +423,7 @@
               $(".full-start__poster").after('<div class="broadcast__scan"><div></div></div>');
               var reg = /[\u4e00-\u9fa5|\u3002|\uff1f|\uff01|\uff0c|\u3001|\uff1b|\uff1a|\u201c|\u201d|\u2018|\u2019|\uff08|\uff09|\u300a|\u300b|\u3008|\u3009|\u3010|\u3011|\u300e|\u300f|\u300c|\u300d|\ufe43|\ufe44|\u3014|\u3015|\u2026|\u2014|\uff5e|\ufe4f|\uffe5\d+|\/]+/;
               //    var chinese_title = element.title.replace(/《|【|》|】|\./g, ' ').match(reg) ? element.title.replace(/《|【|》|】|\./g, ' ').match(reg)[0] : element.title;
-              //    network["native"]('https://filebox-douban.vercel.app/api/search?keyword=' + encodeURIComponent(chinese_title), function (json) {
+              //    network.silent('https://filebox-douban.vercel.app/api/search?keyword=' + encodeURIComponent(chinese_title), function (json) {
               //      if (json.length > 0) { $(".full-start__img").attr('src', json[0].cover_url) }
               //      else { $(".full-start__img").attr('src', './img/img_broken.svg'); };
               //      $('.broadcast__scan').remove();
@@ -480,45 +510,46 @@
                 
                     //   }
                     // });
-                    $.ajax({
-                      url: r[0]+'/api/fs/get',
-                      type: 'POST',
-                      async: false,
-                      data: {
-                        "path": file.replace(r[0]+'/',''),
-                        "password": ""
-                      },
-                      dataType: 'json',
-                      success: function success(j) {
-                          if (j.message == "success") {
-                            var playlist = [];
-                            var first = {
-                              url: j.data.raw_url,
-                              timeline: view,
-                              title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
-                            };
-                            Lampa.Player.play(first);
+                    _this4.doview (r[0],file,element,view);
+                //     $.ajax({
+                //       url: r[0]+'/api/fs/get',
+                //       type: 'POST',
+                //       async: true,
+                //       data: {
+                //         "path": file.replace(r[0]+'/',''),
+                //         "password": ""
+                //       },
+                //       dataType: 'json',
+                //       success: function success(j) {
+                //           if (j.message == "success") {
+                //             var playlist = [];
+                //             var first = {
+                //               url: j.data.raw_url,
+                //               timeline: view,
+                //               title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
+                //             };
+                //             Lampa.Player.play(first);
           
-                            playlist.push(first);
-                            Lampa.Player.playlist(playlist);
-                          } else {
-                              //Lampa.Noty.show('获取Alsit播放地址失败。');
-                              var playlist = [];
-                              var first = {
-                                url: file1,
-                                timeline: view,
-                                title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
-                              };
-                              Lampa.Player.play(first);
+                //             playlist.push(first);
+                //             Lampa.Player.playlist(playlist);
+                //           } else {
+                //               //Lampa.Noty.show('获取Alsit播放地址失败。');
+                //               var playlist = [];
+                //               var first = {
+                //                 url: file1,
+                //                 timeline: view,
+                //                 title: element.season ? element.title : object.movie.title + ' / ' + element.title + ' / ' + element.quality
+                //               };
+                //               Lampa.Player.play(first);
             
-                              playlist.push(first);
-                              Lampa.Player.playlist(playlist);
-                          }
-                      },
-                      error: function error() {
-                          Lampa.Noty.show('获取Alsit播放地址失败。');
-                      }
-                  });
+                //               playlist.push(first);
+                //               Lampa.Player.playlist(playlist);
+                //           }
+                //       },
+                //       error: function error() {
+                //           Lampa.Noty.show('获取Alsit播放地址失败。');
+                //       }
+                //   });
                     //console.log(file)
                   //};
                   
@@ -796,6 +827,26 @@
     }
 
     if (!window.plugin_alist_ready) startPlugin();
+        if (Lampa.Storage.get('alist_site_json')) {
+        $.ajax({
+            url: Lampa.Storage.field('alist_site_json') + '?v=' + Math.random(),
+            type: 'GET',
+            async: false,
+            dataType: 'json',
+            success: function success(j) {
+                if (j.length > 0) {
+                    catalogs_alist = j;
+                } else {
+                    Lampa.Noty.show('Alsit配置无法加载，请检查JSON地址。');
+                }
+            },
+            error: function error() {
+                Lampa.Noty.show('Alist配置无法加载，请检查JSON地址。');
+            }
+        });
+  } else {
+    //Lampa.Noty.show('Alist配置无法加载，请检查JSON地址。');
+  };
     Lampa.Params.select('alist_site_json', '', '');
     Lampa.Template.add('settings_mod_alist', "<div>\n  <div class=\"settings-param selector\" data-name=\"alist_site_json\" data-type=\"input\" placeholder=\"\"> <div class=\"settings-param__name\">Json地址</div> <div class=\"settings-param__value\">请填写json地址</div> <div class=\"settings-param__status\"></div><div class=\"settings-param__descr\">填写Alist网站配置地址</div> </div>\n   </div>\n</div>");
     
@@ -893,7 +944,7 @@
       if (url) {
         var torrent_net = new Lampa.Reguest();
         torrent_net.timeout(10000);
-        torrent_net["native"](Lampa.Utils.checkHttp(Lampa.Storage.get(name))+'?v=' + Math.random(), function (json) {
+        torrent_net.silent(Lampa.Utils.checkHttp(Lampa.Storage.get(name))+'?v=' + Math.random(), function (json) {
           catalogs_alist = json;
           item.removeClass('active error wait').addClass('active');
         }, function (a, c) {
