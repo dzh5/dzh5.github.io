@@ -3253,5 +3253,5 @@
       startSources();
     }
 
-})( 'http://back.freebie.tom.ru', 'v=1924' );
+})();
 
