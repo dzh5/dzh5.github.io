@@ -299,7 +299,7 @@
 
       Lampa.InteractionMain = function (object) {
         var use = new_interface;
-        if (!(object.source == 'tmdb' || object.source == 'cub' || object.source == 'kp')) use = old_interface;
+        if (!(object.source == 'tmdb' || object.source == 'cub' || object.source == 'KP')) use = old_interface;
         if (window.innerWidth < 767) use = old_interface;
         if (Lampa.Manifest.app_digital < 153) use = old_interface;
         return new use(object);
