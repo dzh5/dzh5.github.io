@@ -23,7 +23,7 @@
         
         var activity = {
             url: '',
-            title: object.setup.title + ' - коллекция',
+            title: object.setup.title + ' - Коллекция',
             component: 'jaja',
             quantity: '',
             setup: object.setup,
@@ -532,10 +532,10 @@
                             };
                             Lampa.Modal.close();
                             var archiveMenu = [];
-                            var favtext = 'Добавить в закладки';
+                            var favtext = 'Добавить в коллекцию';
                             var isRadioFavorite = isFavorite(element.url);
                             if (isRadioFavorite) {
-                                favtext = 'Удалить из закладок'
+                                favtext = 'Удалить из коллекции'
                             };
                             archiveMenu.push({
                                 title: favtext,
@@ -560,7 +560,7 @@
                                 items: archiveMenu,
                                 onSelect: function (sel) {
                                     element.website = object.setup.title;
-                                    var favtext = 'Добавлено в закладки';
+                                    var favtext = 'Добавлено в коллекцию';
                                     if (sel.type == 'fav') {
                                         var isRadioFavorite = isFavorite(element.url);
                                         if (isRadioFavorite) {
@@ -569,10 +569,10 @@
                                             // });
                                             // if (indexToRemove !== -1) {
                                             //     removeFavoriteRadio(indexToRemove);
-                                            //     favtext = 'Удалено из закладок'
+                                            //     favtext = 'Удалено из коллекции'
                                             // }
                                             removeFavorite(element);
-                                            favtext = 'Удалено из закладок'
+                                            favtext = 'Удалено из коллекции'
                                         } else {
                                             saveFavoriteRadio(element);
                                         }
@@ -612,10 +612,10 @@
 
                             Lampa.Modal.close();
                             var archiveMenu = [];
-                            var favtext = 'Добавить в закладки';
+                            var favtext = 'Добавить в коллекцию';
                             var isRadioFavorite = isFavorite(element.url);
                             if (isRadioFavorite) {
-                                favtext = 'Удалить из закладок'
+                                favtext = 'Удалить из коллекции'
                             };
                             archiveMenu.push({
                                 title: favtext,
@@ -634,7 +634,7 @@
                                 items: archiveMenu,
                                 onSelect: function (sel) {
                                     element.website = object.setup.title;
-                                    var favtext = 'Добавлено в закладки';
+                                    var favtext = 'Добавлено в коллекцию';
                                     if (sel.type == 'fav') {
                                         var isRadioFavorite = isFavorite(element.url);
                                         if (isRadioFavorite) {
@@ -644,10 +644,10 @@
                                             // if (indexToRemove !== -1) {
                                             //     removeFavoriteRadio(indexToRemove);
                                                 
-                                            //     favtext = 'Удалено из закладок'
+                                            //     favtext = 'Удалено из коллекции'
                                             // }
                                             removeFavorite(element);
-                                            favtext = 'Удалено из закладок'
+                                            favtext = 'Удалено из коллекции'
                                         } else {
                                             saveFavoriteRadio(element);
                                         }
@@ -709,7 +709,7 @@
                 Lampa.Activity.push({
                     //	url: cors + a.url,
                     url: '',
-                    title: object.setup.title + ' - коллекция',
+                    title: object.setup.title + ' - Коллекция',
                     component: 'jaja',
                     quantity: '',
                     setup: object.setup,
