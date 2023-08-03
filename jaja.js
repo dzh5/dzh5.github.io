@@ -24,7 +24,7 @@
         var activity = {
             url: '',
             title: object.setup.title + ' - коллекция',
-            component: 'bibi',
+            component: 'jaja',
             quantity: '',
             setup: object.setup,
             type: 'fav',
@@ -710,7 +710,7 @@
                     //	url: cors + a.url,
                     url: '',
                     title: object.setup.title + ' - коллекция',
-                    component: 'bibi',
+                    component: 'jaja',
                     quantity: '',
                     setup: object.setup,
                     type: 'fav',
@@ -796,7 +796,7 @@
             this.activity.toggle();
         };
 
-        var FAVORITE_RADIOS_KEY = 'favorite_Bibi';
+        var FAVORITE_RADIOS_KEY = 'favorite_jaja';
 
         function getFavoriteRadios() {
             return JSON.parse(localStorage.getItem(FAVORITE_RADIOS_KEY)) || [];
