@@ -1,0 +1,22 @@
+[
+{"group":"","name":"Первый канал HD","time":"","picture":"http://lampa32.ru/tv/icons/logo-perviy-kanal-hd.png","video":"http://193.33.88.172/ort_hd/tracks-v1a1/mono.m3u8"},
+{"group":"","name":"Россия 1 HD","time":"","picture":"http://lampa32.ru/tv/icons/4f01cf9e69600ef5fa1bd69f793998be.png","video":"https://okkotv-live.cdnvideo.ru/channel/Russia1HD.m3u8"},
+{"group":"","name":"Пятый канал","time":"","picture":"https://cdn-st1.rtr-vesti.ru/vh/pictures/hd/323/068/0.png","video":"https://okkotv-live.cdnvideo.ru/channel/5_OTT.m3u8"},
+{"group":"","name":"Россия 24","time":"","picture":"https://telestroka.ru/i/channels/rossia24.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/Russia24.m3u8"},
+{"group":"","name":"Россия Культура","time":"","picture":"http://lampa32.ru/tv/icons/kulutra.jpeg","video":"https://okkotv-live.cdnvideo.ru/channel/Russia_K_SD.m3u8"},
+{"group":"","name":"Спас","time":"","picture":"http://lampa32.ru/tv/icons/spas_01_03_18.png","video":"https://okkotv-live.cdnvideo.ru/channel/Spas.m3u8"},
+{"group":"","name":"РЕН ТВ HD","time":"","picture":"http://lampa32.ru/tv/icons/REN-TV-HD.png","video":"https://okkotv-live.cdnvideo.ru/channel/Rentv_HD_OTT.m3u8"},
+{"group":"","name":"НТВ HD","time":"","picture":"http://lampa32.ru/tv/icons/ntv.png","video":"https://cdn.ntv.ru/ntv-msk_hd/tracks-v1a1/playlist.m3u8"},
+{"group":"","name":"СТС HD","time":"","picture":"https://static.tildacdn.com/tild3933-3534-4238-b130-333537626332/_hd.png","video":"https://okkotv-live.cdnvideo.ru/channel/CTC_HD_OTT.m3u8"},
+{"group":"","name":"Домашний HD","time":"","picture":"http://lampa32.ru/tv/icons/b1203682774.png","video":"https://okkotv-live.cdnvideo.ru/channel/Dom_HD_OTT.m3u8"},
+{"group":"","name":"ТВ3 HD","time":"","picture":"http://lampa32.ru/tv/icons/tv3.png","video":"https://okkotv-live.cdnvideo.ru/channel/TV3_OTT_HD.m3u8"},
+{"group":"","name":"Пятница HD","time":"","picture":"http://lampa32.ru/tv/icons/logo-pyatnica-min.png","video":"https://okkotv-live.cdnvideo.ru/channel/Pyatnizza_OTT_HD.m3u8"},
+{"group":"","name":"ТНТ HD","time":"","picture":"https://images.iptv.rt.ru/sdp/mos/nclogo1508420635111.png","video":"https://okkotv-live.cdnvideo.ru/channel/TNT_OTT_HD.m3u8"},
+{"group":"","name":"Ю","time":"","picture":"http://lampa32.ru/tv/icons/yu.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/Yu_OTT.m3u8"},
+{"group":"","name":"Че","time":"","picture":"https://user.vsevnet.ru/cache/smotreshka/che_new.png","video":"https://okkotv-live.cdnvideo.ru/channel/Che_OTT_2.m3u8"},
+{"group":"","name":"СТС Love","time":"","picture":"http://lampa32.ru/tv/icons/sts-love.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/CTC_Love_OTT_2.m3u8"},
+{"group":"","name":"Звезда","time":"","picture":"http://lampa32.ru/tv/icons/zvezda.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/Zvezda_SD.m3u8"},
+{"group":"","name":"Мир","time":"","picture":"https://avatars.mds.yandex.net/i?id=7ff8f3bdaf23817fd54c99863dbfcf4d_l-5286781-images-thumbs&n=13","video":"https://okkotv-live.cdnvideo.ru/channel/Mir_OTT.m3u8"},
+{"group":"","name":"Известия HD","time":"","picture":"https://images.iptv.rt.ru/sdp/mos/nclogo1543571854883.png","video":"https://okkotv-live.cdnvideo.ru/channel/Izvestiya_HD_2.m3u8"},
+{"group":"","name":"360 Новости","time":"","picture":"https://i.ytimg.com/vi/qv_Mh8fS6cQ/maxresdefault.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/360_Novosti_HD/1080p.m3u8"}
+]

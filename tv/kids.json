@@ -1,0 +1,13 @@
+[
+{"group":"","name":"CTC Kids HD","time":"","picture":"http://lampa32.ru/tv/icons/stskids.png","video":"https://okkotv-live.cdnvideo.ru/channel/CTC_Kids_HD.m3u8"},
+{"group":"","name":"Солнце","time":"","picture":"http://lampa32.ru/tv/icons/sun.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/Disney.m3u8"},
+{"group":"","name":"Мультиландия","time":"","picture":"http://lampa32.ru/tv/icons/Multilandia-logo-2020-full.png","video":"https://okkotv-live.cdnvideo.ru/channel/Multilandia_HD.m3u8"},
+{"group":"","name":"Duck TV","time":"","picture":"http://lampa32.ru/tv/icons/duck.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/DuckTV/480p.m3u8"},
+{"group":"","name":"Лёва HD","time":"","picture":"http://lampa32.ru/tv/icons/leva.png","video":"https://strm.yandex.ru/kal/leva/leva0.m3u8"},
+{"group":"","name":"В гостях у сказки","time":"","picture":"http://lampa32.ru/tv/icons/gosskaz.png","video":"https://strm.yandex.ru/kal/v_gostyah_u_skazki/v_gostyah_u_skazki0.m3u8"},
+{"group":"","name":"Карусель","time":"","picture":"http://lampa32.ru/tv/icons/karusel.jpg","video":"http://94.230.240.17:8080/karusel/index.m3u8"},
+{"group":"","name":"Детский Мир","time":"","picture":"http://lampa32.ru/tv/icons/detmir.png","video":"http://streamer1.ruslanatv.ru/russia/detskiy_mir_2023/playlist.m3u8"},
+{"group":"","name":"Мульт","time":"","picture":"http://lampa32.ru/tv/icons/mult.jpg","video":"http://europe3.livetv.az/russia/mult_sd_new_2023/playlist.m3u8"},
+{"group":"","name":"Рыжий","time":"","picture":"http://lampa32.ru/tv/icons/rizhiy.png","video":"http://193.33.240.8:8080/ryzhiy/index.m3u8"},
+{"group":"","name":"Nickelodeon","time":"","picture":"http://lampa32.ru/tv/icons/nickelodeon.png","video":"http://45.144.31.195:8026/playlist.m3u8"}
+]

@@ -1,0 +1,11 @@
+[
+{"group":"","name":"Муз ТВ","time":"","picture":"http://lampa32.ru/tv/icons/muztvlive.jpg","video":"https://okkotv-live.cdnvideo.ru/channel/MuzTV.m3u8"},
+{"group":"","name":"MusicBox Gold","time":"","picture":"http://lampa32.ru/tv/icons/muzboxgold.jpg","video":"https://strm.yandex.ru/kal/musicboxgold/musicboxgold0.m3u8"},
+{"group":"","name":"ТНТ Music","time":"","picture":"http://lampa32.ru/tv/icons/tntmus.jpeg","video":"https://strm.yandex.ru/kal/tntmusic/tntmusic0.m3u8"},
+{"group":"","name":"RU.TV","time":"","picture":"http://lampa32.ru/tv/icons/rutv.jpeg","video":"https://strm.yandex.ru/kal/rutv_cv/rutv_cv0.m3u8"},
+{"group":"","name":"Ля-минор","time":"","picture":"http://lampa32.ru/tv/icons/lyaminor.jpg","video":"http://146.158.0.56:80/Lya-Minor/index.m3u8"},
+{"group":"","name":"Europa Plus TV","time":"","picture":"http://lampa32.ru/tv/icons/europa.png","video":"http://europe3.livetv.az/russia/evropaplus_sd_new_2023/playlist.m3u8"},
+{"group":"","name":"MTV HD","time":"","picture":"http://lampa32.ru/tv/icons/mtv.jpeg","video":"http://ronaldo.tvfor.pro/Ib4ClhmFDE/39i17a12k12ew3b70s2w65lr"},
+{"group":"","name":"Первый Музыкальный","time":"","picture":"http://lampa32.ru/tv/icons/permuz.jpeg","video":"http://hz1.teleport.cc/HLS/HD.m3u8"},
+{"group":"","name":"Музыка Первого","time":"","picture":"http://lampa32.ru/tv/icons/muzpervogo.jpg","video":"http://193.33.88.172/muz-pervogo/tracks-v1a1/mono.m3u8"}
+]

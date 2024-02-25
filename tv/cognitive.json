@@ -1,0 +1,19 @@
+[
+{"group":"","name":"Terra","time":"","picture":"http://lampa32.ru/tv/icons/terra.png","video":"https://okkotv-live.cdnvideo.ru/channel/NGC_HD/1080p.m3u8"},
+{"group":"","name":"Viasat Nature HD","time":"","picture":"http://lampa32.ru/tv/icons/VIASAT_NATURE.png","video":"https://okkotv-live.cdnvideo.ru/channel/Viasat_Nature_ad_HD.m3u8"},
+{"group":"","name":"Viasat Explore HD","time":"","picture":"https://crimeastar.net/wp-content/uploads/2020/04/viasat-explore-1-2048x1024.png","video":"https://okkotv-live.cdnvideo.ru/channel/Viasat_Explore_HD.m3u8"},
+{"group":"","name":"Viasat History HD","time":"","picture":"http://lampa32.ru/tv/icons/telekanal-viasat-history-otzyvy-1372371098.png","video":"https://okkotv-live.cdnvideo.ru/channel/Viasat_History_ad_HD.m3u8"},
+{"group":"","name":"History HD","time":"","picture":"http://lampa32.ru/tv/icons/historyhd.jpg","video":"http://91.233.215.250:7272/PK41HvJyzlbR8XZ"},
+{"group":"","name":"Оружие","time":"","picture":"http://lampa32.ru/tv/icons/orugie.jpg","video":"https://tbs01-edge11.itdc.ge/oruzhie/tracks-v1a1/mono.m3u8"},
+{"group":"","name":"Дикий","time":"","picture":"https://ntvplus.tv/files/image/01/17/00/woj.png","video":"http://217.107.34.114:8007/playlist.m3u8"},
+{"group":"","name":"Дикая Охота HD","time":"","picture":"http://lampa32.ru/tv/icons/DOHD.png","video":"http://81.177.136.209:8007/playlist.m3u8"},
+{"group":"","name":"Дикая Рыбалка HD","time":"","picture":"http://lampa32.ru/tv/icons/DRHD.png","video":"http://cdn-lb.iptv2022.com/p/wAuqSARQCGm-eF3eJxSmgA,1686070926/streaming/ribalkahd/324/1/index.m3u8"},
+{"group":"","name":"Food Network","time":"","picture":"http://lampa32.ru/tv/icons/foodnetwork.jpg","video":"http://puaosar4.akciatv.ru/iptv/HVZLBXGWWQA6YS/2419/index.m3u8"},
+{"group":"","name":"Food Time","time":"","picture":"http://lampa32.ru/tv/icons/foodtime.jpeg","video":"http://193.33.88.172/eda_hd/tracks-v1a1/mono.m3u8"},
+{"group":"","name":"Кухня ТВ","time":"","picture":"http://lampa32.ru/tv/icons/kuhnya.jpeg","video":"http://31.148.48.15:80/Kuhnya_TV/index.m3u8"},
+{"group":"","name":"Animal Planet","time":"","picture":"http://lampa32.ru/tv/icons/animalplanet.jpeg","video":"http://europe3.livetv.az/russia/animal_planet_sd_new_2023/playlist.m3u8"},
+{"group":"","name":"Наука","time":"","picture":"http://lampa32.ru/tv/icons/nauka.jpeg","video":"https://tbs01-edge11.itdc.ge/nayka/tracks-v1a1/mono.m3u8"},
+{"group":"","name":"Приключения","time":"","picture":"http://lampa32.ru/tv/icons/prikluchenia.jpeg","video":"http://193.33.240.8:8080/teletravel_hd/index.m3u8"},
+{"group":"","name":"Планета HD","time":"","picture":"http://lampa32.ru/tv/icons/planeta.png","video":"http://193.33.240.8:8080/planeta_hd/index.m3u8"},
+{"group":"","name":"Живая Планета","time":"","picture":"http://lampa32.ru/tv/icons/givplaneta.png","video":"http://193.33.88.172/zhivaya-planeta/tracks-v1a1/mono.m3u8"}
+]  
