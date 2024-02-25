@@ -46,37 +46,37 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/tmdb-proxy.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/sources.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
 //Коллекции
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/collections.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/collections.js'], function () {});
 //TorServer из списка
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/torrserver.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
 //Синхронизация тайм-кодов 
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/timecode.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/timecode.js'], function () {});
 //Горячие кнопки в плеере
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/hotkeys.js'], function () {});
-//КиноПоиск, Filmix источник http://l92732ix.beget.tech/on/kp.js
-Lampa.Utils.putScriptAsync(['https://lampa32.github.io/source.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function () {});
+//КиноПоиск, Filmix источник
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/kp.js'], function () {});
 //Рейтинг IMDB и Кинопоиск
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/rating.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
 //Аудио-дорожки и субтитры в плеере
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/track.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {});
 //Стильный интерфейс
-//Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/interface.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/interface.js'], function () {});
 //JaJa 18+
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/jajaj.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {});
 //Сиси клубничка
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/sisis.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
 //Онлайн Lampa
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/online.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
-//Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/mult.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/mult.js'], function () {});
 //Телевизор
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/iptv.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/iptv.js'], function () {});
 //Документалки, Мультики, Концерты
-Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/new-cat.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/new-cat.js'], function () {});
 //Клуюничка BWA
 //Lampa.Utils.putScriptAsync(['https://bwa.to/s'], function () {});
 //Клуюничка SISI
@@ -84,13 +84,13 @@ Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/new-cat.js'], functio
 //Онлайн BWA
 //Lampa.Utils.putScriptAsync(['https://bwa.to/f'], function () {});
 //Выбор парсера
-//Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/jackett.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jackett.js'], function () {});
 //Онлайн Mod
 //Lampa.Utils.putScriptAsync(['https://nb557.github.io/plugins/online_mod.js'], function () {});
 //Твикер
 //Lampa.Utils.putScriptAsync(['https://lampatv.site/tricks.js'], function () {});
 //Визуализация предзагрузки торрента
-//Lampa.Utils.putScriptAsync(['http://l92732ix.beget.tech/on/ts-preload.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/ts-preload.js'], function () {});
 
 
 // Кастомизация
@@ -158,27 +158,27 @@ Lampa.Keypad.listener.follow('keydown', function (e) {
 		var last;
 		var catalogs = [{
         title: 'Спортивные',
-        url: 'http://l92732ix.beget.tech/tv/sport.json'
+        url: 'https://dzh5.github.io/tv/sport.json'
       },
           {
         title: 'Фильмы и сериалы',
-        url: 'http://l92732ix.beget.tech/tv/films.json'
+        url: 'https://dzh5.github.io/tv/films.json'
       },
           {
         title: 'Детские',
-        url: 'http://l92732ix.beget.tech/tv/kids.json'
+        url: 'https://dzh5.github.io/tv/kids.json'
       },
           {
         title: 'Познавательные',
-        url: 'http://l92732ix.beget.tech/tv/cognitive.json'
+        url: 'https://dzh5.github.io/tv/cognitive.json'
       },
           {
         title: 'Музыкальные',
-        url: 'http://l92732ix.beget.tech/tv/music.json'
+        url: 'https://dzh5.github.io/tv/music.json'
       },
           {
         title: 'Федеральные',
-        url: 'http://l92732ix.beget.tech/tv/federals.json'
+        url: 'https://dzh5.github.io/tv/federals.json'
       }];
 		this.create = function() {
 			var _this = this;
