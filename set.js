@@ -58,7 +58,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/timecode.js'], function (
 //Горячие кнопки в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function () {});
 //КиноПоиск, Filmix источник
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/kp.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/kp.js'], function () {});
 //Рейтинг IMDB и Кинопоиск
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
 //Аудио-дорожки и субтитры в плеере
