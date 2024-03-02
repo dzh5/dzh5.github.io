@@ -100,7 +100,7 @@ function cub_off() {
 
 }	
 if(window.appready) cub_off();
-	else {
+	/* else {
 		Lampa.Listener.follow('app', function(e) {
 			if(e.type == 'ready') {
 				cub_off(); hideIT();
@@ -109,6 +109,6 @@ if(window.appready) cub_off();
 				
 			}
 		});
-	}
+	} */
 
 })();
