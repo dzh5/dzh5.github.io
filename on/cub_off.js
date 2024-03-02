@@ -77,9 +77,9 @@ function cub_off() {
 			 if (!$('.extensions__body').length) $('.settings-param-title').last().css('display', 'none');
 		    },0)
 		  });	  
-                   /* setTimeout(function(){
+                   setTimeout(function(){
 			$('.button--subscribe').remove();
-		   },0); */
+		   },0);
                 }
           })   
   
@@ -100,15 +100,15 @@ function cub_off() {
 
 }	
 if(window.appready) cub_off();
-	/* else {
+	else {
 		Lampa.Listener.follow('app', function(e) {
 			if(e.type == 'ready') {
 				cub_off(); hideIT();
-				$("[data-action=feed]").eq(0).remove();
+				/* $("[data-action=feed]").eq(0).remove(); */
                                 $("[data-action=subscribes]").eq(0).remove();
 				
 			}
 		});
-	} */
+	}
 
 })();
