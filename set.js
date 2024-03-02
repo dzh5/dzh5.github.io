@@ -46,7 +46,7 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //Удалить премиум
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/cub_off.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/cub_off.js'], function () {});
 //TMDB Proxy
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
