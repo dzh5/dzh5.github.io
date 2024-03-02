@@ -45,6 +45,8 @@ window.lampa_settings.read_only = false;
 
 // Плагины
 Lampa.Storage.set('plugins', []);
+//Удалить премиум
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/cub_off.js'], function () {});
 //TMDB Proxy
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
@@ -94,12 +96,6 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/new-cat.js'], function ()
 
 
 // Кастомизация
-Lampa.Listener.follow('full', function (e) {
-	if (e.type == 'complite')
-		$('.hide.buttons--container > div').prependTo('.full-start-new__buttons');
-		$('.full-start__button.selector.button--play').remove();	
-});
-
 Lampa.Controller.listener.follow('toggle', function(e) {
 	if(e.name == 'select') {
 		setTimeout(function() {
