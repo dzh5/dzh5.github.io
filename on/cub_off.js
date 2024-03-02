@@ -52,11 +52,11 @@ function cub_off() {
 		localStorage.setItem("region", '{"code":"uk","time":' + time + '}')
 	 })
 
-	 setTimeout(function(){
+	/* setTimeout(function(){
               $('.open--feed').remove();
               $('.open--premium').remove();
 	      $('.open--notice').remove();
-          }, 1000);
+          }, 1000); */
 
 	  Lampa.Settings.listener.follow('open', function (e) {
              if (e.name == 'account') {
