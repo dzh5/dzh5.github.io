@@ -60,7 +60,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function ()
 //КиноПоиск, Filmix источник
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/kp.js'], function () {});
 //Рейтинг IMDB и Кинопоиск
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
 //Аудио-дорожки и субтитры в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {});
 //Стильный интерфейс
@@ -152,12 +152,12 @@ setTimeout(function(){
   }, 1000);
 
   Lampa.Settings.listener.follow('open', function (e) {
-    /* if (e.name == 'account') {
+    if (e.name == 'account') {
 	setTimeout(function(){
 	    $('.settings--account-premium').remove()
 	    $('div > span:contains("CUB Premium")').remove()
 	},0);
-     } */
+     }
   });
 
   Lampa.Listener.follow('full', function(e) {
