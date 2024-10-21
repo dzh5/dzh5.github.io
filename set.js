@@ -35,7 +35,7 @@ Lampa.Storage.set('nc_cartoon', 'true');
 Lampa.Storage.set('nc_documentary', 'true');
 
 // Меню
-Lampa.Storage.set('menu_sort', '["Главная","Источник","Торренты","Фильмы","Сериалы","Избранное","Коллекции","Фильтр","История","Телевизор","LampaTV","Каталог","Релизы","Мультфильмы","Аниме","Подписки","Расписание","Лента","JaJa 18+","Клубничка"]');
+Lampa.Storage.set('menu_sort', '["Главная","Источник","Торренты","Фильмы","Сериалы","Избранное","Коллекции","Фильтр","История","Телевизор","Дорамы","Каталог","Релизы","Мультфильмы","Аниме","Подписки","Расписание","Лента","JaJa 18+","Клубничка"]');
 Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка","Персоны","Расписание"]');
 
 // Вкл. TorrServer на TV
@@ -46,7 +46,7 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
 //Коллекции
