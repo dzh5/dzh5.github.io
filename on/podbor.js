@@ -7,7 +7,7 @@
         e.on("hover:enter", (function() {
             Lampa.Activity.push({
                 url: "?cat=&sort=now&uhd=true",
-                title: "В качестве",g
+                title: "В качестве",
                 component: "category_full",
                 source: "cub",
                 sort: "now",
