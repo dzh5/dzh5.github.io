@@ -7,7 +7,7 @@
         e.on("hover:enter", (function() {
             Lampa.Activity.push({
                 url: "?cat=&sort=now&uhd=true",
-                title: "В качестве",
+                title: "В качестве",g
                 component: "category_full",
                 source: "cub",
                 sort: "now",
@@ -303,7 +303,7 @@
                         1: "Показать",
                         0: "Скрыть"
                     },
-                    default: 0
+                    default: 1
                 },
                 field: {
                     name: "В качестве"
@@ -405,7 +405,7 @@
                         1: "Показать",
                         0: "Скрыть"
                     },
-                    default: 0
+                    default: 1
                 },
                 field: {
                     name: "Netflix"
@@ -422,7 +422,7 @@
                         1: "Показать",
                         0: "Скрыть"
                     },
-                    default: 0
+                    default: 1
                 },
                 field: {
                     name: "Дорамы"
