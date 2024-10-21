@@ -34,8 +34,6 @@ Lampa.Storage.set('nc_concert', 'true');
 Lampa.Storage.set('nc_cartoon', 'true');
 Lampa.Storage.set('nc_documentary', 'true');
 
-Lampa.Storage.set('porborki_netflix', '0');
-
 // Меню
 Lampa.Storage.set('menu_sort', '["Главная","Источник","Торренты","Фильмы","Сериалы","Избранное","Коллекции","Фильтр","История","Телевизор","LampaTV","Каталог","Релизы","Мультфильмы","Аниме","Подписки","Расписание","Лента","JaJa 18+","Клубничка"]');
 Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка"]');
