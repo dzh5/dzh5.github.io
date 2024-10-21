@@ -1270,7 +1270,7 @@
             category: [
 			    {
                     title: '#Bb',
-                    url: 'https://jable.tv/tags/incest/?lang=en',
+                    url: 'https://jable.tv/tags/inc__t/?lang=en',
                     quantity: ''
                 },
 
