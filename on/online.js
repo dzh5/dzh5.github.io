@@ -76,7 +76,7 @@
     function account(url) {
       url = url + '';
       if (url.indexOf('account_email') == -1) {
-        var email = Lampa.Storage.get('account_email');
+        var email = Lampa.Storage.get('account_email') || Lampa.Storage.get('lampac_unic_id', '');
         if (email) url = Lampa.Utils.addUrlComponent(url, 'account_email=' + encodeURIComponent(email));
       }
       return url;
@@ -179,11 +179,16 @@
             });
           }
           $('head meta[name=\"referrer\"]').attr('content', 'origin');
+          var headers = url.indexOf("cdnmovies") >= 0 ? {
+            'Origin': 'https://cdnmovies.net',
+            'Referer': 'https://cdnmovies.net/'
+          } : {};
           network["native"](url, result, function() {
             result('');
           }, data, {
             dataType: 'text',
-            timeout: 1000 * 10
+            timeout: 1000 * 10,
+            headers: headers
           });
         });
         hubConnection.start().then(function() {
@@ -691,6 +696,14 @@
         });
         scroll.append(item);
       });
+	  this.filter({
+        season: filter_find.season.map(function(s) {
+          return s.title;
+        }),
+        voice: filter_find.voice.map(function(b) {
+          return b.title;
+        })
+      }, this.getChoice());
       Lampa.Controller.enable('content');
     };
     this.getChoice = function(for_balanser) {
