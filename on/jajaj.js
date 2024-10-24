@@ -1275,8 +1275,7 @@
                 },
 		     {
                     title: '<b>#Bb</b>',
-                    url: 'https://jable.tv/tags/inc__t/?lang=en',
-                    quantity: ''
+                    quantity: '777'
                 },
 
 				],
