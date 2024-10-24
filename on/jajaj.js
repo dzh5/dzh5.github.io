@@ -1355,7 +1355,7 @@
 },
 {
 	url: 'https://jable.tv/tags/tall/?lang=en',
-	titl4e: 'Высокие',
+	titl4e: 'Персонаж аниме',
 	quantity: ''
 },
 {
