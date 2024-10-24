@@ -1264,7 +1264,7 @@
             link: "https://jable.tv",
             show: "portrait",
             next: "search",
-            datasort: "",
+            datasort: "most_favourited",
             use_referer: true,
             datatype: "text",
             category: [
