@@ -1147,8 +1147,8 @@
                     url: 'https://jable.tv/categories/chinese-subtitle/?lang=en',
                     quantity: ''
                 }, {
-                    title: 'Изнасилование',
-                    url: 'https://jable.tv/categories/rape/?lang=en',
+                    title: 'Насилие',
+                    url: 'https://jable.tv/categories/insult/?lang=en',
                     quantity: ''
                 }, {
                     title: 'Униформа',
