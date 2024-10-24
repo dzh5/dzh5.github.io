@@ -1354,11 +1354,6 @@
 	quantity: ''
 },
 {
-	url: 'https://jable.tv/tags/Cosplay/?lang=en',
-	titl4e: 'Персонаж аниме',
-	quantity: ''
-},
-{
 	url: 'https://jable.tv/tags/tattoo/?lang=en',
 	title: '# Татуировка',
 	quantity: ''
