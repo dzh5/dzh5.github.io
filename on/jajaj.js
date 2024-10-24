@@ -1273,7 +1273,7 @@
                     url: 'https://jable.tv/tags/inc__t/?lang=en',
                     quantity: ''
                 },
-		    <h2 class="h3-md">Clothes</h2>
+		
 {
 	url: 'https://jable.tv/tags/wedding-dress/?lang=en',
 	title: 'Wedding dress',
@@ -1359,7 +1359,7 @@
 	title: 'Anime character',
 	quantity: ''
 },
-<h2 class="h3-md">Body Type</h2>
+
 {
 	url: 'https://jable.tv/tags/tall/?lang=en',
 	title: 'tall',
@@ -1425,7 +1425,7 @@
 	title: 'Beautiful butt',
 	quantity: ''
 },
-<h2 class="h3-md">Acts</h2>
+
 {
 	url: 'https://jable.tv/tags/tit-wank/?lang=en',
 	title: 'Tit Wank',
@@ -1481,7 +1481,7 @@
 	title: 'Anal sex',
 	quantity: ''
 },
-<h2 class="h3-md">Plays</h2>
+
 {
 	url: 'https://jable.tv/tags/tune/?lang=en',
 	title: 'Tune',
@@ -1567,7 +1567,7 @@
 	title: '10 times a day',
 	quantity: ''
 },
-<h2 class="h3-md">Theme</h2>
+
 {
 	url: 'https://jable.tv/tags/virginity/?lang=en',
 	title: 'Virginity',
@@ -1648,7 +1648,7 @@
 	title: 'Affair',
 	quantity: ''
 },
-<h2 class="h3-md">Character</h2>
+
 {
 	url: 'https://jable.tv/tags/wife/?lang=en',
 	title: 'Wife',
@@ -1729,7 +1729,7 @@
 	title: 'Couple',
 	quantity: ''
 },
-<h2 class="h3-md">Location</h2>
+
 {
 	url: 'https://jable.tv/tags/tram/?lang=en',
 	title: 'Tram',
@@ -1795,8 +1795,6 @@
 	title: 'Bathing place',
 	quantity: ''
 },
-<h2 class="h3-md">Others</h2>
-<div class="row gutter-20">
 {
 	url: 'https://jable.tv/tags/video-recording/?lang=en',
 	title: 'Video recording',
