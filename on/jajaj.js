@@ -1354,6 +1354,11 @@
 	quantity: ''
 },
 {
+	url: 'https://jable.tv/tags/tall/?lang=en',
+	title: 'Высокий',
+	quantity: ''
+},
+{
 	url: 'https://jable.tv/tags/tattoo/?lang=en',
 	title: '# Татуировка',
 	quantity: ''
@@ -1585,7 +1590,7 @@
 },
 {
 	url: 'https://jable.tv/tagstr/?lang=en',
-	titl4e: 'Измена',
+	title: 'Измена',
 	quantity: ''
 },
 {
@@ -1600,7 +1605,7 @@
 },
 {
 	url: 'https://jable.tv/tags/inc__t/?lang=en',
-	titl4e: 'Инцест',
+	title: 'Инцест',
 	quantity: ''
 },
 {
