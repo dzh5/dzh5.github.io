@@ -1355,7 +1355,7 @@
 },
 {
 	url: 'https://jable.tv/tags/tall/?lang=en',
-	title: 'Высокий',
+	title: '# Высокие',
 	quantity: ''
 },
 {
@@ -1590,7 +1590,7 @@
 },
 {
 	url: 'https://jable.tv/tagstr/?lang=en',
-	title: 'Измена',
+	title: '# Измена',
 	quantity: ''
 },
 {
@@ -1605,7 +1605,7 @@
 },
 {
 	url: 'https://jable.tv/tags/inc__t/?lang=en',
-	title: 'Инцест',
+	title: '# Инцест',
 	quantity: ''
 },
 {
