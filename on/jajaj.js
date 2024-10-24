@@ -1275,8 +1275,8 @@
                 },
 		     {
                     title: '<b>#Bb</b>',
-		    url: '#!',
-                    quantity: '777'
+		    url: '#',
+                    quantity: ''
                 },
 
 				],
