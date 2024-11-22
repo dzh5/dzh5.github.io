@@ -19,7 +19,7 @@ Lampa.Storage.set('poster_size', 'w300');
 
 // Парсер
 Lampa.Storage.set('parser_use', 'true');
-Lampa.Storage.set('jackett_url', '79.137.204.8:9118');
+Lampa.Storage.set('jackett_url', 'jacred.xyz');
 Lampa.Storage.set('jackett_interview', 'all');
 Lampa.Storage.set('parse_lang', 'lg');
 Lampa.Storage.set('parse_in_search', 'true');
