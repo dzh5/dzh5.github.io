@@ -55,7 +55,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/collections.js'], functio
 //TorServer из списка
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
 //Синхронизация тайм-кодов 
-Lampa.Utils.putScriptAsync(['http://79.137.204.8:9118/timecode.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/timecode.js'], function () {});
 //Горячие кнопки в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function () {});
 //КиноПоиск, Filmix источник
