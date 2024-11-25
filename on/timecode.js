@@ -29,7 +29,7 @@
   var Timecode = /*#__PURE__*/ function() {
     function Timecode(field) {
       _classCallCheck(this, Timecode);
-      this.localhost = 'http://79.137.204.8:9118/';
+      this.localhost = 'https://lampa.freepad.keenetic.link/';
       this.network = new Lampa.Reguest();
     }
     _createClass(Timecode, [{
