@@ -36,7 +36,7 @@ Lampa.Storage.set('nc_documentary', 'true');
 
 // Меню
 Lampa.Storage.set('menu_sort', '["Главная","Источник","Торренты","Фильмы","Сериалы","Избранное","Коллекции","Фильтр","История","Телевизор","Дорамы","Netflix","В качестве","Каталог","Релизы","Аниме","Подписки","Расписание","Лента","JaJa 18+","Клубничка"]');
-Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка","Расписание"]');
+Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка","Персоны","Расписание"]');
 
 // Вкл. TorrServer на TV
 window.lampa_settings.torrents_use = true;
@@ -46,7 +46,7 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdbproxy.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
 //Коллекции
