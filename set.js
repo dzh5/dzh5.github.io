@@ -46,8 +46,9 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-//Lampa.Utils.putScriptAsync(['https://plugin.rootu.top/tmdb.js'], function () {});
-Lampa.Utils.putScriptAsync(['https://lampaplugins.github.io/store/a.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://plugin.rootu.top/tmdb.js'], function () {});	
+Lampa.Utils.putScriptAsync(['https://khuyampa.best/tmdbproxy.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://lampaplugins.github.io/store/a.js'], function () {});
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
