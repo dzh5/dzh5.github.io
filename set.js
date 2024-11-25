@@ -200,7 +200,7 @@ Lampa.Listener.follow('full', function(e) {
   });
 
 }	
-if(window.appready) cub_off();
+/* if(window.appready) cub_off();
 	else {
 	  Lampa.Listener.follow('app', function(e) {
 			if(e.type == 'ready') {
@@ -212,7 +212,7 @@ if(window.appready) cub_off();
 				$('body').append(Lampa.Template.get('stlico_css', {}, true));
 			}
 		});
-	}
+	} */
 	
 Lampa.Controller.listener.follow('toggle', function(e) {
 	if(e.name == 'select') {
