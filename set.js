@@ -53,7 +53,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function ()
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/collections.js'], function () {});
 //TorServer из списка
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
-//Синхронизация тайм-кодов 
+Синхронизация тайм-кодов 
 //Lampa.Utils.putScriptAsync(['http://79.137.204.8:9118/timecode.js'], function () {});
 //Горячие кнопки в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function () {});
@@ -69,9 +69,9 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/interface.js'], function () {});
 //JaJa 18+
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {});
-//Сиси клубничка
+Сиси клубничка
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
-//Онлайн Lampa
+Онлайн Lampa
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/mult.js'], function () {});
