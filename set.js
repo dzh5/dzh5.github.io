@@ -36,7 +36,7 @@ Lampa.Storage.set('nc_documentary', 'true');
 
 // Меню
 Lampa.Storage.set('menu_sort', '["Главная","Источник","Торренты","Фильмы","Сериалы","Избранное","Коллекции","Фильтр","История","Телевизор","Дорамы","Netflix","В качестве","Каталог","Релизы","Аниме","Подписки","Расписание","Лента","JaJa 18+","Клубничка"]');
-Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка","Персоны","Расписание"]');
+Lampa.Storage.set('menu_hide', '["JaJa 18+","Клубничка","Расписание"]');
 
 // Вкл. TorrServer на TV
 window.lampa_settings.torrents_use = true;
@@ -46,8 +46,7 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-Lampa.Utils.putScriptAsync(['http://cub.red/plugin/tmdb-proxy'], function () {});
-//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
 //Коллекции
@@ -55,7 +54,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/collections.js'], functio
 //TorServer из списка
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
 //Синхронизация тайм-кодов 
-Lampa.Utils.putScriptAsync(['http://79.137.204.8:9118/timecode.js'], function () {});
+//Lampa.Utils.putScriptAsync(['http://79.137.204.8:9118/timecode.js'], function () {});
 //Горячие кнопки в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function () {});
 //КиноПоиск, Filmix источник
@@ -71,9 +70,9 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {
 //JaJa 18+
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {});
 //Сиси клубничка
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
 //Онлайн Lampa
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/mult.js'], function () {});
 //Телевизор
@@ -89,7 +88,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/new-cat.js'], function ()
 //Выбор парсера
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jackett.js'], function () {});
 //Онлайн Mod
-//Lampa.Utils.putScriptAsync(['https://nb557.github.io/plugins/online_mod.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://nb557.github.io/plugins/online_mod.js'], function () {});
 //Твикер
 //Lampa.Utils.putScriptAsync(['https://lampatv.site/tricks.js'], function () {});
 //Визуализация предзагрузки торрента
