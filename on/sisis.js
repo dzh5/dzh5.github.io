@@ -3,7 +3,7 @@
 
     var Defined = {
       use_api: 'lampac',
-      localhost: 'https://lampa.freepad.keenetic.link/sisi',
+      localhost: 'https://la2-fear.koyeb.app/sisi',
       vip_site: '',
       framework: ''
     };
