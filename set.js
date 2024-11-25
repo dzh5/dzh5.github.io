@@ -157,7 +157,7 @@ setTimeout(function(){
      }
   });
 
-  Lampa.Listener.follow('full', function(e) {
+/*  Lampa.Listener.follow('full', function(e) {
 	if (e.type == 'complite') {
 	  $('.button--book').on('hover:enter', function(){
 	    setTimeout(function(){	
@@ -171,7 +171,7 @@ setTimeout(function(){
 		$('.button--subscribe').remove();
 	   },0);
 	}
-  })   
+  })   */
 
   Lampa.Storage.listener.follow('change', function (event) {
        if (event.name == 'activity') {
