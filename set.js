@@ -25,6 +25,7 @@ Lampa.Storage.set('parse_lang', 'lg');
 Lampa.Storage.set('parse_in_search', 'true');
 
 // Остальное
+Lampa.Storage.set('full_btn_priority', '1329165215');
 Lampa.Storage.set('start_page', 'main');
 Lampa.Storage.set('source', 'cub');
 Lampa.Storage.set('pva_sources', 'true');
@@ -157,7 +158,7 @@ setTimeout(function(){
      }
   });
 
-/*  Lampa.Listener.follow('full', function(e) {
+Lampa.Listener.follow('full', function(e) {
 	if (e.type == 'complite') {
 	  $('.button--book').on('hover:enter', function(){
 	    setTimeout(function(){	
@@ -166,12 +167,12 @@ setTimeout(function(){
 	    },0)
 	  });	  
 	   setTimeout(function(){
-		$('.hide.buttons--container > div').prependTo('.full-start-new__buttons');
-		$('.full-start__button.selector.button--play').remove();
+		// $('.hide.buttons--container > div').prependTo('.full-start-new__buttons');
+		// $('.full-start__button.selector.button--play').remove();
 		$('.button--subscribe').remove();
 	   },0);
 	}
-  })   */
+  })   
 
   Lampa.Storage.listener.follow('change', function (event) {
        if (event.name == 'activity') {
