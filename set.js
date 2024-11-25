@@ -26,7 +26,7 @@ Lampa.Storage.set('parse_in_search', 'true');
 
 // Остальное
 Lampa.Storage.set('full_btn_priority', '1329165215');
-//Lampa.Storage.set('start_page', 'main');
+Lampa.Storage.set('start_page', 'main');
 Lampa.Storage.set('source', 'cub');
 Lampa.Storage.set('pva_sources', 'true');
 Lampa.Storage.set('keyboard_type', 'integrate');
