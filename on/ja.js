@@ -348,13 +348,13 @@
                             dataType: object.setup.datatype
                         });
                         Lampa.Controller.toggle('content');
-                    } else if (element.url.indexOf('njav') !== -1) {
+                    } else if (element.url.indexOf('123av') !== -1) {
                         network["native"](cors + element.url.replace('/v/', '/en/v/'), function (str) {
                             var regex = /Movie\({id:\s*'(\d+)'\}\)/;
                             var match = str.contents.match(regex);
                             var id = match && match[1];
                             if (id) {
-                                network["native"](cors + 'https://123av.com/en/dm3/zh/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
+                                network["native"](cors + 'https://123av.com/en/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
                                     Lampa.Modal.close();
                                     str = JSON.parse(str.contents)
                                     if (str.status == 200) {
@@ -468,7 +468,7 @@
                         }, false, {
                             dataType: object.setup.datatype
                         });
-                    } else if (element.url.indexOf('njav') !== -1) {
+                    } else if (element.url.indexOf('123av') !== -1) {
                         network["native"](cors + element.url.replace('/v/', '/en/v/'), function (str) {
                             if (object.setup.datatype == 'json') {
                                 str = str.contents
