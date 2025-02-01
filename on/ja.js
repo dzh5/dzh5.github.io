@@ -1,1732 +1,230 @@
-(function () {
+(function() {
     'use strict';
 
-    class Jaja {
-        constructor(object) {
-            this.object = object;
-            this.network = new Lampa.Reguest();
-            this.scroll = new Lampa.Scroll({
-                mask: true,
-                over: true,
-                step: 250
-            });
-            this.items = [];
-            this.html = $('<div class="info_jaja"></div>');
-            this.body = $('<div class="freetv_jaja category-full"></div>');
-            this.info = null;
-            this.last = null;
-            this.waitload = false;
-            this.total_pages = 0;
-            this.cors = 'https://api.allorigins.win/get?url=';
-            this.UA = "Mozilla/5.0";
-            this.activity = {
-                url: '',
-                title: object.setup.title + ' - Коллекция',
-                component: 'jaja',
-                quantity: '',
-                setup: object.setup,
-                type: 'fav',
-                page: 1
-            };
+    const PLUGIN_NAME = 'jaja';
+    const MENU_ITEM_ID = 'jaja-menu-item';
+    const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+    const BASE_URL = 'https://jable.tv';
+
+    if (window.jajaPluginInitialized) return;
+    window.jajaPluginInitialized = true;
+
+    class JajaCore {
+        constructor(data) {
+            this.activity = data.activity;
+            this.config = data;
+            this.html = $('<div class="jaja-container"></div>');
+            this.scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+            this.page = 1;
+            this.hasMore = true;
         }
 
-        async create() {
-            this.activity.loader(true);
-
-            if (this.object.setup.datatype !== 'json') this.cors = '';
-
-            if (this.object.type == 'fav') {
-                const data = this.cardfavor(this.getFavoriteRadios());
-                this.build(data);
-            } else {
-                try {
-                    const response = await this.network.native(this.cors + this.object.url, {
-                        dataType: this.object.setup.datatype,
-                    });
-                    const data = this.card(response);
-                    this.build(data);
-                } catch (error) {
-                    Lampa.Noty.show(this.network.errorDecode(error));
-                }
-            }
-
-            return this.render();
-        }
-
-        async next(page) {
-            if (this.total_pages == 1 || this.total_pages == 0) this.waitload = true;
-
-            if (this.waitload) return;
-            if (this.object.setup.datatype !== 'json') this.cors = '';
-            this.waitload = true;
-            this.object.page++;
-            this.network.clear();
-            this.network.timeout(1000 * 40);
-
-            if (!page || page.indexOf('undefined') !== -1) return;
-
-            if (page.indexOf('before=') !== -1) {
-                // Handle 'before=' case
-            } else {
-                const regex = /page=(\d+)/;
-                const match = page.match(regex);
-                if (match) {
-                    page = page.replace('page=' + match[1], 'page=' + (parseInt(match[1]) + 1));
-                } else {
-                    page = page.replace(page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[0], '') + this.object.page + (page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[1] ? page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[1] : '') + '?lang=en';
-                }
-            }
-
-            try {
-                const response = await this.network.native(this.cors + page, {
-                    dataType: this.object.setup.datatype,
-                    headers: this.object.use_referer ? {
-                        'Referer': this.object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0] + '/',
-                        'User-Agent': this.UA,
-                    } : {}
-                });
-                const data = this.card(response);
-                this.object.data = data;
-                this.append(data, true);
-                if (data.card.length) this.waitload = false;
-                this.activity.loader(false);
-            } catch (error) {
-                if (error.status == 404) {
-                    // Handle 404 error
-                } else {
-                    Lampa.Noty.show(this.network.errorDecode(error));
-                }
-            }
-        }
-
-        card(str) {
-            const card = [];
-            let page;
-
-            const balanser = Lampa.Storage.get('online_jaja_balanser');
-            const catalogs1 = this.getCatalogs().filter(fp => fp.title === balanser);
-
-            if (catalogs1[0].datatype == 'json') {
-                str = str.contents;
-            }
-            str = str.replace(/\n/g, '');
-            const v = catalogs1[0].list.videoscontainer.selector;
-            const t = catalogs1[0].list.title.selector;
-            const th = catalogs1[0].list.thumb.selector;
-            const l = catalogs1[0].list.link.selector;
-            const p = catalogs1[0].list.page.selector;
-            const m = catalogs1[0].list.mnumber.selector;
-
-            const host = this.object.url.indexOf('http') == -1 ? '' : this.object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0];
-            this.total_pages = $(p, str).find('a').last().attr('href') ? $(p, str).find('a').length : $(p, str).length;
-            page = $(p, str).find('a').last().attr('href') ? $(p, str).find('a').last().attr('href') : $(p, str).attr('href');
-
-            if (page) {
-                if (page.indexOf('http') == -1) {
-                    page = host + (page.startsWith('/') ? page : '/' + page);
-                };
-                if (page.indexOf('#') !== -1) {
-                    page = this.object.url;
-                };
-            } else {
-                page = this.object.url;
-                if (page.indexOf('/1') !== -1) {
-                    this.total_pages = 2;
-                } else {
-                    if (/[0-9]+(?=[^0-9]*$)(.*)/i.test(page) && this.object.url !== this.object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0]) {
-                        this.total_pages = 1;
-                    };
-                };
-            };
-
-            const position = this.object.url.indexOf('http');
-            let count = 0;
-            while (position !== -1) {
-                count++;
-                position = this.object.url.indexOf('http', position + 1);
-            };
-
-            let host_img;
-            if (count == 0) {
-                host_img = '';
-            } else {
-                if (count == 1) {
-                    host_img = this.object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0];
-                } else {
-                    const last_host = this.object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/g)[count - 1];
-                    host_img = last_host;
-                }
-            };
-
-            $(v + this.object.quantity, str).each((i, html) => {
-                const t1 = t ? $(html).find(t) : $(html);
-                const u1 = l ? $(html).find(l) : $(html);
-                const i1 = th ? $(html).find(th) : $(html);
-                const m1 = m ? $(html).find(m) : $(html);
-                let tt, uu, ii, mm;
-
-                switch (catalogs1[0].list.title.attrName) {
-                    case 'text':
-                        tt = t1.text();
-                        break;
-                    case 'html':
-                        tt = t1.html();
-                        break;
-                    default:
-                        tt = t1.attr(catalogs1[0].list.title.attrName);
-                };
-                if (typeof tt === 'undefined') return;
-                tt = catalogs1[0].list.title.filter !== '' ? (tt.match(new RegExp(catalogs1[0].list.title.filter)) ? tt.match(new RegExp(catalogs1[0].list.title.filter))[1] : tt) : tt;
-
-                switch (catalogs1[0].list.link.attrName) {
-                    case 'text':
-                        uu = u1.text().indexOf('http') == -1 ? host + u1.text() : u1.text();
-                        break;
-                    case 'html':
-                        uu = u1.html();
-                        break;
-                    default:
-                        uu = u1.attr(catalogs1[0].list.link.attrName).indexOf('http') == -1 ? host + (u1.attr(catalogs1[0].list.link.attrName).startsWith('/') ? u1.attr(catalogs1[0].list.link.attrName) : '/' + u1.attr(catalogs1[0].list.link.attrName)) : u1.attr(catalogs1[0].list.link.attrName);
-                };
-                uu = catalogs1[0].list.link.filter !== '' ? (uu.match(new RegExp(catalogs1[0].list.link.filter)) ? uu.match(new RegExp(catalogs1[0].list.link.filter))[1] : uu) : uu;
-
-                switch (catalogs1[0].list.thumb.attrName) {
-                    case 'text':
-                        ii = i1.text().indexOf('http') == -1 ? host_img + i1.text() : i1.text();
-                        break;
-                    case 'html':
-                        ii = i1.html();
-                        break;
-                    default:
-                        ii = i1.attr(catalogs1[0].list.thumb.attrName) ? (i1.attr(catalogs1[0].list.thumb.attrName).indexOf('http') == -1 ? host_img + (i1.attr(catalogs1[0].list.thumb.attrName).startsWith('/') ? i1.attr(catalogs1[0].list.thumb.attrName) : '/' + i1.attr(catalogs1[0].list.thumb.attrName)) : i1.attr(catalogs1[0].list.thumb.attrName)) : '';
-                };
-
-                switch (catalogs1[0].list.mnumber.attrName) {
-                    case 'text':
-                        mm = m1.text();
-                        break;
-                    case 'html':
-                        mm = m1.html();
-                        break;
-                    default:
-                        mm = m1.attr(catalogs1[0].list.mnumber.attrName);
-                };
-                mm = catalogs1[0].list.mnumber.filter !== '' ? (mm.match(new RegExp(catalogs1[0].list.mnumber.filter)) ? mm.match(new RegExp(catalogs1[0].list.mnumber.filter))[1] : mm) : mm;
-
-                ii = catalogs1[0].list.thumb.filter !== '' ? (ii.match(new RegExp(catalogs1[0].list.thumb.filter)) ? ii.match(new RegExp(catalogs1[0].list.thumb.filter))[1] : './img/img_broken.svg') : ii;
-                if (ii !== undefined && ii.startsWith('/')) ii = catalogs1[0].link + ii;
-
-                card.push({
-                    title: tt,
-                    original_title: '',
-                    title_org: '',
-                    url: uu,
-                    img: ii,
-                    quantity: '',
-                    year: '',
-                    rate: $(catalogs1[0].list.m_time.selector, html).text().trim().replace(/\n/g, '').replace(/\S+\s+/g, ''),
-                    episodes_info: mm.toUpperCase(),
-                    update: '',
-                    score: '',
-                });
-            });
-            return {
-                card: card,
-                page: page,
-                total_pages: this.total_pages
-            };
-        }
-
-        cardfavor(json) {
-            const page = 'undefined';
-            const total_pages = 1;
-
-            const catalogs = json.filter(fp => fp.website === this.object.setup.title);
-            return {
-                card: catalogs.reverse(),
-                page: page,
-                total_pages: total_pages
-            };
-        }
-
-        append(data, append) {
-            data.card.forEach(element => {
-                const mytitle = element.title.replace('/', ' ');
-                const card = Lampa.Template.get('card', {
-                    title: element.title,
-                    release_year: ''
-                });
-                card.addClass('card--collection');
-                const img = card.find('.card__img')[0];
-                img.onload = () => {
-                    card.addClass('card--loaded');
-                };
-                img.onerror = (e) => {
-                    const hex = (Lampa.Utils.hash(element.title) * 1).toString(16);
-                    while (hex.length < 6) hex += hex;
-                    hex = hex.substring(0, 6);
-                    const r = parseInt(hex.slice(0, 2), 16),
-                        g = parseInt(hex.slice(2, 4), 16),
-                        b = parseInt(hex.slice(4, 6), 16);
-                    const hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                    card.find('.card__img').replaceWith('<div class="card__img">' + element.title.replace("-", " ") + '</div>');
-                    card.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText });
-                    card.addClass('card--loaded');
-                };
-                if (element.img) img.src = element.img; else img.onerror();
-                if (element.rate) {
-                    card.find('.card__view').append('<div class="card__type"></div>');
-                    card.find('.card__type').text(element.rate);
-                };
-                if (element.quantity) {
-                    card.find('.card__icons-inner').text(element.quantity)
-                    card.find('.card__icons-inner').css({ 'padding': '0.4em 0.4em' })
-                }
-                if (element.update) {
-                    card.find('.card__view').append('<div class="card__quality"></div>');
-                    card.find('.card__quality').text(element.update);
-                };
-
-                card.on('hover:focus', () => {
-                    this.last = card[0];
-
-                    this.scroll.update(card, true);
-                    this.info.find('.info__title').text(element.episodes_info);
-                    this.info.find('.info__title-original').text(element.quantity);
-                    this.info.find('.info__rate span').text(element.rate);
-                    this.info.find('.info__create').text(element.episodes_info);
-                    this.info.find('.info__rate').toggleClass('hide', !(element.rate > 0));
-                    const maxrow = Math.ceil(this.items.length / 7) - 1;
-                    if (Math.ceil(this.items.indexOf(card) / 7) >= maxrow) this.next(data.page);
-                    if (element.img) Lampa.Background.change(this.cardImgBackground(element.img));
-                    if (Lampa.Helper) Lampa.Helper.show('jaja_detail', 'Нажмите и удерживайте клавишу (ОК), чтобы просмотреть больше связанного контента', card);
-                });
-
-                card.on('hover:enter', async (target, card_data) => {
-                    if (this.object.setup.datatype !== 'json') this.cors = '';
-                    this.last = card[0];
-                    Lampa.Modal.open({
-                        title: '',
-                        html: Lampa.Template.get('modal_loading'),
-                        size: 'small',
-                        align: 'center',
-                        mask: true,
-                        onBack: () => {
-                            Lampa.Modal.close();
-                            Lampa.Api.clear();
-                            Lampa.Controller.toggle('content');
-                        }
-                    });
-                    if (element.url.indexOf('jable') !== -1) {
-                        try {
-                            const response = await this.network.native(this.cors + element.url, {
-                                dataType: this.object.setup.datatype
-                            });
-                            let str = response;
-                            if (this.object.setup.datatype == 'json') {
-                                str = str.contents;
-                            };
-                            const v = str.replace(/\n|\r/g, '').replace(/\\/g, '').match(/https?:\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|](.mp4|.m3u8)/);
-                            const videolink = v ? v[0] : '';
-                            if (videolink) {
-                                const video = {
-                                    title: element.title,
-                                    url: videolink,
-                                    tv: false
-                                };
-                                Lampa.Player.play(video);
-                                Lampa.Player.playlist([video]);
-                            } else {
-                                Lampa.Noty.show('Подходящих видео не найдено.');
-                            };
-                        } catch (error) {
-                            Lampa.Noty.show(this.network.errorDecode(error));
-                        }
-                        Lampa.Controller.toggle('content');
-                    } else if (element.url.indexOf('njav') !== -1) {
-                        try {
-                            const response = await this.network.native(this.cors + element.url.replace('/v/', '/en/v/'), {
-                                dataType: this.object.setup.datatype
-                            });
-                            const regex = /Movie\({id:\s*'(\d+)'\}\)/;
-                            const match = response.contents.match(regex);
-                            const id = match && match[1];
-                            if (id) {
-                                const videoResponse = await this.network.native(this.cors + 'https://njav.tv/zh/ajax/v/' + id + '/videos?r=' + Math.random(), {
-                                    dataType: 'json'
-                                });
-                                const str = JSON.parse(videoResponse.contents);
-                                if (str.status == 200) {
-                                    Lampa.Iframe.show({
-                                        url: str.data[0].url,
-                                        onBack: () => {
-                                            Lampa.Controller.toggle('content');
-                                        }
-                                    });
-                                    $('.iframe__body iframe').removeClass('iframe__window');
-                                    $('.iframe__body iframe').addClass('screensaver-chrome__iframe');
-                                }
-                            }
-                        } catch (error) {
-                            Lampa.Noty.show(this.network.errorDecode(error));
-                        }
-                    }
-                });
-
-                card.on('hover:long', async (target, card_data) => {
-                    if (this.object.setup.datatype !== 'json') this.cors = '';
-                    Lampa.Modal.open({
-                        title: '',
-                        html: Lampa.Template.get('modal_loading'),
-                        size: 'small',
-                        align: 'center',
-                        mask: true,
-                        onBack: () => {
-                            Lampa.Modal.close();
-                            Lampa.Api.clear();
-                            Lampa.Controller.toggle('content');
-                        }
-                    });
-
-                    if (element.url.indexOf('jable') !== -1) {
-                        try {
-                            const response = await this.network.native(this.cors + element.url, {
-                                dataType: this.object.setup.datatype
-                            });
-                            let str = response;
-                            if (this.object.setup.datatype == 'json') {
-                                str = str.contents;
-                            };
-                            Lampa.Modal.close();
-                            const archiveMenu = [];
-                            const favtext = 'Добавить в коллекцию';
-                            const isRadioFavorite = this.isFavorite(element.url);
-                            if (isRadioFavorite) {
-                                favtext = 'Удалить из коллекции';
-                            };
-                            archiveMenu.push({
-                                title: favtext,
-                                url: '',
-                                type: 'fav'
-                            });
-                            archiveMenu.push({
-                                title: element.episodes_info.split('-')[0] + ' - Все видео',
-                                url: 'https://jable.tv/search/?q=' + element.episodes_info.split('-')[0] + '&from_videos=1',
-                                type: 'list'
-                            });
-                            $('.models a.model', str).each((i, html) => {
-                                archiveMenu.push({
-                                    title: $('.placeholder,img', html).attr('title') + ' - Все видео',
-                                    url: $(html).attr('href'),
-                                    type: 'list'
-                                });
-                            });
-
-                            Lampa.Select.show({
-                                title: 'Связанный контент',
-                                items: archiveMenu,
-                                onSelect: (sel) => {
-                                    element.website = this.object.setup.title;
-                                    const favtext = 'Добавлено в коллекцию';
-                                    if (sel.type == 'fav') {
-                                        const isRadioFavorite = this.isFavorite(element.url);
-                                        if (isRadioFavorite) {
-                                            this.removeFavorite(element);
-                                            favtext = 'Удалено из коллекции';
-                                        } else {
-                                            this.saveFavoriteRadio(element);
-                                        }
-                                        if (this.object.type == 'fav') {
-                                            Lampa.Activity.replace(this.activity);
-                                        } else {
-                                            Lampa.Noty.show(favtext);
-                                            Lampa.Controller.toggle('content');
-                                        }
-                                    } else {
-                                        Lampa.Activity.push({
-                                            url: sel.url,
-                                            title: 'Jable.tv - ' + sel.title,
-                                            component: 'jaja',
-                                            quantity: '',
-                                            setup: this.object.setup,
-                                            page: 1
-                                        });
-                                    }
-                                },
-                                onBack: () => {
-                                    Lampa.Controller.toggle('content');
-                                }
-                            });
-                        } catch (error) {
-                            Lampa.Noty.show(this.network.errorDecode(error));
-                        }
-                    } else if (element.url.indexOf('njav') !== -1) {
-                        try {
-                            const response = await this.network.native(this.cors + element.url.replace('/v/', '/en/v/'), {
-                                dataType: this.object.setup.datatype
-                            });
-                            let str = response;
-                            if (this.object.setup.datatype == 'json') {
-                                str = str.contents;
-                            };
-
-                            Lampa.Modal.close();
-                            const archiveMenu = [];
-                            const favtext = 'Добавить в коллекцию';
-                            const isRadioFavorite = this.isFavorite(element.url);
-                            if (isRadioFavorite) {
-                                favtext = 'Удалить из коллекции';
-                            };
-                            archiveMenu.push({
-                                title: favtext,
-                                url: '',
-                                type: 'fav'
-                            });
-                            $('.detail-item a[href*="actresses/"],.detail-item a[href*="labels/"],.detail-item a[href*="tags/"]', str).each((i, html) => {
-                                archiveMenu.push({
-                                    title: $(html).text() + ' - Все видео',
-                                    url: 'https://njav.tv/en/' + $(html).attr('href'),
-                                });
-                            });
-
-                            Lampa.Select.show({
-                                title: 'Связанный контент',
-                                items: archiveMenu,
-                                onSelect: (sel) => {
-                                    element.website = this.object.setup.title;
-                                    const favtext = 'Добавлено в коллекцию';
-                                    if (sel.type == 'fav') {
-                                        const isRadioFavorite = this.isFavorite(element.url);
-                                        if (isRadioFavorite) {
-                                            this.removeFavorite(element);
-                                            favtext = 'Удалено из коллекции';
-                                        } else {
-                                            this.saveFavoriteRadio(element);
-                                        }
-                                        if (this.object.type == 'fav') {
-                                            Lampa.Activity.replace(this.activity);
-                                        } else {
-                                            Lampa.Noty.show(favtext);
-                                            Lampa.Controller.toggle('content');
-                                        }
-                                    } else {
-                                        Lampa.Activity.push({
-                                            url: sel.url,
-                                            title: 'NJAV.tv - ' + sel.title,
-                                            component: 'jaja',
-                                            quantity: '',
-                                            setup: this.object.setup,
-                                            page: 1
-                                        });
-                                    }
-                                },
-                                onBack: () => {
-                                    Lampa.Controller.toggle('content');
-                                }
-                            });
-                        } catch (error) {
-                            Lampa.Noty.show(this.network.errorDecode(error));
-                        }
-                    }
-                });
-
-                this.body.append(card);
-                if (append) Lampa.Controller.collectionAppend(card);
-                this.items.push(card);
-            });
-        }
-
-        build(data) {
-            const viewsort = '<div class="full-start__button selector view--sort"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Сортировать</span>\n    </div>';
-            const viewcategory = '<div class="full-start__button selector view--category"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Категории</span>\n    </div>';
-            const viewtags = '<div class="full-start__button selector view--tags"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Теги</span>\n    </div>';
-            const channelbutton = '<div class="full-start__button selector view--channel"><svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.5 3.588c-.733 0-1.764.175-2.448.311a.191.191 0 0 0-.153.153c-.136.684-.31 1.715-.31 2.448 0 .733.174 1.764.31 2.448a.191.191 0 0 0 .153.153c.684.136 1.715.31 2.448.31.733 0 1.764-.174 2.448-.31a.191.191 0 0 0 .153-.153c.136-.684.31-1.715.31-2.448 0-.733-.174-1.764-.31-2.448a.191.191 0 0 0-.153-.153c-.684-.136-1.715-.31-2.448-.31ZM3.741 2.342C4.427 2.205 5.595 2 6.5 2c.905 0 2.073.205 2.759.342a1.78 1.78 0 0 1 1.4 1.4c.136.685.341 1.853.341 2.758s-.205 2.073-.342 2.759a1.78 1.78 0 0 1-1.4 1.4C8.574 10.794 7.406 11 6.5 11s-2.073-.205-2.759-.342a1.78 1.78 0 0 1-1.4-1.4C2.206 8.574 2 7.406 2 6.5s.205-2.073.342-2.759a1.78 1.78 0 0 1 1.4-1.4ZM6.5 14.588c-.733 0-1.764.175-2.448.311a.191.191 0 0 0-.153.153c-.136.684-.31 1.715-.31 2.448 0 .733.174 1.764.31 2.448a.191.191 0 0 0 .153.153c.684.136 1.715.31 2.448.31.733 0 1.764-.174 2.448-.31a.191.191 0 0 0 .153-.153c.136-.684.31-1.715.31-2.448 0-.733-.174-1.764-.31-2.448a.191.191 0 0 0-.153-.153c-.684-.136-1.715-.31-2.448-.31Zm-2.759-1.246C4.427 13.205 5.595 13 6.5 13c.905 0 2.073.205 2.759.342a1.78 1.78 0 0 1 1.4 1.4c.136.685.341 1.853.341 2.758s-.205 2.073-.342 2.759a1.78 1.78 0 0 1-1.4 1.4c-.685.136-1.853.341-2.758.341s-2.073-.205-2.759-.342a1.78 1.78 0 0 1-1.4-1.4C2.206 19.574 2 18.406 2 17.5s.205-2.073.342-2.759a1.78 1.78 0 0 1 1.4-1.4ZM17.5 3.588c-.733 0-1.764.175-2.448.311a.191.191 0 0 0-.153.153c-.136.684-.31 1.715-.31 2.448 0 .733.174 1.764.31 2.448a.191.191 0 0 0 .153.153c.684.136 1.715.31 2.448.31.733 0 1.764-.174 2.448-.31a.191.191 0 0 0 .153-.153c.136-.684.31-1.715.31-2.448 0-.733-.174-1.764-.31-2.448a.191.191 0 0 0-.153-.153c-.684-.136-1.715-.31-2.448-.31Zm-2.759-1.246C15.427 2.205 16.595 2 17.5 2c.905 0 2.073.205 2.759.342a1.78 1.78 0 0 1 1.4 1.4c.136.685.341 1.853.341 2.758s-.205 2.073-.342 2.759a1.78 1.78 0 0 1-1.4 1.4c-.685.136-1.853.341-2.758.341s-2.073-.205-2.759-.342a1.78 1.78 0 0 1-1.4-1.4C13.206 8.574 13 7.406 13 6.5s.205-2.073.342-2.759a1.78 1.78 0 0 1 1.4-1.4ZM17.5 14.588c-.733 0-1.764.175-2.448.311a.191.191 0 0 0-.153.153c-.136.684-.31 1.715-.31 2.448 0 .733.174 1.764.31 2.448a.191.191 0 0 0 .153.153c.684.136 1.715.31 2.448.31.733 0 1.764-.174 2.448-.31a.191.191 0 0 0 .153-.153c.136-.684.31-1.715.31-2.448 0-.733-.174-1.764-.31-2.448a.191.191 0 0 0-.153-.153c-.684-.136-1.715-.31-2.448-.31Zm-2.759-1.246c.686-.137 1.854-.342 2.759-.342.905 0 2.073.205 2.759.342a1.78 1.78 0 0 1 1.4 1.4c.136.685.341 1.853.341 2.758s-.205 2.073-.342 2.759a1.78 1.78 0 0 1-1.4 1.4c-.685.136-1.853.341-2.758.341s-2.073-.205-2.759-.342a1.78 1.78 0 0 1-1.4-1.4C13.206 19.574 13 18.406 13 17.5s.205-2.073.342-2.759a1.78 1.78 0 0 1 1.4-1.4Z\" fill=\"currentColor\"/></svg>   <span>Источник</span>\n    </div>';
-            const findbutton = '<div class="full-start__button selector open--find"><svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.5122 4.43902C7.60446 4.43902 4.43902 7.60283 4.43902 11.5026C4.43902 15.4024 7.60446 18.5662 11.5122 18.5662C13.4618 18.5662 15.225 17.7801 16.5055 16.5055C17.7918 15.2251 18.5854 13.4574 18.5854 11.5026C18.5854 7.60283 15.4199 4.43902 11.5122 4.43902ZM2 11.5026C2 6.25314 6.26008 2 11.5122 2C16.7643 2 21.0244 6.25314 21.0244 11.5026C21.0244 13.6919 20.2822 15.7095 19.0374 17.3157L21.6423 19.9177C22.1188 20.3936 22.1193 21.1658 21.6433 21.6423C21.1673 22.1188 20.3952 22.1193 19.9187 21.6433L17.3094 19.037C15.7048 20.2706 13.6935 21.0052 11.5122 21.0052C6.26008 21.0052 2 16.7521 2 11.5026Z\" fill="currentColor"/> </svg></div>';
-            const favoritebutton = '<div class="full-start__button selector open--favorite"><svg fill="Currentcolor" width="24px" height="24px" viewBox="0 0 0.72 0.72" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"><path d="M0.66 0.303c0.003 -0.015 -0.009 -0.033 -0.024 -0.033l-0.171 -0.024L0.387 0.09c-0.003 -0.006 -0.006 -0.009 -0.012 -0.012 -0.015 -0.009 -0.033 -0.003 -0.042 0.012L0.258 0.246 0.087 0.27c-0.009 0 -0.015 0.003 -0.018 0.009 -0.012 0.012 -0.012 0.03 0 0.042l0.123 0.12 -0.03 0.171c0 0.006 0 0.012 0.003 0.018 0.009 0.015 0.027 0.021 0.042 0.012l0.153 -0.081 0.153 0.081c0.003 0.003 0.009 0.003 0.015 0.003h0.006c0.015 -0.003 0.027 -0.018 0.024 -0.036l-0.03 -0.171 0.123 -0.12c0.006 -0.003 0.009 -0.009 0.009 -0.015z\"/></svg>   <span>Коллекция</span>\n    </div>';
-            Lampa.Template.add('button_category', "<style>.freetv_jaja.category-full .card__icons {top: 0.3em;right: 0.3em;justify-content: center !important;}.freetv_jaja.category-full{ padding-bottom:8em;margin-top: -1.5em;} .freetv_jaja div.card__view{ position:relative; background-color:#353535; background-color:#353535a6; border-radius:1em; cursor:pointer; padding-bottom: 56%; } .freetv_jaja.square_icons div.card__view{ padding-bottom:100% } .freetv_jaja.category-full .card__icons { top:0.3em; right:0.3em; justify-content:right; }.freetv_jaja div.card__title {white-space: nowrap;text-overflow: ellipsis;display: block;}.info_jaja div.info__right{padding-top:0;}.info_jaja .info.layer--width{height:auto;font-size:0.7em;} @media screen and (max-width: 385px) { .card--collection { width: 33.3%!important; } .info_jaja div.info__right{display:block!important;} .info_jaja .info.layer--width {overflow: scroll;}  } </style><div class=\"full-start__buttons\">" + viewsort + viewcategory + viewtags + channelbutton + favoritebutton + findbutton + "  </div>");
-            Lampa.Template.add('info_web', '<div class="info layer--width"><div class="info__left"><div class="info__title"></div></div><div class="info__right">  <div id="web_filtr"></div></div></div>');
-            const btn = Lampa.Template.get('button_category');
-            this.info = Lampa.Template.get('info_web');
-            this.info.find('#web_filtr').append(btn);
-            this.info.find('.view--channel').on('hover:enter hover:click', () => {
-                this.selectGroup();
-            });
-            this.info.find('.view--sort').on('hover:enter hover:click', () => {
-                this.listNavigation();
-            });
-            this.info.find('.view--category').on('hover:enter hover:click', () => {
-                this.listNavigation2();
-            });
-            this.info.find('.view--tags').on('hover:enter hover:click', () => {
-                this.listNavigation3();
-            });
-            this.info.find('.open--favorite').on('hover:enter hover:click', () => {
-                Lampa.Activity.push({
-                    url: '',
-                    title: this.object.setup.title + ' - Коллекция',
-                    component: 'jaja',
-                    quantity: '',
-                    setup: this.object.setup,
-                    type: 'fav',
-                    page: 1
-                });
-            });
-            this.info.find('.open--find').on('hover:enter hover:click', () => {
-                Lampa.Input.edit({
-                    title: this.object.setup.title + ' - Поиск видео',
-                    value: '',
-                    free: true,
-                    nosave: true
-                }, (new_value) => {
-                    if (new_value) {
-                        const searchurl = this.object.setup.search.url.replace('#msearchword', encodeURIComponent(new_value));
-                        Lampa.Activity.push({
-                            url: searchurl,
-                            title: this.object.setup.title + ' - Поисковый запрос: "' + new_value + '"',
-                            component: 'jaja',
-                            quantity: '',
-                            setup: this.object.setup,
-                            page: 1
-                        });
-                    } else Lampa.Controller.toggle('content');
-                });
-            });
-
-            this.selectGroup = () => {
-                const balanser_ = Lampa.Storage.get('online_jaja_balanser');
-
-                Lampa.Select.show({
-                    title: 'Источник',
-                    items: this.getCatalogs().map(elem => {
-                        elem.selected = (balanser_ == elem.title);
-                        return elem;
-                    }),
-                    onSelect: (a) => {
-                        Lampa.Storage.set('online_jaja_balanser', a.title);
-                        const catalogs1 = this.getCatalogs().filter(fp => fp.title === a.title);
-                        Lampa.Activity.push({
-                            url: a.category[0].url,
-                            title: a.title + ' - ' + a.category[0].title,
-                            quantity: a.category[0].quantity,
-                            component: 'jaja',
-                            setup: catalogs1[0],
-                            page: 1
-                        });
-                    },
-                    onBack: () => {
-                        Lampa.Controller.toggle('content');
-                    }
-                });
-            };
-            this.scroll.render().addClass('layer--wheight').data('mheight', this.info);
-            if (data.card.length) {
-                this.html.append(this.info);
-                this.scroll.minus();
-                this.html.append(this.scroll.render());
-                this.append(data);
-                this.scroll.append(this.body);
-                this.activity.loader(false);
-                this.activity.toggle();
-            } else {
-                this.html.append(this.scroll.render());
-                this.empty();
-            }
-        }
-
-        empty() {
-            const empty = new Lampa.Empty();
-            this.scroll.append(empty.render());
-            this.start = empty.start;
-            this.activity.loader(false);
-            this.activity.toggle();
-        }
-
-        getFavoriteRadios() {
-            return JSON.parse(localStorage.getItem('favorite_jaja')) || [];
-        }
-
-        saveFavoriteRadio(el) {
-            const favoriteRadios = this.getFavoriteRadios();
-            favoriteRadios.push(el);
-            localStorage.setItem('favorite_jaja', JSON.stringify(favoriteRadios));
-        }
-
-        removeFavoriteRadio(index) {
-            const favoriteRadios = this.getFavoriteRadios();
-            favoriteRadios.splice(index, 1);
-            localStorage.setItem('favorite_jaja', JSON.stringify(favoriteRadios));
-        }
-
-        removeFavorite(el) {
-            const updatedHistory = this.getFavoriteRadios().filter(obj => obj.url !== el.url);
-            Lampa.Storage.set('favorite_jaja', updatedHistory);
-        }
-
-        isFavorite(el) {
-            const favoriteRadios = this.getFavoriteRadios();
-            return favoriteRadios.some(a => a.url === el);
-        }
-
-        cardImgBackground(card_data) {
-            if (Lampa.Storage.field('background')) {
-                return Lampa.Storage.get('background_type', 'complex') == 'poster' && card_data ? card_data : card_data;
-            }
-            return '';
-        };
-
-        start() {
-            if (Lampa.Activity.active().activity !== this.activity) return;
-            const _this = this;
-            Lampa.Controller.add('content', {
-                toggle: () => {
-                    Lampa.Controller.collectionSet(this.scroll.render());
-                    Lampa.Controller.collectionFocus(this.last || false, this.scroll.render());
-                },
-                left: () => {
-                    if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Controller.toggle('menu');
-                },
-                right: () => {
-                    if (Navigator.canmove('right')) Navigator.move('right');
-                    else this.selectGroup();
-                },
-                up: () => {
-                    if (Navigator.canmove('up')) {
-                        Navigator.move('up');
-                    } else {
-                        if (this.info) {
-                            if (!this.info.find('.view--category').hasClass('focus')) {
-                                Lampa.Controller.collectionSet(this.info);
-                                Navigator.move('right')
-                            } else Lampa.Controller.toggle('head');
-                        } else Lampa.Controller.toggle('head');
-                    }
-                },
-                down: () => {
-                    if (Navigator.canmove('down')) Navigator.move('down');
-                    else if (this.info) {
-                        if (this.info.find('.view--category').hasClass('focus')) {
-                            Lampa.Controller.toggle('content');
-                        }
-                    }
-                },
-                back: () => {
-                    Lampa.Activity.backward();
-                }
-            });
-            Lampa.Controller.toggle('content');
-        }
-
-        pause() { }
-
-        stop() { }
-
-        render() {
+        create() {
             return this.html;
         }
 
+        start() {
+            this.loadContent();
+            Lampa.Controller.toggle('content');
+        }
+
+        pause() {}
+        stop() {}
+        
         destroy() {
-            this.network.clear();
             this.scroll.destroy();
-            if (this.info) this.info.remove();
             this.html.remove();
-            this.body.remove();
-            this.network = null;
-            this.items = null;
-            this.html = null;
-            this.body = null;
-            this.info = null;
         }
 
-        getCatalogs() {
-            return [
-                {
-                    title: "Jable.tv",
-                    link: "https://jable.tv",
-                    show: "portrait",
-                    next: "search",
-                    datasort: "",
-                    use_referer: true,
-                    datatype: "text",
-                    category: [
-                        {
-                            title: 'Недавно обновленное',
-                            url: 'https://jable.tv/latest-updates/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Новое',
-                            url: 'https://jable.tv/new-release/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Популярные за неделю',
-                            url: 'https://jable.tv/hot/?lang=en',
-                            quantity: ''
-                        }
-                    ],
-                    list: {
-                        page: {
-                            selector: ".pagination"
-                        },
-                        videoscontainer: {
-                            selector: "div.video-img-box",
-                            attrName: "",
-                            filter: ""
-                        },
-                        title: {
-                            selector: "h6.title a",
-                            attrName: "text",
-                            filter: ""
-                        },
-                        thumb: {
-                            selector: "img",
-                            attrName: "data-src",
-                            filter: ""
-                        },
-                        link: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: ""
-                        },
-                        game_status: {
-                            selector: ".pay-btn",
-                            attrName: "",
-                            filter: ""
-                        },
-                        mnumber: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: "\/([a-zA-Z0-9-]+)\/?$"
-                        },
-                        m_time: {
-                            selector: ".label",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_home: {
-                            selector: ".text-right",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_away: {
-                            selector: ".text-left",
-                            attrName: "",
-                            filter: ""
-                        },
-                    },
-                    detail: {
-                        videoscontainer: {
-                            selector: '',
-                            attrName: '',
-                            filter: ''
-                        },
-                        title: {
-                            selector: 'a',
-                            attrName: 'text',
-                            filter: ''
-                        },
-                        link: {
-                            selector: 'a',
-                            attrName: 'href',
-                            filter: ''
-                        }
-                    },
-                    search: {
-                        url: 'https://jable.tv/search/?q=#msearchword&from_videos=1'
-                    }
-                },
-                {
-                    title: "NJAV.tv",
-                    link: "https://njav.tv",
-                    show: "portrait",
-                    next: "search",
-                    datasort: "",
-                    use_referer: true,
-                    datatype: "json",
-                    category: [{
-                        title: 'Главная',
-                        url: 'https://njav.tv/en/',
-                        quantity: ':gt(9)'
-                    }, {
-                        title: 'Недавно обновленное',
-                        url: 'https://njav.tv/en/recent-update',
-                        quantity: ''
-                    }, {
-                        title: 'Новое',
-                        url: 'https://njav.tv/en/new-release',
-                        quantity: ''
-                    }, {
-                        title: 'Популярное',
-                        url: 'https://njav.tv/en/trending',
-                        quantity: ''
-                    }, {
-                        title: 'Рекомендуемое',
-                        url: 'https://njav.tv/en/recommended',
-                        quantity: ''
-                    }, {
-                        title: 'Лучшее за день',
-                        url: 'https://njav.tv/en/today-hot',
-                        quantity: ''
-                    }, {
-                        title: 'Лучшее за неделю',
-                        url: 'https://njav.tv/en/weekly-hot',
-                        quantity: ''
-                    }, {
-                        title: 'Лучшее за месяц',
-                        url: 'https://njav.tv/en/monthly-hot',
-                        quantity: ''
-                    }],
-                    list: {
-                        page: {
-                            selector: ".pagination"
-                        },
-                        videoscontainer: {
-                            selector: "div.box-item",
-                            attrName: "",
-                            filter: ""
-                        },
-                        title: {
-                            selector: ".detail a",
-                            attrName: "text",
-                            filter: ""
-                        },
-                        thumb: {
-                            selector: "img",
-                            attrName: "data-src",
-                            filter: ""
-                        },
-                        link: {
-                            selector: ".detail a",
-                            attrName: "href",
-                            filter: ""
-                        },
-                        game_status: {
-                            selector: ".pay-btn",
-                            attrName: "",
-                            filter: ""
-                        },
-                        mnumber: {
-                            selector: "img",
-                            attrName: "alt",
-                            filter: ""
-                        },
-                        m_time: {
-                            selector: ".duration",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_home: {
-                            selector: ".text-right",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_away: {
-                            selector: ".text-left",
-                            attrName: "",
-                            filter: ""
-                        },
-                    },
-                    detail: {
-                        videoscontainer: {
-                            selector: '',
-                            attrName: '',
-                            filter: ''
-                        },
-                        title: {
-                            selector: 'a',
-                            attrName: 'text',
-                            filter: ''
-                        },
-                        link: {
-                            selector: 'a',
-                            attrName: 'href',
-                            filter: ''
-                        }
-                    },
-                    search: {
-                        url: 'https://njav.tv/en/search?keyword=#msearchword'
-                    }
-                },
-            ];
+        async loadContent() {
+            try {
+                const { items, nextPage } = await this.fetchData();
+                this.renderItems(items);
+                this.hasMore = !!nextPage;
+            } catch (error) {
+                console.error('[Jaja] Error:', error);
+                Lampa.Noty.show('Ошибка загрузки контента');
+            }
         }
 
-        getCatalogs2() {
-            return [
-                {
-                    title: "Jable.tv",
-                    link: "https://jable.tv",
-                    show: "portrait",
-                    next: "search",
-                    datasort: "",
-                    use_referer: true,
-                    datatype: "text",
-                    category: [
-                        {
-                            title: 'BDSM',
-                            url: 'https://jable.tv/categories/bdsm/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Только секс',
-                            url: 'https://jable.tv/categories/sex-only/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Китайские субтитры',
-                            url: 'https://jable.tv/categories/chinese-subtitle/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Насилие',
-                            url: 'https://jable.tv/categories/insult/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Униформа',
-                            url: 'https://jable.tv/categories/uniform/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Ролевые игры',
-                            url: 'https://jable.tv/categories/roleplay/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Скрытая камера',
-                            url: 'https://jable.tv/categories/hidden-cam/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Без цензуры',
-                            url: 'https://jable.tv/categories/uncensored/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'От первого лица',
-                            url: 'https://jable.tv/categories/pov/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Групповой секс',
-                            url: 'https://jable.tv/categories/groupsex/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'В чулках',
-                            url: 'https://jable.tv/categories/pantyhose/?lang=en',
-                            quantity: ''
-                        }, {
-                            title: 'Лесби',
-                            url: 'https://jable.tv/categories/lesbian/?lang=en',
-                            quantity: ''
-                        }
-                    ],
-                    list: {
-                        page: {
-                            selector: ".pagination"
-                        },
-                        videoscontainer: {
-                            selector: "div.video-img-box",
-                            attrName: "",
-                            filter: ""
-                        },
-                        title: {
-                            selector: "h6.title a",
-                            attrName: "text",
-                            filter: ""
-                        },
-                        thumb: {
-                            selector: "img",
-                            attrName: "data-src",
-                            filter: ""
-                        },
-                        link: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: ""
-                        },
-                        game_status: {
-                            selector: ".pay-btn",
-                            attrName: "",
-                            filter: ""
-                        },
-                        mnumber: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: "\/([a-zA-Z0-9-]+)\/?$"
-                        },
-                        m_time: {
-                            selector: ".label",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_home: {
-                            selector: ".text-right",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_away: {
-                            selector: ".text-left",
-                            attrName: "",
-                            filter: ""
-                        },
-                    },
-                    detail: {
-                        videoscontainer: {
-                            selector: '',
-                            attrName: '',
-                            filter: ''
-                        },
-                        title: {
-                            selector: 'a',
-                            attrName: 'text',
-                            filter: ''
-                        },
-                        link: {
-                            selector: 'a',
-                            attrName: 'href',
-                            filter: ''
-                        }
-                    },
-                    search: {
-                        url: 'https://jable.tv/search/?q=#msearchword&from_videos=1'
-                    }
-                },
-            ];
+        async fetchData() {
+            const url = `${BASE_URL}/latest-updates/${this.page > 1 ? `?page=${this.page}` : ''}`;
+            const response = await this.networkRequest(url);
+            const $html = $(response);
+            
+            return {
+                items: this.parseItems($html),
+                nextPage: this.parseNextPage($html)
+            };
         }
 
-        getCatalogs3() {
-            return [
-                {
-                    title: "Jable.tv",
-                    link: "https://jable.tv",
-                    show: "portrait",
-                    next: "search",
-                    datasort: "most_favourited",
-                    use_referer: true,
-                    datatype: "text",
-                    category: [
-                        {
-                            url: 'https://jable.tv/tags/wedding-dress/?lang=en',
-                            title: '# Свадебное платье',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/swimsuit/?lang=en',
-                            title: '# Купальник',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/stockings/?lang=en',
-                            title: '# Чулки',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/sportswear/?lang=en',
-                            title: '# Спортивная одежда',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/school-uniform/?lang=en',
-                            title: '# Школьная форма',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/pantyhose/?lang=en',
-                            title: '# Колготки',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/maid/?lang=en',
-                            title: '# Служанка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/knee-socks/?lang=en',
-                            title: '# Гольфы',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/kimono/?lang=en',
-                            title: '# Кимоно',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/kemonomimi/?lang=en',
-                            title: '# Кэмономими',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/glasses/?lang=en',
-                            title: '# Очки',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/flesh-toned-pantyhose/?lang=en',
-                            title: '# Колготки телесного цвета',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/fishnets/?lang=en',
-                            title: '# Рыболовные сети',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/cheongsam/?lang=en',
-                            title: '# Платье Чонсам',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/bunny-girl/?lang=en',
-                            title: '# Девочка-кролик',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/black-pantyhose/?lang=en',
-                            title: '# Черные колготки',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/Cosplay/?lang=en',
-                            title: '# Персонаж аниме',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/tall/?lang=en',
-                            title: '# Высокие',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/tattoo/?lang=en',
-                            title: '# Татуировка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/suntan/?lang=en',
-                            title: '# Загар',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/small-tits/?lang=en',
-                            title: '# Маленькие сиськи',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/short-hair/?lang=en',
-                            title: '# Короткие волосы',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/mature-woman/?lang=en',
-                            title: '# Зрелая женщина',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/hairless-pussy/?lang=en',
-                            title: '# Безволосая киска',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/girl/?lang=en',
-                            title: '# Девочка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/flexible-body/?lang=en',
-                            title: '# Гибкое тело',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/dainty/?lang=en',
-                            title: '# Изысканность',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/big-tits/?lang=en',
-                            title: '# Большие сиськи',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/beautiful-leg/?lang=en',
-                            title: '# Красивые ноги',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/beautiful-butt/?lang=en',
-                            title: '# Красивая задница',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/tit-wank/?lang=en',
-                            title: '# Между сисек',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/squirting/?lang=en',
-                            title: '# Брызги',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/spasms/?lang=en',
-                            title: '# Спазмы',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/kiss/?lang=en',
-                            title: '# Поцелуй',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/footjob/?lang=en',
-                            title: '# Дрочка ногами',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/facial/?lang=en',
-                            title: '# Уход за лицом',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/deep-throat/?lang=en',
-                            title: '# Глубокая глотка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/cum-in-mouth/?lang=en',
-                            title: '# Кончить в рот',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/creampie/?lang=en',
-                            title: '# Кремовый пирог',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/blowjob/?lang=en',
-                            title: '# Минет',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/anal-sex/?lang=en',
-                            title: '# Анальный секс',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/tune/?lang=en',
-                            title: '# Мелодия',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/torture/?lang=en',
-                            title: '# Пытка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/soapland/?lang=en',
-                            title: '# Мыльная страна',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/quickie/?lang=en',
-                            title: '# Быстро',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/piss/?lang=en',
-                            title: '# Писс',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/outdoor/?lang=en',
-                            title: '# На открытом воздухе',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/massage/?lang=en',
-                            title: '# Массаж',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/masochism-guy/?lang=en',
-                            title: '# Мазохистский парень',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/groupsex/?lang=en',
-                            title: '# Групповуха',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/gang-r__e/?lang=en',
-                            title: '# Банда R**e',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/crapulence/?lang=en',
-                            title: '# Похмелье',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/chizyo/?lang=en',
-                            title: '# Шлюха',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/chikan/?lang=en',
-                            title: '# Приставание',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/breast-milk/?lang=en',
-                            title: '# Грудное молоко',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/bondage/?lang=en',
-                            title: '# Бондаж',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/3p/?lang=en',
-                            title: '# 3P',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/10-times-a-day/?lang=en',
-                            title: '# 10 раз в день',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/virginity/?lang=en',
-                            title: '# Девственность',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/ugly-man/?lang=en',
-                            title: '# Уродливый человек',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/time-stop/?lang=en',
-                            title: '# Остановка времени',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/temptation/?lang=en',
-                            title: '# Искушение',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/sex-beside-husband/?lang=en',
-                            title: '# Секс рядом с мужем',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/rainy-day/?lang=en',
-                            title: '# Дождливый день',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tagstr/?lang=en',
-                            title: '# Измена',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/love-potion/?lang=en',
-                            title: '# Любовное зелье',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/hidden-cam/?lang=en',
-                            title: '# Утечка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/inc__t/?lang=en',
-                            title: '# Инцест',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/hypnosis/?lang=en',
-                            title: '# Гипноз',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/giant/?lang=en',
-                            title: '# Гигант',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/black/?lang=en',
-                            title: '# Черный',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/avenge/?lang=en',
-                            title: '# Месть',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/age-difference/?lang=en',
-                            title: '# Разница в возрасте',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/affair/?lang=en',
-                            title: '# Обман',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/wife/?lang=en',
-                            title: '# Замужняя женщина',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/widow/?lang=en',
-                            title: '# Вдова',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/team-manager/?lang=en',
-                            title: '# Менеджер команды',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/teacher/?lang=en',
-                            title: '# Учитель',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/club-hostess-and-sex-worker/?lang=en',
-                            title: '# Секс-работница',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/private-teacher/?lang=en',
-                            title: '# Частный учитель',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tagsurse/?lang=en',
-                            title: '# Медсестра',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/idol/?lang=en',
-                            title: '# Идол',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/housewife/?lang=en',
-                            title: '# Домохозяйка',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/fugitive/?lang=en',
-                            title: '# Беглец',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/flight-attendant/?lang=en',
-                            title: '# Бортпроводник',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/female-anchor/?lang=en',
-                            title: '# Женщина-ведущая',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/doctor/?lang=en',
-                            title: '# Доктор',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/detective/?lang=en',
-                            title: '# Детектив',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/couple/?lang=en',
-                            title: '# Пара',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/tram/?lang=en',
-                            title: '# Трамвай',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/toilet/?lang=en',
-                            title: '# Туалет',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/swimming-pool/?lang=en',
-                            title: '# Бассейн',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/store/?lang=en',
-                            title: '# Магазин',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/school/?lang=en',
-                            title: '# Школа',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/prison/?lang=en',
-                            title: '# Тюрьма',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/magic-mirror/?lang=en',
-                            title: '# Волшебное зеркало',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/library/?lang=en',
-                            title: '# Библиотека',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/hot-spring/?lang=en',
-                            title: '# Горячий источник',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/gym-room/?lang=en',
-                            title: '# Спортзал',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/first-night/?lang=en',
-                            title: '# Первая ночь',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/car/?lang=en',
-                            title: '# Автомобиль',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/bathing-place/?lang=en',
-                            title: '# Место для купания',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/video-recording/?lang=en',
-                            title: '# Видеозапись',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/variety-show/?lang=en',
-                            title: '# Варьете (Шоу)',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/thanksgiving/?lang=en',
-                            title: '# День благодарения',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/more-than-4-hours/?lang=en',
-                            title: '# Более 4 часов',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/festival/?lang=en',
-                            title: '# Фестиваль',
-                            quantity: ''
-                        },
-                        {
-                            url: 'https://jable.tv/tags/debut-retires/?lang=en',
-                            title: '# Дебют / Уходит в отставку',
-                            quantity: ''
-                        }
-                    ],
-                    list: {
-                        page: {
-                            selector: ".pagination"
-                        },
-                        videoscontainer: {
-                            selector: "div.video-img-box",
-                            attrName: "",
-                            filter: ""
-                        },
-                        title: {
-                            selector: "h6.title a",
-                            attrName: "text",
-                            filter: ""
-                        },
-                        thumb: {
-                            selector: "img",
-                            attrName: "data-src",
-                            filter: ""
-                        },
-                        link: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: ""
-                        },
-                        game_status: {
-                            selector: ".pay-btn",
-                            attrName: "",
-                            filter: ""
-                        },
-                        mnumber: {
-                            selector: "h6.title a",
-                            attrName: "href",
-                            filter: "\/([a-zA-Z0-9-]+)\/?$"
-                        },
-                        m_time: {
-                            selector: ".label",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_home: {
-                            selector: ".text-right",
-                            attrName: "",
-                            filter: ""
-                        },
-                        team_away: {
-                            selector: ".text-left",
-                            attrName: "",
-                            filter: ""
-                        },
-                    },
-                    detail: {
-                        videoscontainer: {
-                            selector: '',
-                            attrName: '',
-                            filter: ''
-                        },
-                        title: {
-                            selector: 'a',
-                            attrName: 'text',
-                            filter: ''
-                        },
-                        link: {
-                            selector: 'a',
-                            attrName: 'href',
-                            filter: ''
-                        }
-                    },
-                    search: {
-                        url: 'https://jable.tv/search/?q=#msearchword&from_videos=1'
-                    }
-                },
-            ];
-        }
-
-        function addSettingsjaja() {
-            const ico = '<svg width="800px" height="800px" viewBox="20 50 115 115" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M120.69 101.68C114.53 101.68 110.33 97.91 110.16 92.51C110.03 88.1 112.58 84.29 116.64 84.29C121.81 84.29 123.93 89.44 120.86 92.48L116.37 89.26C114.99 90.77 115.48 96.19 120.14 96.19C124.21 96.19 126.14 93.36 126.14 88.92C126.14 84 123.06 80.06 114.73 80.06C107.31 80.06 103.5 86.06 103.5 94.71C103.5 99.24 106.09 102.87 109.02 106.51C114.36 105.51 119.48 112.89 116.27 117.41C116.932 119.172 117.271 121.038 117.27 122.92C117.267 123.857 117.17 124.792 116.98 125.71C121.82 130.96 113.98 140.37 107.98 136.29C105.07 137.594 101.919 138.275 98.73 138.29C95.56 143.71 85.15 140.96 85.73 134.44C83.709 133.184 81.5645 132.138 79.33 131.32C79.43 137.13 71.18 140.81 66.73 137.54C64.8991 140.142 62.5541 142.34 59.84 144C59.84 144.19 59.84 144.38 59.84 144.58C60.02 154.52 43.12 154.76 42.94 145.06C42.94 144.92 42.94 144.8 42.94 144.67C40.0878 143.796 37.3889 142.483 34.94 140.78C27.28 145.35 18.48 133.22 24.79 127.39C23.5874 123.872 22.9823 120.178 23 116.46C14.28 113.63 18.09 98.69 26.8 100.06C28.4235 97.1054 30.6398 94.5181 33.31 92.46C31.77 83.58 46.16 80 49.41 87.69C51.7941 87.7882 54.1517 88.2294 56.41 89L56.61 88.81C63.07 83.23 72.5 94.16 66.36 99.67C67.67 105.19 65.73 110.94 61.99 112.96C56.99 105.56 46.49 107.96 46.49 117.06C46.49 123.42 50.99 125.85 55.84 125.85C61.84 125.85 65.47 114.53 73.73 114.53C85.95 114.53 93.05 126.21 98.44 126.21C102.7 126.21 103.82 124.3 103.82 121.48C103.82 112.99 94.6 108.32 94.6 94.93C94.6 82.63 102.6 72.6 114.6 72.6C125.74 72.6 131.96 79.43 131.96 87.85C131.96 96.27 127.74 101.68 120.69 101.68ZM63.6 96.91C66.08 94.77 61.6 89.57 59.07 91.76C56.54 93.95 60.88 99.26 63.6 96.91ZM43.68 135.45C47.38 133.26 43.11 125.64 39.18 127.97C35.58 130.1 40 137.62 43.68 135.45ZM26.57 104.58C22.9 103.64 20.9 111.32 24.66 112.28C28.42 113.24 30.6 105.62 26.57 104.58ZM28.37 130.32C25.29 132.54 29.91 138.99 33.06 136.72C36.21 134.45 31.74 127.89 28.37 130.32ZM35.49 111.21C31.41 109.63 28.07 118.21 32.26 119.78C36.45 121.35 40 112.94 35.49 111.21ZM45.49 90.09C44.63 86.39 36.89 88.16 37.77 91.95C38.65 95.74 46.43 94.14 45.49 90.09ZM46.49 99.73C45.09 95.79 36.86 98.73 38.28 102.73C39.7 106.73 48 104 46.47 99.73H46.49ZM47.49 144.81C47.56 148.61 55.49 148.49 55.42 144.6C55.35 140.71 47.4 140.66 47.47 144.81H47.49ZM52.84 135.61C53.33 139.76 62.01 138.76 61.5 134.51C60.99 130.26 52.29 131.07 52.82 135.61H52.84ZM68.38 133.11C69.68 136.31 76.38 133.61 75.03 130.33C73.68 127.05 66.93 129.61 68.36 133.11H68.38ZM72.93 122.57C72.41 126.33 80.26 127.46 80.8 123.57C81.34 119.68 73.49 118.45 72.91 122.57H72.93ZM89.48 134.21C88.77 137.21 95.15 138.76 95.88 135.63C96.61 132.5 90.23 130.86 89.46 134.21H89.48ZM109.82 133C112.26 135 116.41 129.9 113.92 127.87C111.43 125.84 107.16 130.86 109.82 133ZM112.6 115.82C115.12 113.94 111.22 108.67 108.6 110.59C105.98 112.51 109.85 117.9 112.6 115.85V115.82Z" fill="currentcolor"/></svg>';
-            const menu_item = $('<li class="menu__item selector" data-action="jaja"><div class="menu__ico">' + ico + '</div><div class="menu__text">JaJa 18+</div></li>');
-            menu_item.on('hover:enter', () => {
-                this.listNavigation();
+        async networkRequest(url) {
+            return new Promise((resolve, reject) => {
+                Lampa.Request.native(
+                    CORS_PROXY + encodeURIComponent(url),
+                    data => resolve(data.contents),
+                    error => reject(error),
+                    false,
+                    { dataType: 'json' }
+                );
             });
-            $('.menu .menu__list').eq(0).append(menu_item);
         }
 
-        if (window.appready) addSettingsjaja()
-        else {
-            Lampa.Listener.follow('app', (e) => {
-                if (e.type == 'ready') addSettingsjaja()
-            })
+        parseItems($html) {
+            return $html.find('.video-img-box').map((i, el) => ({
+                title: $(el).find('h6.title').text().trim(),
+                image: $(el).find('img').data('src'),
+                url: $(el).find('a').attr('href'),
+                duration: $(el).find('.label').text().trim()
+            })).get();
+        }
+
+        parseNextPage($html) {
+            const nextPage = $html.find('.pagination a').last().attr('href');
+            return nextPage ? BASE_URL + nextPage : null;
+        }
+
+        renderItems(items) {
+            const cards = items.map(item => this.createCard(item));
+            this.html.empty().append(cards);
+            this.scroll.append(this.html);
+        }
+
+        createCard(item) {
+            const card = $(`
+                <div class="card card--collection">
+                    <div class="card__img"></div>
+                    <div class="card__title">${item.title}</div>
+                    ${item.duration ? `<div class="card__quality">${item.duration}</div>` : ''}
+                </div>
+            `);
+
+            this.loadImage(card, item);
+            card.on('hover:enter', () => this.playVideo(item));
+            return card;
+        }
+
+        async playVideo(item) {
+            Lampa.Modal.show({ 
+                title: 'Загрузка...', 
+                html: Lampa.Template.get('modal_loading') 
+            });
+
+            try {
+                const videoUrl = await this.fetchVideoUrl(item.url);
+                Lampa.Player.play({
+                    title: item.title,
+                    url: videoUrl,
+                    tv: false
+                });
+            } catch (error) {
+                Lampa.Noty.show('Ошибка воспроизведения');
+            } finally {
+                Lampa.Modal.close();
+            }
+        }
+
+        async fetchVideoUrl(url) {
+            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+            const text = await response.text();
+            const $page = $(text);
+            return $page.find('script:contains("http")').text().match(/https?:\/\/[^'"]+/)[0];
+        }
+
+        loadImage(card, item) {
+            const img = new Image();
+            img.src = item.image;
+            img.onload = () => card.addClass('card--loaded');
+            img.onerror = () => this.handleImageError(card, item.title);
+            card.find('.card__img').replaceWith(img);
+        }
+
+        handleImageError(card, title) {
+            const color = this.generateColor(title);
+            card.find('.card__img').css({
+                backgroundColor: color.background,
+                color: color.text
+            }).text(title.substring(0, 2));
+        }
+
+        generateColor(title) {
+            const hash = Lampa.Utils.hash(title);
+            const hex = (hash * 0xFFFFFF).toString(16).slice(0,6).padEnd(6, '0');
+            const brightness = parseInt(hex, 16) > 0xAAAAAA;
+            return {
+                background: `#${hex}`,
+                text: brightness ? '#000' : '#fff'
+            };
         }
     }
 
-    if (!window.plugin_jaja_ready) startjaja();
+    function initPlugin() {
+        Lampa.Component.add(PLUGIN_NAME, JajaCore);
+        addMenuEntry();
+        addStyles();
+    }
+
+    function addMenuEntry() {
+        const menuItem = $(`
+            <li id="${MENU_ITEM_ID}" class="menu__item selector">
+                <div class="menu__ico">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
+                </div>
+                <div class="menu__text">18+ Контент</div>
+            </li>
+        `).on('hover:enter', function(e) {
+            e.stopPropagation();
+            Lampa.Activity.push({
+                title: '18+ Контент',
+                component: PLUGIN_NAME,
+                url: BASE_URL + '/latest-updates/'
+            });
+        });
+
+        const tryAdd = () => {
+            const $menu = $('.menu__list').first();
+            if ($menu.length) {
+                $menu.append(menuItem);
+                return true;
+            }
+            return false;
+        };
+
+        if (!tryAdd()) {
+            Lampa.Listener.follow('app', e => e.type === 'ready' && tryAdd());
+        }
+    }
+
+    function addStyles() {
+        const styles = `
+            .jaja-container {
+                padding: 20px;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            .card--collection .card__quality {
+                background: rgba(0,0,0,0.7);
+                padding: 2px 8px;
+                border-radius: 4px;
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                font-size: 12px;
+            }
+            #${MENU_ITEM_ID} {
+                order: 999;
+            }
+        `;
+        $('<style>').html(styles).appendTo('head');
+    }
+
+    if (window.appready) {
+        initPlugin();
+    } else {
+        Lampa.Listener.follow('app', e => e.type === 'ready' && initPlugin());
+    }
 
 })();
