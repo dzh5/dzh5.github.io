@@ -354,7 +354,7 @@
                             var match = str.contents.match(regex);
                             var id = match && match[1];
                             if (id) {
-                                network["native"](cors + 'https://njav.tv/zh/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
+                                network["native"](cors + 'https://123av.com/en/dm3/zh/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
                                     Lampa.Modal.close();
                                     str = JSON.parse(str.contents)
                                     if (str.status == 200) {
@@ -489,7 +489,7 @@
                             $('.detail-item a[href*="actresses/"],.detail-item a[href*="labels/"],.detail-item a[href*="tags/"]', str).each(function (i, html) {
                                 archiveMenu.push({
                                     title: $(html).text() + ' - Все видео',
-                                    url: 'https://njav.tv/en/' + $(html).attr('href'),
+                                    url: 'https://123av.com/en/dm3' + $(html).attr('href'),
                                 });
                             });
 
@@ -516,7 +516,7 @@
                                     } else {
                                         Lampa.Activity.push({
                                             url: sel.url,
-                                            title: 'NJAV.tv - ' + sel.title,
+                                            title: '123av.com - ' + sel.title,
                                             component: 'jaja',
                                             quantity: '',
                                             setup: object.setup,
@@ -851,8 +851,8 @@
                 }
             },
             {
-                title: "NJAV.tv",
-                link: "https://njav.tv",
+                title: "123av.com",
+                link: "https://123av.com/en/dm3",
                 show: "portrait",
                 next: "search",
                 datasort: "",
@@ -860,35 +860,35 @@
                 datatype: "json",
                 category: [{
                     title: 'Главная',
-                    url: 'https://njav.tv/en/',
+                    url: 'https://123av.com/en/dm3',
                     quantity: ':gt(9)'
                 }, {
                     title: 'Недавно обновленное',
-                    url: 'https://njav.tv/en/recent-update',
+                    url: 'https://123av.com/en/dm1/recent-update',
                     quantity: ''
                 }, {
                     title: 'Новое',
-                    url: 'https://njav.tv/en/new-release',
+                    url: 'https://123av.com/en/dm1/new-release',
                     quantity: ''
                 }, {
                     title: 'Популярное',
-                    url: 'https://njav.tv/en/trending',
+                    url: 'https://123av.com/en/dm1/trending',
                     quantity: ''
                 }, {
                     title: 'Рекомендуемое',
-                    url: 'https://njav.tv/en/recommended',
+                    url: 'https://123av.com/en/dm1/recommended',
                     quantity: ''
                 }, {
                     title: 'Лучшее за день',
-                    url: 'https://njav.tv/en/today-hot',
+                    url: 'https://123av.com/en/dm1/today-hot',
                     quantity: ''
                 }, {
                     title: 'Лучшее за неделю',
-                    url: 'https://njav.tv/en/weekly-hot',
+                    url: 'https://123av.com/en/dm1/weekly-hot',
                     quantity: ''
                 }, {
                     title: 'Лучшее за месяц',
-                    url: 'https://njav.tv/en/monthly-hot',
+                    url: 'https://123av.com/en/dm1/monthly-hot',
                     quantity: ''
                 }],
                 list: {
@@ -959,7 +959,7 @@
                     }
                 },
                 search: {
-                    url: 'https://njav.tv/en/search?keyword=#msearchword'
+                    url: 'https://123av.com/en/search?keyword=#msearchword'
                 }
             },
         ];
