@@ -354,7 +354,7 @@
                             var match = str.contents.match(regex);
                             var id = match && match[1];
                             if (id) {
-                                network["native"](cors + 'https://123av.com/en/dm1/v/' + id + '/videos?r=' + Math.random(), function (str) {
+                                network["native"](cors + 'https://123av.com/en/dm1/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
                                     Lampa.Modal.close();
                                     str = JSON.parse(str.contents)
                                     if (str.status == 200) {
