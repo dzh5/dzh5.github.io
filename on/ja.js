@@ -3,41 +3,7 @@
 
     const PLUGIN_NAME = 'jaja';
     const MENU_ITEM_ID = 'jaja-menu-item';
-    const CORS_PROXY = 'https://api.allorigins.win/get?url=';
-    const SITES = {
-        jable: {
-            title: 'Jable.tv',
-            baseUrl: 'https://jable.tv',
-            parse: $ => {
-                return $('.grid .video-img-box').map((i, el) => {
-                    const $el = $(el);
-                    return {
-                        title: $el.find('h6.title').text(),
-                        image: $el.find('img').data('src'),
-                        url: $el.find('a').attr('href'),
-                        duration: $el.find('.label').text(),
-                        id: $el.find('a').attr('href').split('/').filter(Boolean).pop()
-                    };
-                }).get();
-            }
-        },
-        njav: {
-            title: 'NJAV.tv',
-            baseUrl: 'https://njav.tv',
-            parse: $ => {
-                return $('.box-item').map((i, el) => {
-                    const $el = $(el);
-                    return {
-                        title: $el.find('.detail a').text(),
-                        image: $el.find('img').data('src'),
-                        url: $el.find('a').attr('href'),
-                        duration: $el.find('.duration').text(),
-                        id: $el.find('img').attr('alt')
-                    };
-                }).get();
-            }
-        }
-    };
+    const CORS_PROXY = 'https://api.allorigins.win/get?url='; // Обновленный прокси
 
     if (window.jajaPluginInitialized) return;
     window.jajaPluginInitialized = true;
@@ -46,35 +12,33 @@
         constructor(data) {
             this.activity = data.activity;
             this.config = data;
+            this.html = $('<div class="jaja-container"></div>');
+            this.scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
             this.currentSite = this.detectSite();
             this.page = 1;
             this.hasMore = true;
-            this.initUI();
         }
 
-        initUI() {
-            this.html = $('<div class="jaja-container"></div>');
-            this.scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-            this.setupControls();
-        }
-
-        detectSite() {
-            return this.config.url.includes('jable') ? 'jable' : 'njav';
-        }
-
-        // Основные методы компонента
+        // Обязательные методы компонента
         start() {
             this.loadContent();
             Lampa.Controller.toggle('content');
+        }
+
+        pause() {} // Добавлен обязательный метод
+        stop() {}  // Добавлен обязательный метод
+
+        destroy() {
+            this.scroll.destroy();
+            this.html.remove();
         }
 
         create() {
             return this.html;
         }
 
-        destroy() {
-            this.scroll.destroy();
-            this.html.remove();
+        detectSite() {
+            return this.config.url.includes('jable') ? 'jable' : 'njav';
         }
 
         async loadContent() {
@@ -83,26 +47,44 @@
                 this.renderItems(items);
                 this.hasMore = !!nextPage;
             } catch (error) {
-                Lampa.Noty.show('Ошибка загрузки');
-                console.error(error);
+                console.error('[Jaja] Error:', error);
+                Lampa.Noty.show('Ошибка загрузки контента. Попробуйте позже.');
             }
         }
 
         async fetchData() {
             const url = this.buildUrl();
-            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
-            const text = await response.text();
-            const $html = $(text);
+            const response = await this.networkRequest(url);
+            const $html = $(response);
             
             return {
-                items: SITES[this.currentSite].parse($html),
-                nextPage: $html.find('.pagination a').last().attr('href')
+                items: this.parseItems($html),
+                nextPage: this.parseNextPage($html)
             };
         }
 
-        buildUrl() {
-            const site = SITES[this.currentSite];
-            return this.config.url || site.baseUrl + `/latest-updates/?page=${this.page}`;
+        async networkRequest(url) {
+            return new Promise((resolve, reject) => {
+                Lampa.Reguest().native(CORS_PROXY + encodeURIComponent(url), 
+                    data => resolve(data.contents), 
+                    error => reject(error),
+                    false,
+                    { dataType: 'json' }
+                );
+            });
+        }
+
+        parseItems($html) {
+            return $html.find('.video-img-box, .box-item').map((i, el) => ({
+                title: $(el).find('.title, .detail a').text().trim(),
+                image: $(el).find('img').data('src') || $(el).find('img').attr('src'),
+                url: $(el).find('a').attr('href'),
+                duration: $(el).find('.label, .duration').text().trim()
+            })).get();
+        }
+
+        parseNextPage($html) {
+            return $html.find('.pagination a').last().attr('href');
         }
 
         renderItems(items) {
@@ -116,13 +98,11 @@
                 <div class="card card--collection">
                     <div class="card__img"></div>
                     <div class="card__title">${item.title}</div>
-                    <div class="card__quality">${item.duration}</div>
+                    ${item.duration ? `<div class="card__quality">${item.duration}</div>` : ''}
                 </div>
             `);
 
             this.loadImage(card, item);
-            this.setupCardEvents(card, item);
-            
             return card;
         }
 
@@ -144,96 +124,12 @@
 
         generateColor(title) {
             const hash = Lampa.Utils.hash(title);
-            const hex = (hash * 0xFFFFFF).toString(16).slice(0,6);
+            const hex = (hash * 0xFFFFFF).toString(16).slice(0,6).padEnd(6, '0');
             const brightness = parseInt(hex, 16) > 0xAAAAAA;
             return {
                 background: `#${hex}`,
                 text: brightness ? '#000' : '#fff'
             };
-        }
-
-        setupCardEvents(card, item) {
-            card.on('hover:focus', () => this.handleFocus(card, item))
-                .on('hover:enter', () => this.playVideo(item))
-                .on('hover:long', () => this.showContextMenu(item));
-        }
-
-        async playVideo(item) {
-            Lampa.Modal.show({ title: 'Загрузка...', html: Lampa.Template.get('modal_loading') });
-            
-            try {
-                const videoUrl = await this.fetchVideoUrl(item.url);
-                Lampa.Player.play({ url: videoUrl, title: item.title });
-            } catch (error) {
-                Lampa.Noty.show('Ошибка воспроизведения');
-            }
-            
-            Lampa.Modal.close();
-        }
-
-        async fetchVideoUrl(url) {
-            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
-            const text = await response.text();
-            const $page = $(text);
-            
-            return this.currentSite === 'jable'
-                ? $page.find('script:contains("http")').text().match(/https?:\/\/[^'"]+/)[0]
-                : $page.find('iframe').attr('src');
-        }
-
-        showContextMenu(item) {
-            Lampa.Select.show({
-                title: item.title,
-                items: [
-                    { title: FavoriteManager.has(item.url) ? 'Удалить из избранного' : 'Добавить в избранное' },
-                    { title: 'Похожие видео' },
-                    { title: 'Информация' }
-                ],
-                onSelect: (_, index) => {
-                    if (index === 0) this.toggleFavorite(item);
-                    if (index === 1) this.showSimilar(item);
-                }
-            });
-        }
-
-        toggleFavorite(item) {
-            FavoriteManager.toggle(item);
-            Lampa.Noty.show(FavoriteManager.has(item.url) 
-                ? 'Добавлено в избранное' 
-                : 'Удалено из избранного'
-            );
-        }
-
-        setupControls() {
-            Lampa.Controller.add('content', {
-                toggle: () => this.scroll.toggle(),
-                up: () => Navigator.move('up'),
-                down: () => Navigator.move('down'),
-                back: () => Lampa.Activity.backward()
-            });
-        }
-    }
-
-    class FavoriteManager {
-        static get() {
-            return JSON.parse(localStorage.getItem('jaja_favorites') || '[]');
-        }
-
-        static toggle(item) {
-            const favorites = this.get();
-            const index = favorites.findIndex(f => f.url === item.url);
-            
-            if (index === -1) {
-                favorites.push(item);
-            } else {
-                favorites.splice(index, 1);
-            }
-            
-            localStorage.setItem('jaja_favorites', JSON.stringify(favorites));
-        }
-
-        static has(url) {
-            return this.get().some(f => f.url === url);
         }
     }
 
@@ -258,11 +154,11 @@
             Lampa.Activity.push({
                 title: '18+ Контент',
                 component: PLUGIN_NAME,
-                url: SITES.jable.baseUrl + '/latest-updates/'
+                url: 'https://jable.tv/latest-updates/'
             });
         });
 
-        const tryAdd = () => $(document).find('.menu__list').first().append(menuItem);
+        const tryAdd = () => $('.menu__list').first().append(menuItem);
         tryAdd() || Lampa.Listener.follow('app', e => e.type === 'ready' && tryAdd());
     }
 
@@ -274,10 +170,6 @@
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                 gap: 15px;
             }
-            #${MENU_ITEM_ID} .menu__ico svg {
-                width: 24px;
-                height: 24px;
-            }
             .card--collection .card__quality {
                 background: rgba(0,0,0,0.7);
                 padding: 2px 8px;
@@ -285,6 +177,7 @@
                 position: absolute;
                 bottom: 8px;
                 right: 8px;
+                font-size: 12px;
             }
         `;
         $('<style>').html(styles).appendTo('head');
