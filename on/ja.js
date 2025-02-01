@@ -364,80 +364,96 @@
         }
     }
 
-    // Инициализация плагина
+    if (window.jajaPluginInitialized) {
+        console.warn('[Jaja] Plugin already initialized!');
+        return;
+    }
+    window.jajaPluginInitialized = true;
+
     function initPlugin() {
-    console.log('[Jaja] Plugin initialization started');
-    Lampa.Component.add(PLUGIN_NAME, JajaCore);
-    addMenuEntry();
-    addStyles();
-    console.log('[Jaja] Plugin initialized');
+        console.log('[Jaja] Initializing plugin...');
+        
+        // Добавление компонента
+        Lampa.Component.add(PLUGIN_NAME, class {
+            constructor(data) {
+                console.log('[Jaja] Component created');
+            }
+        });
+
+        // Добавление пункта меню
+        function addMenuEntry() {
+            const menuItemExists = $(`#${MENU_ITEM_ID}`).length > 0;
+            if (menuItemExists) {
+                console.log('[Jaja] Menu item already exists');
+                return;
+            }
+
+            const menuItem = $(`
+                <li id="${MENU_ITEM_ID}" class="menu__item selector">
+                    <div class="menu__ico">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                    </div>
+                    <div class="menu__text">18+ Контент</div>
+                </li>
+            `).on('hover:enter', () => {
+                Lampa.Activity.push({
+                    title: '18+ Контент',
+                    component: PLUGIN_NAME,
+                    url: 'https://jable.tv/latest-updates/'
+                });
+            });
+
+            function tryAddMenuItem() {
+                const $menu = $('.menu .menu__list:first, .menu__body .menu__list');
+                if ($menu.length) {
+                    $menu.append(menuItem);
+                    console.log('[Jaja] Menu item added successfully');
+                    return true;
+                }
+                return false;
+            }
+
+            if (!tryAddMenuItem()) {
+                console.log('[Jaja] Menu not found, waiting...');
+                const listener = Lampa.Listener.follow('app', e => {
+                    if (e.type === 'ready' && tryAddMenuItem()) {
+                        Lampa.Listener.unfollow(listener);
+                    }
+                });
+            }
+        }
+
+        // Добавление стилей
+        function addStyles() {
+            const styles = `
+                #${MENU_ITEM_ID} .menu__ico svg {
+                    width: 24px;
+                    height: 24px;
+                }
+                #${MENU_ITEM_ID} .menu__text {
+                    color: #ffffff;
+                }
+            `;
+            $('<style>').html(styles).appendTo('head');
+        }
+
+        addMenuEntry();
+        addStyles();
+        console.log('[Jaja] Plugin initialized successfully');
     }
 
-function addMenuEntry() {
-    console.log('[Jaja] Adding menu entry');
-    const menuHtml = `
-        <li class="menu__item selector" data-action="${PLUGIN_NAME}">
-            <div class="menu__ico">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                </svg>
-            </div>
-            <div class="menu__text">18+ Контент</div>
-        </li>
-    `;
-    
-    const $menuList = $('.menu .menu__list:first');
-    console.log('[Jaja] Menu list element:', $menuList.length);
-    
-    if ($menuList.length) {
-        $menuList.append(menuHtml);
-        console.log('[Jaja] Menu item added successfully');
+    // Запуск инициализации
+    if (window.appready) {
+        initPlugin();
     } else {
-        console.error('[Jaja] Menu list not found!');
         Lampa.Listener.follow('app', e => {
             if (e.type === 'ready') {
-                $('.menu .menu__list:first').append(menuHtml);
-                console.log('[Jaja] Menu item added after app ready');
+                initPlugin();
             }
         });
-    }
-}
-
-    function addStyles() {
-        const styles = `
-            .freetv_jaja .card__img {
-                border-radius: 12px;
-                overflow: hidden;
-            }
-            .freetv_jaja .card__quality {
-                position: absolute;
-                bottom: 8px;
-                right: 8px;
-                background: rgba(0,0,0,0.7);
-                padding: 2px 8px;
-                border-radius: 4px;
-                font-size: 12px;
-            }
-            .info_jaja .info__title {
-                font-size: 1.4em;
-                margin-bottom: 8px;
-            }
-        `;
-        $('<style>').html(styles).appendTo('head');
-    }
-
-    function showMainScreen() {
-        Lampa.Activity.push({
-            title: '18+ Контент',
-            component: PLUGIN_NAME,
-            url: SITE_CONFIG.jable.baseUrl + '/latest-updates/',
-            setup: { type: 'category', category: 'Новинки' }
-        });
-    }
-
-    if (!window.jajaPluginInitialized) {
-        window.jajaPluginInitialized = true;
-        initPlugin();
     }
 
 })();
+    
