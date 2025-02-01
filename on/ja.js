@@ -230,6 +230,84 @@
         }
     ];
 
+    const catalogs2 = [
+        {
+            title: "Jable.tv",
+            link: "https://jable.tv",
+            show: "portrait",
+            next: "search",
+            datasort: "",
+            use_referer: true,
+            datatype: "text",
+            category: [
+                { title: 'BDSM', url: 'https://jable.tv/categories/bdsm/?lang=en', quantity: '' },
+                { title: 'Только секс', url: 'https://jable.tv/categories/sex-only/?lang=en', quantity: '' },
+                { title: 'Китайские субтитры', url: 'https://jable.tv/categories/chinese-subtitle/?lang=en', quantity: '' },
+                { title: 'Насилие', url: 'https://jable.tv/categories/insult/?lang=en', quantity: '' },
+                { title: 'Униформа', url: 'https://jable.tv/categories/uniform/?lang=en', quantity: '' },
+                { title: 'Ролевые игры', url: 'https://jable.tv/categories/roleplay/?lang=en', quantity: '' },
+                { title: 'Скрытая камера', url: 'https://jable.tv/categories/hidden-cam/?lang=en', quantity: '' },
+                { title: 'Без цензуры', url: 'https://jable.tv/categories/uncensored/?lang=en', quantity: '' },
+                { title: 'От первого лица', url: 'https://jable.tv/categories/pov/?lang=en', quantity: '' },
+                { title: 'Групповой секс', url: 'https://jable.tv/categories/groupsex/?lang=en', quantity: '' },
+                { title: 'В чулках', url: 'https://jable.tv/categories/pantyhose/?lang=en', quantity: '' },
+                { title: 'Лесби', url: 'https://jable.tv/categories/lesbian/?lang=en', quantity: '' }
+            ],
+            list: {
+                page: { selector: ".pagination" },
+                videoscontainer: { selector: "div.video-img-box", attrName: "", filter: "" },
+                title: { selector: "h6.title a", attrName: "text", filter: "" },
+                thumb: { selector: "img", attrName: "data-src", filter: "" },
+                link: { selector: "h6.title a", attrName: "href", filter: "" },
+                mnumber: { selector: "h6.title a", attrName: "href", filter: "\/([a-zA-Z0-9-]+)\/?$" },
+                m_time: { selector: ".label", attrName: "", filter: "" }
+            },
+            search: { url: 'https://jable.tv/search/?q=#msearchword&from_videos=1' }
+        }
+    ];
+
+    const catalogs3 = [
+        {
+            title: "Jable.tv",
+            link: "https://jable.tv",
+            show: "portrait",
+            next: "search",
+            datasort: "most_favourited",
+            use_referer: true,
+            datatype: "text",
+            category: [
+                { title: '# Свадебное платье', url: 'https://jable.tv/tags/wedding-dress/?lang=en', quantity: '' },
+                { title: '# Купальник', url: 'https://jable.tv/tags/swimsuit/?lang=en', quantity: '' },
+                { title: '# Чулки', url: 'https://jable.tv/tags/stockings/?lang=en', quantity: '' },
+                { title: '# Спортивная одежда', url: 'https://jable.tv/tags/sportswear/?lang=en', quantity: '' },
+                { title: '# Школьная форма', url: 'https://jable.tv/tags/school-uniform/?lang=en', quantity: '' },
+                { title: '# Колготки', url: 'https://jable.tv/tags/pantyhose/?lang=en', quantity: '' },
+                { title: '# Служанка', url: 'https://jable.tv/tags/maid/?lang=en', quantity: '' },
+                { title: '# Гольфы', url: 'https://jable.tv/tags/knee-socks/?lang=en', quantity: '' },
+                { title: '# Кимоно', url: 'https://jable.tv/tags/kimono/?lang=en', quantity: '' },
+                { title: '# Кэмономими', url: 'https://jable.tv/tags/kemonomimi/?lang=en', quantity: '' },
+                { title: '# Очки', url: 'https://jable.tv/tags/glasses/?lang=en', quantity: '' },
+                { title: '# Колготки телесного цвета', url: 'https://jable.tv/tags/flesh-toned-pantyhose/?lang=en', quantity: '' },
+                { title: '# Рыболовные сети', url: 'https://jable.tv/tags/fishnets/?lang=en', quantity: '' },
+                { title: '# Платье Чонсам', url: 'https://jable.tv/tags/cheongsam/?lang=en', quantity: '' },
+                { title: '# Девочка-кролик', url: 'https://jable.tv/tags/bunny-girl/?lang=en', quantity: '' },
+                { title: '# Черные колготки', url: 'https://jable.tv/tags/black-pantyhose/?lang=en', quantity: '' },
+                { title: '# Персонаж аниме', url: 'https://jable.tv/tags/Cosplay/?lang=en', quantity: '' }
+                // ... остальные категории ...
+            ],
+            list: {
+                page: { selector: ".pagination" },
+                videoscontainer: { selector: "div.video-img-box", attrName: "", filter: "" },
+                title: { selector: "h6.title a", attrName: "text", filter: "" },
+                thumb: { selector: "img", attrName: "data-src", filter: "" },
+                link: { selector: "h6.title a", attrName: "href", filter: "" },
+                mnumber: { selector: "h6.title a", attrName: "href", filter: "\/([a-zA-Z0-9-]+)\/?$" },
+                m_time: { selector: ".label", attrName: "", filter: "" }
+            },
+            search: { url: 'https://jable.tv/search/?q=#msearchword&from_videos=1' }
+        }
+    ];
+
     function listNavigation(catalogsList) {
         const balanser = Lampa.Storage.get('online_jaja_balanser') || catalogsList[0].title;
         const catalog = catalogsList.find(fp => fp.title === balanser) || catalogsList[0];
