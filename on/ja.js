@@ -44,7 +44,7 @@
                 this.hasMore = !!nextPage;
             } catch (error) {
                 console.error('[Jaja] Error:', error);
-                Lampa.Noty.show('Ошибка загрузки контента. Попробуйте позже.');
+                Lampa.Noty.show('Ошибка загрузки контента');
             }
         }
 
@@ -61,7 +61,7 @@
 
         async networkRequest(url) {
             return new Promise((resolve, reject) => {
-                Lampa.Reguest().native(
+                Lampa.Request().native(
                     CORS_PROXY + encodeURIComponent(url),
                     data => resolve(data.contents),
                     error => reject(error),
@@ -81,12 +81,13 @@
         }
 
         parseNextPage($html) {
-            return $html.find('.pagination a').last().attr('href');
+            const nextPage = $html.find('.pagination a').last().attr('href');
+            return nextPage ? BASE_URL + nextPage : null;
         }
 
         renderItems(items) {
             const cards = items.map(item => this.createCard(item));
-            this.html.append(cards);
+            this.html.empty().append(cards);
             this.scroll.append(this.html);
         }
 
@@ -100,7 +101,35 @@
             `);
 
             this.loadImage(card, item);
+            card.on('hover:enter', () => this.playVideo(item));
             return card;
+        }
+
+        async playVideo(item) {
+            Lampa.Modal.show({ 
+                title: 'Загрузка...', 
+                html: Lampa.Template.get('modal_loading') 
+            });
+
+            try {
+                const videoUrl = await this.fetchVideoUrl(item.url);
+                Lampa.Player.play({
+                    title: item.title,
+                    url: videoUrl,
+                    tv: false
+                });
+            } catch (error) {
+                Lampa.Noty.show('Ошибка воспроизведения');
+            } finally {
+                Lampa.Modal.close();
+            }
+        }
+
+        async fetchVideoUrl(url) {
+            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+            const text = await response.text();
+            const $page = $(text);
+            return $page.find('script:contains("http")').text().match(/https?:\/\/[^'"]+/)[0];
         }
 
         loadImage(card, item) {
@@ -130,7 +159,6 @@
         }
     }
 
-    // Инициализация плагина
     function initPlugin() {
         Lampa.Component.add(PLUGIN_NAME, JajaCore);
         addMenuEntry();
@@ -147,10 +175,7 @@
                 </div>
                 <div class="menu__text">18+ Контент</div>
             </li>
-        `);
-
-        // Исправленный обработчик событий
-        menuItem.on('hover:enter', function(e) {
+        `).on('hover:enter', function(e) {
             e.stopPropagation();
             Lampa.Activity.push({
                 title: '18+ Контент',
@@ -163,16 +188,13 @@
             const $menu = $('.menu__list').first();
             if ($menu.length) {
                 $menu.append(menuItem);
-                console.log('[Jaja] Menu item added');
                 return true;
             }
             return false;
         };
 
         if (!tryAdd()) {
-            Lampa.Listener.follow('app', e => {
-                if (e.type === 'ready') tryAdd();
-            });
+            Lampa.Listener.follow('app', e => e.type === 'ready' && tryAdd());
         }
     }
 
@@ -203,9 +225,7 @@
     if (window.appready) {
         initPlugin();
     } else {
-        Lampa.Listener.follow('app', e => {
-            if (e.type === 'ready') initPlugin();
-        });
+        Lampa.Listener.follow('app', e => e.type === 'ready' && initPlugin());
     }
 
 })();
