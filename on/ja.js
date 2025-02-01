@@ -3,7 +3,8 @@
 
     const PLUGIN_NAME = 'jaja';
     const MENU_ITEM_ID = 'jaja-menu-item';
-    const CORS_PROXY = 'https://api.allorigins.win/get?url='; // Обновленный прокси
+    const CORS_PROXY = 'https://cors.convert2api.com/';
+    const BASE_URL = 'https://jable.tv';
 
     if (window.jajaPluginInitialized) return;
     window.jajaPluginInitialized = true;
@@ -14,7 +15,6 @@
             this.config = data;
             this.html = $('<div class="jaja-container"></div>');
             this.scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-            this.currentSite = this.detectSite();
             this.page = 1;
             this.hasMore = true;
         }
@@ -25,8 +25,8 @@
             Lampa.Controller.toggle('content');
         }
 
-        pause() {} // Добавлен обязательный метод
-        stop() {}  // Добавлен обязательный метод
+        pause() {}
+        stop() {}
 
         destroy() {
             this.scroll.destroy();
@@ -35,10 +35,6 @@
 
         create() {
             return this.html;
-        }
-
-        detectSite() {
-            return this.config.url.includes('jable') ? 'jable' : 'njav';
         }
 
         async loadContent() {
@@ -63,6 +59,10 @@
             };
         }
 
+        buildUrl() {
+            return `${BASE_URL}/latest-updates/${this.page > 1 ? `?page=${this.page}` : ''}`;
+        }
+
         async networkRequest(url) {
             return new Promise((resolve, reject) => {
                 Lampa.Reguest().native(CORS_PROXY + encodeURIComponent(url), 
@@ -75,11 +75,11 @@
         }
 
         parseItems($html) {
-            return $html.find('.video-img-box, .box-item').map((i, el) => ({
-                title: $(el).find('.title, .detail a').text().trim(),
-                image: $(el).find('img').data('src') || $(el).find('img').attr('src'),
+            return $html.find('.video-img-box').map((i, el) => ({
+                title: $(el).find('h6.title').text().trim(),
+                image: $(el).find('img').data('src'),
                 url: $(el).find('a').attr('href'),
-                duration: $(el).find('.label, .duration').text().trim()
+                duration: $(el).find('.label').text().trim()
             })).get();
         }
 
@@ -154,7 +154,7 @@
             Lampa.Activity.push({
                 title: '18+ Контент',
                 component: PLUGIN_NAME,
-                url: 'https://jable.tv/latest-updates/'
+                url: BASE_URL + '/latest-updates/'
             });
         });
 
@@ -178,6 +178,10 @@
                 bottom: 8px;
                 right: 8px;
                 font-size: 12px;
+            }
+            #${MENU_ITEM_ID} .menu__ico svg {
+                width: 24px;
+                height: 24px;
             }
         `;
         $('<style>').html(styles).appendTo('head');
