@@ -3,6 +3,7 @@
 
     const PLUGIN_NAME = 'jaja';
     const FAVORITE_KEY = 'favorite_jaja';
+    const MENU_ITEM_ID = 'jaja-menu-item';
     const CORS_PROXY = 'https://cors.eu.org/';
     const SITE_CONFIG = {
         jable: {
