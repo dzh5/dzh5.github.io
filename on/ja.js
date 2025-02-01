@@ -3,7 +3,7 @@
 
     const PLUGIN_NAME = 'jaja';
     const FAVORITE_KEY = 'favorite_jaja';
-    const MENU_ITEM_ID = 'jaja-menu-item';
+    const MENU_ITEM_ID = 'jaja-plugin-menu-item';
     const CORS_PROXY = 'https://cors.eu.org/';
     const SITE_CONFIG = {
         jable: {
@@ -365,29 +365,30 @@
         }
     }
 
-    if (window.jajaPluginInitialized) {
-        console.warn('[Jaja] Plugin already initialized!');
-        return;
-    }
+   if (window.jajaPluginInitialized) return;
     window.jajaPluginInitialized = true;
+
+    class JajaCore {
+        constructor(data) {
+            this.activity = data.activity;
+            console.log('[Jaja] Activity created');
+        }
+
+        create() {
+            console.log('[Jaja] Creating component');
+            return $('<div>Тестовый контент плагина</div>');
+        }
+    }
 
     function initPlugin() {
         console.log('[Jaja] Initializing plugin...');
-        
-        // Добавление компонента
-        Lampa.Component.add(PLUGIN_NAME, class {
-            constructor(data) {
-                console.log('[Jaja] Component created');
-            }
-        });
+
+        // Регистрация компонента
+        Lampa.Component.add(PLUGIN_NAME, JajaCore);
 
         // Добавление пункта меню
         function addMenuEntry() {
-            const menuItemExists = $(`#${MENU_ITEM_ID}`).length > 0;
-            if (menuItemExists) {
-                console.log('[Jaja] Menu item already exists');
-                return;
-            }
+            if ($(`#${MENU_ITEM_ID}`).length > 0) return;
 
             const menuItem = $(`
                 <li id="${MENU_ITEM_ID}" class="menu__item selector">
@@ -406,55 +407,37 @@
                 });
             });
 
-            function tryAddMenuItem() {
+            function tryAddToMenu() {
                 const $menu = $('.menu .menu__list:first, .menu__body .menu__list');
                 if ($menu.length) {
                     $menu.append(menuItem);
-                    console.log('[Jaja] Menu item added successfully');
+                    console.log('[Jaja] Menu item added');
                     return true;
                 }
                 return false;
             }
 
-            if (!tryAddMenuItem()) {
-                console.log('[Jaja] Menu not found, waiting...');
-                const listener = Lampa.Listener.follow('app', e => {
-                    if (e.type === 'ready' && tryAddMenuItem()) {
-                        Lampa.Listener.unfollow(listener);
-                    }
+            if (!tryAddToMenu()) {
+                Lampa.Listener.follow('app', e => {
+                    if (e.type === 'ready') tryAddToMenu();
                 });
             }
         }
 
-        // Добавление стилей
-        function addStyles() {
-            const styles = `
-                #${MENU_ITEM_ID} .menu__ico svg {
-                    width: 24px;
-                    height: 24px;
-                }
-                #${MENU_ITEM_ID} .menu__text {
-                    color: #ffffff;
-                }
-            `;
-            $('<style>').html(styles).appendTo('head');
+        // Запуск инициализации
+        if (window.appready) {
+            addMenuEntry();
+        } else {
+            Lampa.Listener.follow('app', e => {
+                if (e.type === 'ready') addMenuEntry();
+            });
         }
 
-        addMenuEntry();
-        addStyles();
-        console.log('[Jaja] Plugin initialized successfully');
+        console.log('[Jaja] Plugin initialized');
     }
 
-    // Запуск инициализации
-    if (window.appready) {
-        initPlugin();
-    } else {
-        Lampa.Listener.follow('app', e => {
-            if (e.type === 'ready') {
-                initPlugin();
-            }
-        });
-    }
+    // Старт плагина
+    initPlugin();
 
 })();
     
