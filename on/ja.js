@@ -3,7 +3,41 @@
 
     const PLUGIN_NAME = 'jaja';
     const MENU_ITEM_ID = 'jaja-menu-item';
-    const CORS_PROXY = 'https://api.codetabs.com/v1/proxy/?quest=';
+    const CORS_PROXY = 'https://corsproxy.io/?';
+    const SITES = {
+        jable: {
+            title: 'Jable.tv',
+            baseUrl: 'https://jable.tv',
+            parse: $ => {
+                return $('.grid .video-img-box').map((i, el) => {
+                    const $el = $(el);
+                    return {
+                        title: $el.find('h6.title').text(),
+                        image: $el.find('img').data('src'),
+                        url: $el.find('a').attr('href'),
+                        duration: $el.find('.label').text(),
+                        id: $el.find('a').attr('href').split('/').filter(Boolean).pop()
+                    };
+                }).get();
+            }
+        },
+        njav: {
+            title: 'NJAV.tv',
+            baseUrl: 'https://njav.tv',
+            parse: $ => {
+                return $('.box-item').map((i, el) => {
+                    const $el = $(el);
+                    return {
+                        title: $el.find('.detail a').text(),
+                        image: $el.find('img').data('src'),
+                        url: $el.find('a').attr('href'),
+                        duration: $el.find('.duration').text(),
+                        id: $el.find('img').attr('alt')
+                    };
+                }).get();
+            }
+        }
+    };
 
     if (window.jajaPluginInitialized) return;
     window.jajaPluginInitialized = true;
@@ -11,65 +45,70 @@
     class JajaCore {
         constructor(data) {
             this.activity = data.activity;
-            this.html = $('<div class="jaja-container"></div>');
             this.config = data;
-            console.log('[Jaja] Activity created');
+            this.currentSite = this.detectSite();
+            this.page = 1;
+            this.hasMore = true;
+            this.initUI();
         }
 
-        // Обязательные методы компонента
+        initUI() {
+            this.html = $('<div class="jaja-container"></div>');
+            this.scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+            this.setupControls();
+        }
+
+        detectSite() {
+            return this.config.url.includes('jable') ? 'jable' : 'njav';
+        }
+
+        // Основные методы компонента
         start() {
-            console.log('[Jaja] Component started');
             this.loadContent();
             Lampa.Controller.toggle('content');
         }
 
-        pause() {}
-
-        stop() {}
-
-        destroy() {
-            this.html.remove();
+        create() {
+            return this.html;
         }
 
-        create() {
-            console.log('[Jaja] Creating component');
-            return this.html;
+        destroy() {
+            this.scroll.destroy();
+            this.html.remove();
         }
 
         async loadContent() {
             try {
-                const content = await this.fetchData(this.config.url);
-                this.displayContent(content);
+                const { items, nextPage } = await this.fetchData();
+                this.renderItems(items);
+                this.hasMore = !!nextPage;
             } catch (error) {
-                console.error('[Jaja] Error:', error);
-                Lampa.Noty.show('Ошибка загрузки контента');
+                Lampa.Noty.show('Ошибка загрузки');
+                console.error(error);
             }
         }
 
-        async fetchData(url) {
-            const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
-                }
-            });
-            return await response.text();
+        async fetchData() {
+            const url = this.buildUrl();
+            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+            const text = await response.text();
+            const $html = $(text);
+            
+            return {
+                items: SITES[this.currentSite].parse($html),
+                nextPage: $html.find('.pagination a').last().attr('href')
+            };
         }
 
-        displayContent(data) {
-            const $html = $(data);
-            const items = [];
-            
-            $html.find('.video-img-box').each((i, el) => {
-                const $el = $(el);
-                items.push({
-                    title: $el.find('h6.title').text(),
-                    image: $el.find('img').attr('data-src'),
-                    url: $el.find('a').attr('href')
-                });
-            });
+        buildUrl() {
+            const site = SITES[this.currentSite];
+            return this.config.url || site.baseUrl + `/latest-updates/?page=${this.page}`;
+        }
 
+        renderItems(items) {
             const cards = items.map(item => this.createCard(item));
-            this.html.html('<h2>18+ Контент</h2>').append(cards);
+            this.html.append(cards);
+            this.scroll.append(this.html);
         }
 
         createCard(item) {
@@ -77,15 +116,22 @@
                 <div class="card card--collection">
                     <div class="card__img"></div>
                     <div class="card__title">${item.title}</div>
+                    <div class="card__quality">${item.duration}</div>
                 </div>
             `);
 
-            const img = card.find('.card__img')[0];
+            this.loadImage(card, item);
+            this.setupCardEvents(card, item);
+            
+            return card;
+        }
+
+        loadImage(card, item) {
+            const img = new Image();
+            img.src = item.image;
             img.onload = () => card.addClass('card--loaded');
             img.onerror = () => this.handleImageError(card, item.title);
-            img.src = item.image || './img/img_broken.svg';
-
-            return card;
+            card.find('.card__img').replaceWith(img);
         }
 
         handleImageError(card, title) {
@@ -93,7 +139,7 @@
             card.find('.card__img').css({
                 backgroundColor: color.background,
                 color: color.text
-            }).text(title);
+            }).text(title.substring(0, 2));
         }
 
         generateColor(title) {
@@ -105,15 +151,100 @@
                 text: brightness ? '#000' : '#fff'
             };
         }
+
+        setupCardEvents(card, item) {
+            card.on('hover:focus', () => this.handleFocus(card, item))
+                .on('hover:enter', () => this.playVideo(item))
+                .on('hover:long', () => this.showContextMenu(item));
+        }
+
+        async playVideo(item) {
+            Lampa.Modal.show({ title: 'Загрузка...', html: Lampa.Template.get('modal_loading') });
+            
+            try {
+                const videoUrl = await this.fetchVideoUrl(item.url);
+                Lampa.Player.play({ url: videoUrl, title: item.title });
+            } catch (error) {
+                Lampa.Noty.show('Ошибка воспроизведения');
+            }
+            
+            Lampa.Modal.close();
+        }
+
+        async fetchVideoUrl(url) {
+            const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+            const text = await response.text();
+            const $page = $(text);
+            
+            return this.currentSite === 'jable'
+                ? $page.find('script:contains("http")').text().match(/https?:\/\/[^'"]+/)[0]
+                : $page.find('iframe').attr('src');
+        }
+
+        showContextMenu(item) {
+            Lampa.Select.show({
+                title: item.title,
+                items: [
+                    { title: FavoriteManager.has(item.url) ? 'Удалить из избранного' : 'Добавить в избранное' },
+                    { title: 'Похожие видео' },
+                    { title: 'Информация' }
+                ],
+                onSelect: (_, index) => {
+                    if (index === 0) this.toggleFavorite(item);
+                    if (index === 1) this.showSimilar(item);
+                }
+            });
+        }
+
+        toggleFavorite(item) {
+            FavoriteManager.toggle(item);
+            Lampa.Noty.show(FavoriteManager.has(item.url) 
+                ? 'Добавлено в избранное' 
+                : 'Удалено из избранного'
+            );
+        }
+
+        setupControls() {
+            Lampa.Controller.add('content', {
+                toggle: () => this.scroll.toggle(),
+                up: () => Navigator.move('up'),
+                down: () => Navigator.move('down'),
+                back: () => Lampa.Activity.backward()
+            });
+        }
     }
 
+    class FavoriteManager {
+        static get() {
+            return JSON.parse(localStorage.getItem('jaja_favorites') || '[]');
+        }
+
+        static toggle(item) {
+            const favorites = this.get();
+            const index = favorites.findIndex(f => f.url === item.url);
+            
+            if (index === -1) {
+                favorites.push(item);
+            } else {
+                favorites.splice(index, 1);
+            }
+            
+            localStorage.setItem('jaja_favorites', JSON.stringify(favorites));
+        }
+
+        static has(url) {
+            return this.get().some(f => f.url === url);
+        }
+    }
+
+    // Инициализация плагина
     function initPlugin() {
-        console.log('[Jaja] Initializing plugin...');
-
-        // Регистрация компонента
         Lampa.Component.add(PLUGIN_NAME, JajaCore);
+        addMenuEntry();
+        addStyles();
+    }
 
-        // Добавление пункта меню
+    function addMenuEntry() {
         const menuItem = $(`
             <li id="${MENU_ITEM_ID}" class="menu__item selector">
                 <div class="menu__ico">
@@ -127,55 +258,42 @@
             Lampa.Activity.push({
                 title: '18+ Контент',
                 component: PLUGIN_NAME,
-                url: 'https://jable.tv/latest-updates/'
+                url: SITES.jable.baseUrl + '/latest-updates/'
             });
         });
 
-        // Добавление стилей
+        const tryAdd = () => $(document).find('.menu__list').first().append(menuItem);
+        tryAdd() || Lampa.Listener.follow('app', e => e.type === 'ready' && tryAdd());
+    }
+
+    function addStyles() {
         const styles = `
             .jaja-container {
                 padding: 20px;
-                color: white;
-            }
-            .jaja-container h2 {
-                color: #ff4757;
-                margin-bottom: 20px;
-                font-size: 1.8em;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
             }
             #${MENU_ITEM_ID} .menu__ico svg {
                 width: 24px;
                 height: 24px;
             }
+            .card--collection .card__quality {
+                background: rgba(0,0,0,0.7);
+                padding: 2px 8px;
+                border-radius: 4px;
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+            }
         `;
         $('<style>').html(styles).appendTo('head');
-
-        // Попытка добавления в меню
-        function tryAddToMenu() {
-            const $menu = $('.menu .menu__list, .menu__body .menu__list').first();
-            if ($menu.length) {
-                $menu.append(menuItem);
-                console.log('[Jaja] Menu item added');
-                return true;
-            }
-            return false;
-        }
-
-        if (!tryAddToMenu()) {
-            Lampa.Listener.follow('app', e => {
-                if (e.type === 'ready') tryAddToMenu();
-            });
-        }
-
-        console.log('[Jaja] Plugin initialized');
     }
 
-    // Запуск инициализации
     if (window.appready) {
         initPlugin();
     } else {
-        Lampa.Listener.follow('app', e => {
-            if (e.type === 'ready') initPlugin();
-        });
+        Lampa.Listener.follow('app', e => e.type === 'ready' && initPlugin());
     }
 
 })();
