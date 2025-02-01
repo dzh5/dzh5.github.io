@@ -3,7 +3,7 @@
 
     const PLUGIN_NAME = 'jaja';
     const MENU_ITEM_ID = 'jaja-menu-item';
-    const CORS_PROXY = 'https://cors.convert2api.com/';
+    const CORS_PROXY = 'https://api.allorigins.win/get?url=';
     const BASE_URL = 'https://jable.tv';
 
     if (window.jajaPluginInitialized) return;
@@ -49,7 +49,7 @@
         }
 
         async fetchData() {
-            const url = this.buildUrl();
+            const url = `${BASE_URL}/latest-updates/${this.page > 1 ? `?page=${this.page}` : ''}`;
             const response = await this.networkRequest(url);
             const $html = $(response);
             
@@ -59,14 +59,11 @@
             };
         }
 
-        buildUrl() {
-            return `${BASE_URL}/latest-updates/${this.page > 1 ? `?page=${this.page}` : ''}`;
-        }
-
         async networkRequest(url) {
             return new Promise((resolve, reject) => {
-                Lampa.Reguest().native(CORS_PROXY + encodeURIComponent(url), 
-                    data => resolve(data.contents), 
+                Lampa.Reguest().native(
+                    CORS_PROXY + encodeURIComponent(url),
+                    data => resolve(data.contents),
                     error => reject(error),
                     false,
                     { dataType: 'json' }
@@ -150,7 +147,11 @@
                 </div>
                 <div class="menu__text">18+ Контент</div>
             </li>
-        `).on('hover:enter', () => {
+        `);
+
+        // Исправленный обработчик событий
+        menuItem.on('hover:enter', function(e) {
+            e.stopPropagation();
             Lampa.Activity.push({
                 title: '18+ Контент',
                 component: PLUGIN_NAME,
@@ -158,8 +159,21 @@
             });
         });
 
-        const tryAdd = () => $('.menu__list').first().append(menuItem);
-        tryAdd() || Lampa.Listener.follow('app', e => e.type === 'ready' && tryAdd());
+        const tryAdd = () => {
+            const $menu = $('.menu__list').first();
+            if ($menu.length) {
+                $menu.append(menuItem);
+                console.log('[Jaja] Menu item added');
+                return true;
+            }
+            return false;
+        };
+
+        if (!tryAdd()) {
+            Lampa.Listener.follow('app', e => {
+                if (e.type === 'ready') tryAdd();
+            });
+        }
     }
 
     function addStyles() {
@@ -179,9 +193,8 @@
                 right: 8px;
                 font-size: 12px;
             }
-            #${MENU_ITEM_ID} .menu__ico svg {
-                width: 24px;
-                height: 24px;
+            #${MENU_ITEM_ID} {
+                order: 999;
             }
         `;
         $('<style>').html(styles).appendTo('head');
@@ -190,7 +203,9 @@
     if (window.appready) {
         initPlugin();
     } else {
-        Lampa.Listener.follow('app', e => e.type === 'ready' && initPlugin());
+        Lampa.Listener.follow('app', e => {
+            if (e.type === 'ready') initPlugin();
+        });
     }
 
 })();
