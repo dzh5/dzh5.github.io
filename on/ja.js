@@ -2,6 +2,7 @@
     'use strict';
 
     const PLUGIN_NAME = 'jaja';
+    const CORS_PROXY = 'https://cors.eu.org/';
     const MENU_ITEM_ID = 'jaja-plugin-menu-item';
 
    if (window.jajaPluginInitialized) return;
