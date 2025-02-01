@@ -19,7 +19,10 @@
             this.hasMore = true;
         }
 
-        // Обязательные методы компонента
+        create() {
+            return this.html;
+        }
+
         start() {
             this.loadContent();
             Lampa.Controller.toggle('content');
@@ -27,14 +30,10 @@
 
         pause() {}
         stop() {}
-
+        
         destroy() {
             this.scroll.destroy();
             this.html.remove();
-        }
-
-        create() {
-            return this.html;
         }
 
         async loadContent() {
