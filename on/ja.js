@@ -349,12 +349,12 @@
                         });
                         Lampa.Controller.toggle('content');
                     } else if (element.url.indexOf('123av') !== -1) {
-                        network["native"](cors + element.url.replace('/v/', '/en/v/'), function (str) {
+                        network["native"](cors + element.url.replace('/v/', '/en/dm1/v/'), function (str) {
                             var regex = /Movie\({id:\s*'(\d+)'\}\)/;
                             var match = str.contents.match(regex);
                             var id = match && match[1];
                             if (id) {
-                                network["native"](cors + 'https://123av.com/en/ajax/v/' + id + '/videos?r=' + Math.random(), function (str) {
+                                network["native"](cors + 'https://123av.com/en/dm1/v/' + id + '/videos?r=' + Math.random(), function (str) {
                                     Lampa.Modal.close();
                                     str = JSON.parse(str.contents)
                                     if (str.status == 200) {
