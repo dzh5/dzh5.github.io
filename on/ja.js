@@ -175,8 +175,59 @@
     }
 
     const catalogs = [
-        { title: "Jable.tv", ... },
-        { title: "NJAV.tv", ... }
+        {
+            title: "Jable.tv",
+            link: "https://jable.tv",
+            show: "portrait",
+            next: "search",
+            datasort: "",
+            use_referer: true,
+            datatype: "text",
+            category: [
+                { title: 'Недавно обновленное', url: 'https://jable.tv/latest-updates/?lang=en', quantity: '' },
+                { title: 'Новое', url: 'https://jable.tv/new-release/?lang=en', quantity: '' },
+                { title: 'Популярные за неделю', url: 'https://jable.tv/hot/?lang=en', quantity: '' }
+            ],
+            list: {
+                page: { selector: ".pagination" },
+                videoscontainer: { selector: "div.video-img-box", attrName: "", filter: "" },
+                title: { selector: "h6.title a", attrName: "text", filter: "" },
+                thumb: { selector: "img", attrName: "data-src", filter: "" },
+                link: { selector: "h6.title a", attrName: "href", filter: "" },
+                mnumber: { selector: "h6.title a", attrName: "href", filter: "\/([a-zA-Z0-9-]+)\/?$" },
+                m_time: { selector: ".label", attrName: "", filter: "" }
+            },
+            search: { url: 'https://jable.tv/search/?q=#msearchword&from_videos=1' }
+        },
+        {
+            title: "NJAV.tv",
+            link: "https://njav.tv",
+            show: "portrait",
+            next: "search",
+            datasort: "",
+            use_referer: true,
+            datatype: "json",
+            category: [
+                { title: 'Главная', url: 'https://njav.tv/en/', quantity: ':gt(9)' },
+                { title: 'Недавно обновленное', url: 'https://njav.tv/en/recent-update', quantity: '' },
+                { title: 'Новое', url: 'https://njav.tv/en/new-release', quantity: '' },
+                { title: 'Популярное', url: 'https://njav.tv/en/trending', quantity: '' },
+                { title: 'Рекомендуемое', url: 'https://njav.tv/en/recommended', quantity: '' },
+                { title: 'Лучшее за день', url: 'https://njav.tv/en/today-hot', quantity: '' },
+                { title: 'Лучшее за неделю', url: 'https://njav.tv/en/weekly-hot', quantity: '' },
+                { title: 'Лучшее за месяц', url: 'https://njav.tv/en/monthly-hot', quantity: '' }
+            ],
+            list: {
+                page: { selector: ".pagination" },
+                videoscontainer: { selector: "div.box-item", attrName: "", filter: "" },
+                title: { selector: ".detail a", attrName: "text", filter: "" },
+                thumb: { selector: "img", attrName: "data-src", filter: "" },
+                link: { selector: ".detail a", attrName: "href", filter: "" },
+                mnumber: { selector: "img", attrName: "alt", filter: "" },
+                m_time: { selector: ".duration", attrName: "", filter: "" }
+            },
+            search: { url: 'https://njav.tv/en/search?keyword=#msearchword' }
+        }
     ];
 
     function listNavigation(catalogsList) {
