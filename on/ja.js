@@ -2,76 +2,110 @@
     'use strict';
 
     const PLUGIN_NAME = 'jaja';
-    const CORS_PROXY = 'https://cors.eu.org/';
-    const MENU_ITEM_ID = 'jaja-plugin-menu-item';
-class JajaCore {
-    constructor(data) {
-        this.activity = data.activity;
-        this.html = $('<div class="jaja-container"></div>');
-        console.log('[Jaja] Activity created');
-    }
+    const MENU_ITEM_ID = 'jaja-menu-item';
+    const CORS_PROXY = 'https://api.codetabs.com/v1/proxy/?quest=';
 
-    // Обязательные методы для компонента Lampa
-    start() {
-        console.log('[Jaja] Component started');
-        Lampa.Controller.toggle('content');
-        this.loadContent();
-    }
-
-    pause() {}
-
-    stop() {}
-
-    destroy() {
-        this.html.remove();
-    }
-
-    create() {
-        console.log('[Jaja] Creating component');
-        return this.html;
-    }
-
-    async loadContent() {
-        try {
-            const data = await this.fetchData('https://jable.tv/latest-updates/');
-            this.displayContent(data);
-        } catch (error) {
-            Lampa.Noty.show('Ошибка загрузки контента');
-            console.error('[Jaja] Error:', error);
-        }
-    }
-
-    async fetchData(url) {
-        const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
-            }
-        });
-        return await response.text();
-    }
-
-    displayContent(data) {
-        // Обработка и отображение данных
-        this.html.html('<h2>Загруженный контент:</h2>' + data);
-    }
-}
-   if (window.jajaPluginInitialized) return;
+    if (window.jajaPluginInitialized) return;
     window.jajaPluginInitialized = true;
 
     class JajaCore {
         constructor(data) {
             this.activity = data.activity;
+            this.html = $('<div class="jaja-container"></div>');
+            this.config = data;
             console.log('[Jaja] Activity created');
+        }
+
+        // Обязательные методы компонента
+        start() {
+            console.log('[Jaja] Component started');
+            this.loadContent();
+            Lampa.Controller.toggle('content');
+        }
+
+        pause() {}
+
+        stop() {}
+
+        destroy() {
+            this.html.remove();
         }
 
         create() {
             console.log('[Jaja] Creating component');
-            return $('<div>Тестовый контент плагина</div>');
+            return this.html;
+        }
+
+        async loadContent() {
+            try {
+                const content = await this.fetchData(this.config.url);
+                this.displayContent(content);
+            } catch (error) {
+                console.error('[Jaja] Error:', error);
+                Lampa.Noty.show('Ошибка загрузки контента');
+            }
+        }
+
+        async fetchData(url) {
+            const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
+                }
+            });
+            return await response.text();
+        }
+
+        displayContent(data) {
+            const $html = $(data);
+            const items = [];
+            
+            $html.find('.video-img-box').each((i, el) => {
+                const $el = $(el);
+                items.push({
+                    title: $el.find('h6.title').text(),
+                    image: $el.find('img').attr('data-src'),
+                    url: $el.find('a').attr('href')
+                });
+            });
+
+            const cards = items.map(item => this.createCard(item));
+            this.html.html('<h2>18+ Контент</h2>').append(cards);
+        }
+
+        createCard(item) {
+            const card = $(`
+                <div class="card card--collection">
+                    <div class="card__img"></div>
+                    <div class="card__title">${item.title}</div>
+                </div>
+            `);
+
+            const img = card.find('.card__img')[0];
+            img.onload = () => card.addClass('card--loaded');
+            img.onerror = () => this.handleImageError(card, item.title);
+            img.src = item.image || './img/img_broken.svg';
+
+            return card;
+        }
+
+        handleImageError(card, title) {
+            const color = this.generateColor(title);
+            card.find('.card__img').css({
+                backgroundColor: color.background,
+                color: color.text
+            }).text(title);
+        }
+
+        generateColor(title) {
+            const hash = Lampa.Utils.hash(title);
+            const hex = (hash * 0xFFFFFF).toString(16).slice(0,6);
+            const brightness = parseInt(hex, 16) > 0xAAAAAA;
+            return {
+                background: `#${hex}`,
+                text: brightness ? '#000' : '#fff'
+            };
         }
     }
-
-    if (window.jajaPluginInitialized) return;
-    window.jajaPluginInitialized = true;
 
     function initPlugin() {
         console.log('[Jaja] Initializing plugin...');
@@ -97,6 +131,25 @@ class JajaCore {
             });
         });
 
+        // Добавление стилей
+        const styles = `
+            .jaja-container {
+                padding: 20px;
+                color: white;
+            }
+            .jaja-container h2 {
+                color: #ff4757;
+                margin-bottom: 20px;
+                font-size: 1.8em;
+            }
+            #${MENU_ITEM_ID} .menu__ico svg {
+                width: 24px;
+                height: 24px;
+            }
+        `;
+        $('<style>').html(styles).appendTo('head');
+
+        // Попытка добавления в меню
         function tryAddToMenu() {
             const $menu = $('.menu .menu__list, .menu__body .menu__list').first();
             if ($menu.length) {
@@ -116,7 +169,7 @@ class JajaCore {
         console.log('[Jaja] Plugin initialized');
     }
 
-    // Старт плагина при готовности приложения
+    // Запуск инициализации
     if (window.appready) {
         initPlugin();
     } else {
@@ -126,4 +179,3 @@ class JajaCore {
     }
 
 })();
-    
