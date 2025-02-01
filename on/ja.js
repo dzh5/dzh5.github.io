@@ -321,14 +321,34 @@
     }
 
     function startjaja() {
-        window.plugin_jaja_ready = true;
-        Lampa.Component.add('jaja', jaja);
-        const addSettingsjaja = () => {
-            const menu_item = $('<div>JaJa 18+</div>').on('hover:enter', () => listNavigation(catalogs));
-            $('.menu .menu__list').eq(0).append(menu_item);
-        };
-        window.appready ? addSettingsjaja() : Lampa.Listener.follow('app', e => e.type === 'ready' && addSettingsjaja());
+    window.plugin_jaja_ready = true;
+
+    Lampa.Component.add('jaja', jaja);
+
+    function addSettingsjaja() {
+        // Создание кнопки JaJa 18+
+        const menu_item = $('<div class="menu__item">JaJa 18+</div>'); // Добавляем класс для стилей
+        menu_item.on('hover:enter', () => { // Обработка события при наведении/кликабельности
+            listNavigation(); // Вызываем функцию навигации
+        });
+
+        // Добавляем пункт меню в первый список меню
+        $('.menu .menu__list').eq(0).append(menu_item);
     }
 
-    if (!window.plugin_jaja_ready) startjaja();
+    if (window.appready) {
+        addSettingsjaja(); // Если приложение уже загружено, сразу добавляем меню
+    } else {
+        // Ждём загрузку приложения
+        Lampa.Listener.follow('app', (e) => {
+            if (e.type === 'ready') {
+                addSettingsjaja(); // Добавляем меню после загрузки
+            }
+        });
+    }
+}
+
+if (!window.plugin_jaja_ready) {
+    startjaja();
+}
 })();
