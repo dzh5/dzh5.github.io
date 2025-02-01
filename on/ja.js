@@ -3,7 +3,7 @@
 
     const PLUGIN_NAME = 'jaja';
     const MENU_ITEM_ID = 'jaja-menu-item';
-    const CORS_PROXY = 'https://corsproxy.io/?';
+    const CORS_PROXY = 'https://api.allorigins.win/get?url=';
     const SITES = {
         jable: {
             title: 'Jable.tv',
