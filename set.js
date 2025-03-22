@@ -29,6 +29,7 @@ Lampa.Storage.set('full_btn_priority', '1329165215');
 Lampa.Storage.set('start_page', 'main');
 Lampa.Storage.set('source', 'cub');
 Lampa.Storage.set('pva_sources', 'true');
+Lampa.Storage.set('protocol', 'https');
 Lampa.Storage.set('keyboard_type', 'integrate');
 Lampa.Storage.set('pva_timeline', 'true');
 Lampa.Storage.set('nc_concert', 'true');
