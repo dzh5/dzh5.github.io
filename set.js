@@ -89,6 +89,8 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/new-cat.js'], function ()
 //Lampa.Utils.putScriptAsync(['https://bwa.to/f'], function () {});
 //Выбор парсера
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jackett.js'], function () {});
+//Поиск IMDB
+Lampa.Utils.putScriptAsync(['https://nb557.github.io/plugins/alt_search.js'], function () {});
 //Онлайн Mod
 Lampa.Utils.putScriptAsync(['https://nb557.github.io/plugins/online_mod.js'], function () {});
 //Твикер
