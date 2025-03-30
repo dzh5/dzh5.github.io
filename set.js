@@ -48,7 +48,7 @@ window.lampa_settings.read_only = false;
 // Плагины
 Lampa.Storage.set('plugins', []);
 //TMDB Proxy
-//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/tmdb-proxy.js'], function () {});
 //Источник в меню
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function () {});
 //Коллекции
