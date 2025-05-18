@@ -13,8 +13,8 @@
         var info;
         var last;
         var waitload = false; 
-        var current_total_pages = 0; 
-        var current_url_for_next_page_from_parser; // URL следующей страницы, полученный от парсера
+        var current_total_pages_from_parser = 0; 
+        var current_url_for_next_page_from_parser; 
 
         var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
@@ -26,8 +26,7 @@
             quantity: object.quantity || '', 
             setup: object.setup,
             type: object.type || 'movie', 
-            // page: 1, // activity.page будет отражать номер ЗАГРУЖЕННОЙ страницы (начинается с 1)
-                        // Инициализируется в create
+            page: 0, 
         };
         
         this.create = function () {
@@ -35,26 +34,54 @@
             this.activity.loader(true);
             waitload = true; 
 
-            activity.page = 1; // Инициализируем страницу для текущего Activity
-            current_total_pages = 0; 
+            activity.page = 0; 
+            current_total_pages_from_parser = 0; 
             current_url_for_next_page_from_parser = undefined;
 
-            var current_cors_to_use = cors; // Локальная переменная для CORS в этом запросе
+            var current_cors_to_use = cors; 
             if (object.setup && object.setup.datatype !== 'json') {
                 current_cors_to_use = '';
             }
 
             if (object.type == 'fav') {
                 var favData = _this.cardfavor(getFavoriteRadios());
-                current_total_pages = favData.total_pages;
+                current_total_pages_from_parser = favData.total_pages; 
                 current_url_for_next_page_from_parser = favData.page; 
                 _this.build(favData);
                 waitload = false;
                 this.activity.loader(false);
             } else {
-                network["native"](current_cors_to_use + object.url, function (str) {
-                    var parsedData = _this.card(str, 1); // Передаем текущий номер страницы 1
-                    current_total_pages = parsedData.total_pages;
+                var first_page_url = object.url; 
+                // Для Jable и других сайтов, где первая страница не имеет ?page=1, но последующие имеют
+                // Если в object.url уже есть page=, то используем его как есть.
+                // Иначе, для Jable, добавляем page=1 и lang=en к базовому URL категории.
+                if (first_page_url.indexOf('page=') === -1 && object.setup && object.setup.link && object.setup.link.includes('jable.tv')) { 
+                    if (first_page_url.includes('?')) {
+                        first_page_url += '&page=1';
+                    } else {
+                        first_page_url += '?page=1';
+                    }
+                     if (first_page_url.indexOf('lang=en') === -1) { // Добавляем lang=en если его нет
+                        if (first_page_url.includes('&page=1') || first_page_url.includes('?page=1')) { // Проверяем, что page=1 уже есть
+                            var parts = first_page_url.split('?');
+                            if (parts.length > 1 && parts[1].includes('page=1') && parts[1].split('&').length > 1) { // page=1 не единственный параметр
+                                first_page_url += '&lang=en';
+                            } else if (parts.length > 1 && parts[1] === 'page=1') { // page=1 единственный параметр
+                                first_page_url += '&lang=en';
+                            } else if (parts.length === 1 && !first_page_url.includes('?')){ // Если ? нет вообще
+                                 first_page_url += '?lang=en'; // Это условие маловероятно после добавления ?page=1
+                            }
+                        } else { // Если page=1 еще не добавлен (маловероятно здесь)
+                             if (first_page_url.includes('?')) first_page_url += '&lang=en'; else first_page_url += '?lang=en';
+                        }
+                     }
+                }
+
+
+                network["native"](current_cors_to_use + first_page_url, function (str) {
+                    activity.page = 1; 
+                    var parsedData = _this.card(str, 1); 
+                    current_total_pages_from_parser = parsedData.total_pages;
                     current_url_for_next_page_from_parser = parsedData.page;
                     _this.build(parsedData);
                     waitload = false; 
@@ -73,32 +100,44 @@
         this.next = function () { 
             var _this2 = this;
             
-            // Используем URL, который был получен от парсера для следующей страницы
             var url_to_request = current_url_for_next_page_from_parser;
 
-            if (!url_to_request) {
-                // Если URL от парсера нет, и мы еще не достигли общего числа страниц (если оно известно > 0)
-                // и activity.page > 0 (т.е. хотя бы одна страница загружена)
-                if (activity.page > 0 && activity.page < current_total_pages && current_total_pages > 0) {
-                    // Попытка сформировать URL для следующей страницы на основе object.url и activity.page + 1
-                    var base_url_for_paging = object.url; 
-                    var next_page_num = activity.page + 1;
-                    if (base_url_for_paging.includes('page=')) {
-                        url_to_request = base_url_for_paging.replace(/page=\d+/, 'page=' + next_page_num);
-                    } else if (base_url_for_paging.includes('?')) {
-                        url_to_request = base_url_for_paging + '&page=' + next_page_num;
-                    } else {
-                        url_to_request = base_url_for_paging + '?page=' + next_page_num;
-                    }
-                    if (url_to_request.indexOf('jable.tv') !== -1 && url_to_request.indexOf('lang=en') === -1) {
-                         if (url_to_request.includes('?')) url_to_request += '&lang=en'; else url_to_request += '?lang=en';
-                     }
+            // Если парсер не дал URL следующей страницы, пытаемся сформировать его сами
+            if (!url_to_request && (activity.page < current_total_pages_from_parser || current_total_pages_from_parser === 0) ) {
+                var next_page_num_to_try = activity.page + 1;
+                // Используем object.url как базовый для формирования, но без существующего ?page=N
+                var base_url_for_next = object.url.replace(/&?page=\d+/, '');
+                 if (base_url_for_next.endsWith('?')) { // Убираем '?' если он остался в конце
+                    base_url_for_next = base_url_for_next.slice(0, -1);
+                }
+
+                if (base_url_for_next.includes('?')) {
+                    url_to_request = base_url_for_next + '&page=' + next_page_num_to_try;
                 } else {
-                    // Lampa.Noty.show('Нет URL для следующей страницы или достигнут конец.');
-                    return; // Выходим, если нет URL и нет оснований его формировать
+                    url_to_request = base_url_for_next + '?page=' + next_page_num_to_try;
+                }
+                // Добавляем lang=en для Jable, если его нет
+                if (url_to_request.indexOf('jable.tv') !== -1 && url_to_request.indexOf('lang=en') === -1) {
+                     if (url_to_request.includes('&page=')) { 
+                         url_to_request += '&lang=en';
+                    } else if (url_to_request.includes('?page=')){ 
+                         url_to_request += '&lang=en';
+                    } else { 
+                        url_to_request += '?lang=en';
+                    }
                 }
             }
+
+
+            if (!url_to_request) {
+                return; 
+            }
             
+            if (current_total_pages_from_parser > 0 && (activity.page + 1) > current_total_pages_from_parser) {
+                return;
+            }
+
+
             if (waitload) return;
 
             waitload = true;
@@ -119,28 +158,28 @@
                 } catch (e) {/* ignore */}
             }
             
-            var requested_page_number = activity.page + 1; // Номер страницы, которую мы пытаемся загрузить
+            var loading_page_number = activity.page + 1; 
 
             network["native"](current_cors_to_use + url_to_request, function (result) {
-                var parsedData = _this2.card(result, requested_page_number); 
+                var parsedData = _this2.card(result, loading_page_number); 
                 
                 if (parsedData.card.length > 0) {
-                    activity.page = requested_page_number; 
-                    current_total_pages = parsedData.total_pages; 
+                    activity.page = loading_page_number; 
+                    current_total_pages_from_parser = parsedData.total_pages; 
                     current_url_for_next_page_from_parser = parsedData.page; 
                     _this2.append(parsedData, true);
                     waitload = false;
                 } else {
-                    Lampa.Noty.show('Больше элементов не найдено.');
+                    Lampa.Noty.show('Больше элементов не найдено на странице ' + loading_page_number + '.');
                     current_url_for_next_page_from_parser = undefined; 
-                    current_total_pages = activity.page; // Считаем текущую последней, раз ничего не пришло
+                    current_total_pages_from_parser = activity.page; 
                     waitload = true; 
                 }
                 _this2.activity.loader(false);
             }, function (a, c) {
                 if (a.status == 404) {
-                    Lampa.Noty.show('Ох, это последняя страница (404).');
-                    current_total_pages = activity.page; 
+                    Lampa.Noty.show('Страница ' + loading_page_number + ' не найдена (404). Это последняя.');
+                    current_total_pages_from_parser = activity.page; 
                     current_url_for_next_page_from_parser = undefined; 
                 } else {
                     Lampa.Noty.show(network.errorDecode(a, c));
@@ -220,13 +259,14 @@
                 page_links.each(function() { 
                     var text = $(this).text().trim();
                     if ($.isNumeric(text)) {
-                        last_page_link_num_text = text; // Берем последнее число из ссылок
+                        last_page_link_num_text = text; 
                         temp_page_numbers.push(parseInt(text,10));
                     }
                 });
+
                 if (temp_page_numbers.length > 0) {
                      total_pages_parsed = Math.max.apply(null, temp_page_numbers);
-                } else if ($.isNumeric(last_page_link_num_text)) {
+                } else if ($.isNumeric(last_page_link_num_text)) { 
                     total_pages_parsed = parseInt(last_page_link_num_text, 10);
                 } else if (current_page_element.length && !next_link_candidate.length) { 
                      var current_text = current_page_element.text().trim();
@@ -276,11 +316,10 @@
             
             return {
                 card: card_list,
-                page: next_page_url_parsed, 
+                page: next_page_url_parsed, // Возвращаем URL следующей страницы, если парсер его нашел
                 total_pages: total_pages_parsed
             };
         };
-        
         this.cardfavor = function (json) {
             var page; 
             var total_pages = 1;
@@ -341,17 +380,15 @@
                     }
                     
                     var card_width_with_margin = card_element.outerWidth(true);
-                    if (card_width_with_margin > 0) { // Защита от деления на ноль
+                    if (card_width_with_margin > 0) { 
                         var scroll_width = scroll.render().width();
                         var items_per_row = Math.max(1, Math.floor(scroll_width / card_width_with_margin));
                         var current_card_index = items.indexOf(card_element);
                         
-                        // Если это одна из последних (items_per_row * 1.5) карточек и есть куда грузить
-                        if (current_card_index >= items.length - (items_per_row * 1.5) && current_url_for_next_page_from_parser && !waitload) {
-                           _this3.next(current_url_for_next_page_from_parser);
+                        if (current_card_index >= items.length - (items_per_row * 1.5) && !waitload) {
+                           _this3.next(); 
                         }
                     }
-
 
                     if (element.img && element.img !== './img/img_broken.svg') Lampa.Background.change(cardImgBackground(element.img));
                     if (Lampa.Helper) Lampa.Helper.show('jaja_detail', 'Нажмите (ОК) для просмотра или удерживайте (ОК) для доп. опций.', card_element);
@@ -519,12 +556,12 @@
                 scroll.append(body);
                 
                 var scroll_element = scroll.render();
-                scroll_element.off('scroll.jaja_autonext'); // Сначала отписываемся, чтобы избежать дублирования
+                scroll_element.off('scroll.jaja_autonext'); 
                 scroll_element.on('scroll.jaja_autonext', function() { 
                     var element = $(this);
                     if (element[0].scrollHeight - element.scrollTop() - element.outerHeight() < 350) { 
-                         if (!waitload && current_url_for_next_page_from_parser) { 
-                            _this2.next(current_url_for_next_page_from_parser);
+                         if (!waitload) { 
+                            _this2.next(); 
                         }
                     }
                 });
@@ -579,9 +616,9 @@
             datatype: "text",    
             use_referer: true,   
             category: [
-                { title: 'Недавно обновленное', url: 'https://jable.tv/latest-updates/?lang=en', quantity: '' },
-                { title: 'Новое', url: 'https://jable.tv/new-release/?lang=en', quantity: '' },
-                { title: 'Популярные за неделю', url: 'https://jable.tv/hot/?lang=en', quantity: '' }
+                { title: 'Недавно обновленное', url: 'https://jable.tv/latest-updates/', quantity: '' },
+                { title: 'Новое', url: 'https://jable.tv/new-release/', quantity: '' },
+                { title: 'Популярные за неделю', url: 'https://jable.tv/hot/', quantity: '' }
             ],
             list: { 
                 page: { selector: ".pagination" }, 
@@ -605,18 +642,18 @@
             datatype: "text",
             use_referer: true,
             category: [ 
-                { title: 'BDSM', url: 'https://jable.tv/categories/bdsm/?lang=en' },
-                { title: 'Только секс', url: 'https://jable.tv/categories/sex-only/?lang=en' },
-                { title: 'Китайские субтитры', url: 'https://jable.tv/categories/chinese-subtitle/?lang=en' },
-                { title: 'Насилие', url: 'https://jable.tv/categories/insult/?lang=en' },
-                { title: 'Униформа', url: 'https://jable.tv/categories/uniform/?lang=en' },
-                { title: 'Ролевые игры', url: 'https://jable.tv/categories/roleplay/?lang=en' },
-                { title: 'Скрытая камера', url: 'https://jable.tv/categories/hidden-cam/?lang=en' },
-                { title: 'Без цензуры', url: 'https://jable.tv/categories/uncensored/?lang=en' },
-                { title: 'От первого лица', url: 'https://jable.tv/categories/pov/?lang=en' },
-                { title: 'Групповой секс', url: 'https://jable.tv/categories/groupsex/?lang=en' },
-                { title: 'В чулках', url: 'https://jable.tv/categories/pantyhose/?lang=en' },
-                { title: 'Лесби', url: 'https://jable.tv/categories/lesbian/?lang=en' }
+                { title: 'BDSM', url: 'https://jable.tv/categories/bdsm/' },
+                { title: 'Только секс', url: 'https://jable.tv/categories/sex-only/' },
+                { title: 'Китайские субтитры', url: 'https://jable.tv/categories/chinese-subtitle/' },
+                { title: 'Насилие', url: 'https://jable.tv/categories/insult/' },
+                { title: 'Униформа', url: 'https://jable.tv/categories/uniform/' },
+                { title: 'Ролевые игры', url: 'https://jable.tv/categories/roleplay/' },
+                { title: 'Скрытая камера', url: 'https://jable.tv/categories/hidden-cam/' },
+                { title: 'Без цензуры', url: 'https://jable.tv/categories/uncensored/' },
+                { title: 'От первого лица', url: 'https://jable.tv/categories/pov/' },
+                { title: 'Групповой секс', url: 'https://jable.tv/categories/groupsex/' },
+                { title: 'В чулках', url: 'https://jable.tv/categories/pantyhose/' },
+                { title: 'Лесби', url: 'https://jable.tv/categories/lesbian/' }
             ],
             list: catalogs[0].list, 
             search: catalogs[0].search 
@@ -630,115 +667,115 @@
             datatype: "text",
             use_referer: true,
             category: [
-                { url: 'https://jable.tv/tags/wedding-dress/?lang=en', title: '# Свадебное платье', quantity: '' },
-                { url: 'https://jable.tv/tags/swimsuit/?lang=en', title: '# Купальник', quantity: '' },
-                { url: 'https://jable.tv/tags/stockings/?lang=en', title: '# Чулки', quantity: '' },
-                { url: 'https://jable.tv/tags/sportswear/?lang=en', title: '# Спортивная одежда', quantity: '' },
-                { url: 'https://jable.tv/tags/school-uniform/?lang=en', title: '# Школьная форма', quantity: '' },
-                { url: 'https://jable.tv/tags/pantyhose/?lang=en', title: '# Колготки', quantity: '' },
-                { url: 'https://jable.tv/tags/maid/?lang=en', title: '# Служанка', quantity: '' },
-                { url: 'https://jable.tv/tags/knee-socks/?lang=en', title: '# Гольфы', quantity: '' },
-                { url: 'https://jable.tv/tags/kimono/?lang=en', title: '# Кимоно', quantity: '' },
-                { url: 'https://jable.tv/tags/kemonomimi/?lang=en', title: '# Кэмономими', quantity: '' },
-                { url: 'https://jable.tv/tags/glasses/?lang=en', title: '# Очки', quantity: '' },
-                { url: 'https://jable.tv/tags/flesh-toned-pantyhose/?lang=en', title: '# Колготки телесного цвета', quantity: '' },
-                { url: 'https://jable.tv/tags/fishnets/?lang=en', title: '# Рыболовные сети', quantity: '' },
-                { url: 'https://jable.tv/tags/cheongsam/?lang=en', title: '# Платье Чонсам', quantity: '' },
-                { url: 'https://jable.tv/tags/bunny-girl/?lang=en', title: '# Девочка-кролик', quantity: '' },
-                { url: 'https://jable.tv/tags/black-pantyhose/?lang=en', title: '# Черные колготки', quantity: '' },
-                { url: 'https://jable.tv/tags/Cosplay/?lang=en', title: '# Персонаж аниме', quantity: '' },
-                { url: 'https://jable.tv/tags/tall/?lang=en', title: '# Высокие', quantity: '' },
-                { url: 'https://jable.tv/tags/tattoo/?lang=en', title: '# Татуировка', quantity: '' },
-                { url: 'https://jable.tv/tags/suntan/?lang=en', title: '# Загар', quantity: '' },
-                { url: 'https://jable.tv/tags/small-tits/?lang=en', title: '# Маленькие сиськи', quantity: '' },
-                { url: 'https://jable.tv/tags/short-hair/?lang=en', title: '# Короткие волосы', quantity: '' },
-                { url: 'https://jable.tv/tags/mature-woman/?lang=en', title: '# Зрелая женщина', quantity: '' },
-                { url: 'https://jable.tv/tags/hairless-pussy/?lang=en', title: '# Безволосая киска', quantity: '' },
-                { url: 'https://jable.tv/tags/girl/?lang=en', title: '# Девочка', quantity: '' },
-                { url: 'https://jable.tv/tags/flexible-body/?lang=en', title: '# Гибкое тело', quantity: '' },
-                { url: 'https://jable.tv/tags/dainty/?lang=en', title: '# Изысканность', quantity: '' },
-                { url: 'https://jable.tv/tags/big-tits/?lang=en', title: '# Большие сиськи', quantity: '' },
-                { url: 'https://jable.tv/tags/beautiful-leg/?lang=en', title: '# Красивые ноги', quantity: '' },
-                { url: 'https://jable.tv/tags/beautiful-butt/?lang=en', title: '# Красивая задница', quantity: '' },
-                { url: 'https://jable.tv/tags/tit-wank/?lang=en', title: '# Между сисек', quantity: '' },
-                { url: 'https://jable.tv/tags/squirting/?lang=en', title: '# Брызги', quantity: '' },
-                { url: 'https://jable.tv/tags/spasms/?lang=en', title: '# Спазмы', quantity: '' },
-                { url: 'https://jable.tv/tags/kiss/?lang=en', title: '# Поцелуй', quantity: '' },
-                { url: 'https://jable.tv/tags/footjob/?lang=en', title: '# Дрочка ногами', quantity: '' },
-                { url: 'https://jable.tv/tags/facial/?lang=en', title: '# Уход за лицом', quantity: '' },
-                { url: 'https://jable.tv/tags/deep-throat/?lang=en', title: '# Глубокая глотка', quantity: '' },
-                { url: 'https://jable.tv/tags/cum-in-mouth/?lang=en', title: '# Кончить в рот', quantity: '' },
-                { url: 'https://jable.tv/tags/creampie/?lang=en', title: '# Кремовый пирог', quantity: '' },
-                { url: 'https://jable.tv/tags/blowjob/?lang=en', title: '# Минет', quantity: '' },
-                { url: 'https://jable.tv/tags/anal-sex/?lang=en', title: '# Анальный секс', quantity: '' },
-                { url: 'https://jable.tv/tags/tune/?lang=en', title: '# Мелодия', quantity: '' },
-                { url: 'https://jable.tv/tags/torture/?lang=en', title: '# Пытка', quantity: '' },
-                { url: 'https://jable.tv/tags/soapland/?lang=en', title: '# Мыльная страна', quantity: '' },
-                { url: 'https://jable.tv/tags/quickie/?lang=en', title: '# Быстро', quantity: '' },
-                { url: 'https://jable.tv/tags/piss/?lang=en', title: '# Писс', quantity: '' },
-                { url: 'https://jable.tv/tags/outdoor/?lang=en', title: '# На открытом воздухе', quantity: '' },
-                { url: 'https://jable.tv/tags/massage/?lang=en', title: '# Массаж', quantity: '' },
-                { url: 'https://jable.tv/tags/masochism-guy/?lang=en', title: '# Мазохистский парень', quantity: '' },
-                { url: 'https://jable.tv/tags/groupsex/?lang=en', title: '# Групповуха', quantity: '' },
-                { url: 'https://jable.tv/tags/gang-r__e/?lang=en', title: '# Банда R**e', quantity: '' },
-                { url: 'https://jable.tv/tags/crapulence/?lang=en', title: '# Похмелье', quantity: '' },
-                { url: 'https://jable.tv/tags/chizyo/?lang=en', title: '# Шлюха', quantity: '' },
-                { url: 'https://jable.tv/tags/chikan/?lang=en', title: '# Приставание', quantity: '' },
-                { url: 'https://jable.tv/tags/breast-milk/?lang=en', title: '# Грудное молоко', quantity: '' },
-                { url: 'https://jable.tv/tags/bondage/?lang=en', title: '# Бондаж', quantity: '' },
-                { url: 'https://jable.tv/tags/3p/?lang=en', title: '# 3P', quantity: '' },
-                { url: 'https://jable.tv/tags/10-times-a-day/?lang=en', title: '# 10 раз в день', quantity: '' },
-                { url: 'https://jable.tv/tags/virginity/?lang=en', title: '# Девственность', quantity: '' },
-                { url: 'https://jable.tv/tags/ugly-man/?lang=en', title: '# Уродливый человек', quantity: '' },
-                { url: 'https://jable.tv/tags/time-stop/?lang=en', title: '# Остановка времени', quantity: '' },
-                { url: 'https://jable.tv/tags/temptation/?lang=en', title: '# Искушение', quantity: '' },
-                { url: 'https://jable.tv/tags/sex-beside-husband/?lang=en', title: '# Секс рядом с мужем', quantity: '' },
-                { url: 'https://jable.tv/tags/rainy-day/?lang=en', title: '# Дождливый день', quantity: '' },
-                { url: 'https://jable.tv/tags/ntr/?lang=en', title: '# Измена', quantity: '' }, 
-                { url: 'https://jable.tv/tags/love-potion/?lang=en', title: '# Любовное зелье', quantity: '' },
-                { url: 'https://jable.tv/tags/hidden-cam/?lang=en', title: '# Утечка', quantity: '' }, 
-                { url: 'https://jable.tv/tags/incest/?lang=en', title: '# Инцест', quantity: '' }, 
-                { url: 'https://jable.tv/tags/hypnosis/?lang=en', title: '# Гипноз', quantity: '' },
-                { url: 'https://jable.tv/tags/giant/?lang=en', title: '# Гигант', quantity: '' },
-                { url: 'https://jable.tv/tags/black/?lang=en', title: '# Черный', quantity: '' },
-                { url: 'https://jable.tv/tags/avenge/?lang=en', title: '# Месть', quantity: '' },
-                { url: 'https://jable.tv/tags/age-difference/?lang=en', title: '# Разница в возрасте', quantity: '' },
-                { url: 'https://jable.tv/tags/affair/?lang=en', title: '# Обман', quantity: '' },
-                { url: 'https://jable.tv/tags/wife/?lang=en', title: '# Замужняя женщина', quantity: '' },
-                { url: 'https://jable.tv/tags/widow/?lang=en', title: '# Вдова', quantity: '' },
-                { url: 'https://jable.tv/tags/team-manager/?lang=en', title: '# Менеджер команды', quantity: '' },
-                { url: 'https://jable.tv/tags/teacher/?lang=en', title: '# Учитель', quantity: '' },
-                { url: 'https://jable.tv/tags/club-hostess-and-sex-worker/?lang=en', title: '# Секс-работница', quantity: '' },
-                { url: 'https://jable.tv/tags/private-teacher/?lang=en', title: '# Частный учитель', quantity: '' },
-                { url: 'https://jable.tv/tags/ol/?lang=en', title: '# ОЛ', quantity: '' },
-                { url: 'https://jable.tv/tags/nurse/?lang=en', title: '# Медсестра', quantity: '' }, 
-                { url: 'https://jable.tv/tags/idol/?lang=en', title: '# Идол', quantity: '' },
-                { url: 'https://jable.tv/tags/housewife/?lang=en', title: '# Домохозяйка', quantity: '' },
-                { url: 'https://jable.tv/tags/fugitive/?lang=en', title: '# Беглец', quantity: '' },
-                { url: 'https://jable.tv/tags/flight-attendant/?lang=en', title: '# Бортпроводник', quantity: '' },
-                { url: 'https://jable.tv/tags/female-anchor/?lang=en', title: '# Женщина-ведущая', quantity: '' },
-                { url: 'https://jable.tv/tags/doctor/?lang=en', title: '# Доктор', quantity: '' },
-                { url: 'https://jable.tv/tags/detective/?lang=en', title: '# Детектив', quantity: '' },
-                { url: 'https://jable.tv/tags/couple/?lang=en', title: '# Пара', quantity: '' },
-                { url: 'https://jable.tv/tags/tram/?lang=en', title: '# Трамвай', quantity: '' },
-                { url: 'https://jable.tv/tags/toilet/?lang=en', title: '# Туалет', quantity: '' },
-                { url: 'https://jable.tv/tags/swimming-pool/?lang=en', title: '# Бассейн', quantity: '' },
-                { url: 'https://jable.tv/tags/store/?lang=en', title: '# Магазин', quantity: '' },
-                { url: 'https://jable.tv/tags/school/?lang=en', title: '# Школа', quantity: '' },
-                { url: 'https://jable.tv/tags/prison/?lang=en', title: '# Тюрьма', quantity: '' },
-                { url: 'https://jable.tv/tags/magic-mirror/?lang=en', title: '# Волшебное зеркало', quantity: '' },
-                { url: 'https://jable.tv/tags/library/?lang=en', title: '# Библиотека', quantity: '' },
-                { url: 'https://jable.tv/tags/hot-spring/?lang=en', title: '# Горячий источник', quantity: '' },
-                { url: 'https://jable.tv/tags/gym-room/?lang=en', title: '# Спортзал', quantity: '' },
-                { url: 'https://jable.tv/tags/first-night/?lang=en', title: '# Первая ночь', quantity: '' },
-                { url: 'https://jable.tv/tags/car/?lang=en', title: '# Автомобиль', quantity: '' },
-                { url: 'https://jable.tv/tags/bathing-place/?lang=en', title: '# Место для купания', quantity: '' },
-                { url: 'https://jable.tv/tags/video-recording/?lang=en', title: '# Видеозапись', quantity: '' },
-                { url: 'https://jable.tv/tags/variety-show/?lang=en', title: '# Варьете (Шоу)', quantity: '' },
-                { url: 'https://jable.tv/tags/thanksgiving/?lang=en', title: '# День благодарения', quantity: '' },
-                { url: 'https://jable.tv/tags/more-than-4-hours/?lang=en', title: '# Более 4 часов', quantity: '' },
-                { url: 'https://jable.tv/tags/festival/?lang=en', title: '# Фестиваль', quantity: '' },
-                { url: 'https://jable.tv/tags/debut-retires/?lang=en', title: '# Дебют / Уходит в отставку', quantity: '' }
+                { url: 'https://jable.tv/tags/wedding-dress/', title: '# Свадебное платье', quantity: '' },
+                { url: 'https://jable.tv/tags/swimsuit/', title: '# Купальник', quantity: '' },
+                { url: 'https://jable.tv/tags/stockings/', title: '# Чулки', quantity: '' },
+                { url: 'https://jable.tv/tags/sportswear/', title: '# Спортивная одежда', quantity: '' },
+                { url: 'https://jable.tv/tags/school-uniform/', title: '# Школьная форма', quantity: '' },
+                { url: 'https://jable.tv/tags/pantyhose/', title: '# Колготки', quantity: '' },
+                { url: 'https://jable.tv/tags/maid/', title: '# Служанка', quantity: '' },
+                { url: 'https://jable.tv/tags/knee-socks/', title: '# Гольфы', quantity: '' },
+                { url: 'https://jable.tv/tags/kimono/', title: '# Кимоно', quantity: '' },
+                { url: 'https://jable.tv/tags/kemonomimi/', title: '# Кэмономими', quantity: '' },
+                { url: 'https://jable.tv/tags/glasses/', title: '# Очки', quantity: '' },
+                { url: 'https://jable.tv/tags/flesh-toned-pantyhose/', title: '# Колготки телесного цвета', quantity: '' },
+                { url: 'https://jable.tv/tags/fishnets/', title: '# Рыболовные сети', quantity: '' },
+                { url: 'https://jable.tv/tags/cheongsam/', title: '# Платье Чонсам', quantity: '' },
+                { url: 'https://jable.tv/tags/bunny-girl/', title: '# Девочка-кролик', quantity: '' },
+                { url: 'https://jable.tv/tags/black-pantyhose/', title: '# Черные колготки', quantity: '' },
+                { url: 'https://jable.tv/tags/Cosplay/', title: '# Персонаж аниме', quantity: '' },
+                { url: 'https://jable.tv/tags/tall/', title: '# Высокие', quantity: '' },
+                { url: 'https://jable.tv/tags/tattoo/', title: '# Татуировка', quantity: '' },
+                { url: 'https://jable.tv/tags/suntan/', title: '# Загар', quantity: '' },
+                { url: 'https://jable.tv/tags/small-tits/', title: '# Маленькие сиськи', quantity: '' },
+                { url: 'https://jable.tv/tags/short-hair/', title: '# Короткие волосы', quantity: '' },
+                { url: 'https://jable.tv/tags/mature-woman/', title: '# Зрелая женщина', quantity: '' },
+                { url: 'https://jable.tv/tags/hairless-pussy/', title: '# Безволосая киска', quantity: '' },
+                { url: 'https://jable.tv/tags/girl/', title: '# Девочка', quantity: '' },
+                { url: 'https://jable.tv/tags/flexible-body/', title: '# Гибкое тело', quantity: '' },
+                { url: 'https://jable.tv/tags/dainty/', title: '# Изысканность', quantity: '' },
+                { url: 'https://jable.tv/tags/big-tits/', title: '# Большие сиськи', quantity: '' },
+                { url: 'https://jable.tv/tags/beautiful-leg/', title: '# Красивые ноги', quantity: '' },
+                { url: 'https://jable.tv/tags/beautiful-butt/', title: '# Красивая задница', quantity: '' },
+                { url: 'https://jable.tv/tags/tit-wank/', title: '# Между сисек', quantity: '' },
+                { url: 'https://jable.tv/tags/squirting/', title: '# Брызги', quantity: '' },
+                { url: 'https://jable.tv/tags/spasms/', title: '# Спазмы', quantity: '' },
+                { url: 'https://jable.tv/tags/kiss/', title: '# Поцелуй', quantity: '' },
+                { url: 'https://jable.tv/tags/footjob/', title: '# Дрочка ногами', quantity: '' },
+                { url: 'https://jable.tv/tags/facial/', title: '# Уход за лицом', quantity: '' },
+                { url: 'https://jable.tv/tags/deep-throat/', title: '# Глубокая глотка', quantity: '' },
+                { url: 'https://jable.tv/tags/cum-in-mouth/', title: '# Кончить в рот', quantity: '' },
+                { url: 'https://jable.tv/tags/creampie/', title: '# Кремовый пирог', quantity: '' },
+                { url: 'https://jable.tv/tags/blowjob/', title: '# Минет', quantity: '' },
+                { url: 'https://jable.tv/tags/anal-sex/', title: '# Анальный секс', quantity: '' },
+                { url: 'https://jable.tv/tags/tune/', title: '# Мелодия', quantity: '' },
+                { url: 'https://jable.tv/tags/torture/', title: '# Пытка', quantity: '' },
+                { url: 'https://jable.tv/tags/soapland/', title: '# Мыльная страна', quantity: '' },
+                { url: 'https://jable.tv/tags/quickie/', title: '# Быстро', quantity: '' },
+                { url: 'https://jable.tv/tags/piss/', title: '# Писс', quantity: '' },
+                { url: 'https://jable.tv/tags/outdoor/', title: '# На открытом воздухе', quantity: '' },
+                { url: 'https://jable.tv/tags/massage/', title: '# Массаж', quantity: '' },
+                { url: 'https://jable.tv/tags/masochism-guy/', title: '# Мазохистский парень', quantity: '' },
+                { url: 'https://jable.tv/tags/groupsex/', title: '# Групповуха', quantity: '' },
+                { url: 'https://jable.tv/tags/gang-r__e/', title: '# Банда R**e', quantity: '' },
+                { url: 'https://jable.tv/tags/crapulence/', title: '# Похмелье', quantity: '' },
+                { url: 'https://jable.tv/tags/chizyo/', title: '# Шлюха', quantity: '' },
+                { url: 'https://jable.tv/tags/chikan/', title: '# Приставание', quantity: '' },
+                { url: 'https://jable.tv/tags/breast-milk/', title: '# Грудное молоко', quantity: '' },
+                { url: 'https://jable.tv/tags/bondage/', title: '# Бондаж', quantity: '' },
+                { url: 'https://jable.tv/tags/3p/', title: '# 3P', quantity: '' },
+                { url: 'https://jable.tv/tags/10-times-a-day/', title: '# 10 раз в день', quantity: '' },
+                { url: 'https://jable.tv/tags/virginity/', title: '# Девственность', quantity: '' },
+                { url: 'https://jable.tv/tags/ugly-man/', title: '# Уродливый человек', quantity: '' },
+                { url: 'https://jable.tv/tags/time-stop/', title: '# Остановка времени', quantity: '' },
+                { url: 'https://jable.tv/tags/temptation/', title: '# Искушение', quantity: '' },
+                { url: 'https://jable.tv/tags/sex-beside-husband/', title: '# Секс рядом с мужем', quantity: '' },
+                { url: 'https://jable.tv/tags/rainy-day/', title: '# Дождливый день', quantity: '' },
+                { url: 'https://jable.tv/tags/ntr/', title: '# Измена', quantity: '' }, 
+                { url: 'https://jable.tv/tags/love-potion/', title: '# Любовное зелье', quantity: '' },
+                { url: 'https://jable.tv/tags/hidden-cam/', title: '# Скрытая камера', quantity: '' }, // Важно: Убедитесь, что это не дублирует тег "Утечка"
+                { url: 'https://jable.tv/tags/incest/', title: '# Инцест', quantity: '' }, 
+                { url: 'https://jable.tv/tags/hypnosis/', title: '# Гипноз', quantity: '' },
+                { url: 'https://jable.tv/tags/giant/', title: '# Гигант', quantity: '' },
+                { url: 'https://jable.tv/tags/black/', title: '# Черный', quantity: '' },
+                { url: 'https://jable.tv/tags/avenge/', title: '# Месть', quantity: '' },
+                { url: 'https://jable.tv/tags/age-difference/', title: '# Разница в возрасте', quantity: '' },
+                { url: 'https://jable.tv/tags/affair/', title: '# Обман', quantity: '' },
+                { url: 'https://jable.tv/tags/wife/', title: '# Замужняя женщина', quantity: '' },
+                { url: 'https://jable.tv/tags/widow/', title: '# Вдова', quantity: '' },
+                { url: 'https://jable.tv/tags/team-manager/', title: '# Менеджер команды', quantity: '' },
+                { url: 'https://jable.tv/tags/teacher/', title: '# Учитель', quantity: '' },
+                { url: 'https://jable.tv/tags/club-hostess-and-sex-worker/', title: '# Секс-работница', quantity: '' },
+                { url: 'https://jable.tv/tags/private-teacher/', title: '# Частный учитель', quantity: '' },
+                { url: 'https://jable.tv/tags/ol/', title: '# ОЛ', quantity: '' },
+                { url: 'https://jable.tv/tags/nurse/', title: '# Медсестра', quantity: '' }, 
+                { url: 'https://jable.tv/tags/idol/', title: '# Идол', quantity: '' },
+                { url: 'https://jable.tv/tags/housewife/', title: '# Домохозяйка', quantity: '' },
+                { url: 'https://jable.tv/tags/fugitive/', title: '# Беглец', quantity: '' },
+                { url: 'https://jable.tv/tags/flight-attendant/', title: '# Бортпроводник', quantity: '' },
+                { url: 'https://jable.tv/tags/female-anchor/', title: '# Женщина-ведущая', quantity: '' },
+                { url: 'https://jable.tv/tags/doctor/', title: '# Доктор', quantity: '' },
+                { url: 'https://jable.tv/tags/detective/', title: '# Детектив', quantity: '' },
+                { url: 'https://jable.tv/tags/couple/', title: '# Пара', quantity: '' },
+                { url: 'https://jable.tv/tags/tram/', title: '# Трамвай', quantity: '' },
+                { url: 'https://jable.tv/tags/toilet/', title: '# Туалет', quantity: '' },
+                { url: 'https://jable.tv/tags/swimming-pool/', title: '# Бассейн', quantity: '' },
+                { url: 'https://jable.tv/tags/store/', title: '# Магазин', quantity: '' },
+                { url: 'https://jable.tv/tags/school/', title: '# Школа', quantity: '' },
+                { url: 'https://jable.tv/tags/prison/', title: '# Тюрьма', quantity: '' },
+                { url: 'https://jable.tv/tags/magic-mirror/', title: '# Волшебное зеркало', quantity: '' },
+                { url: 'https://jable.tv/tags/library/', title: '# Библиотека', quantity: '' },
+                { url: 'https://jable.tv/tags/hot-spring/', title: '# Горячий источник', quantity: '' },
+                { url: 'https://jable.tv/tags/gym-room/', title: '# Спортзал', quantity: '' },
+                { url: 'https://jable.tv/tags/first-night/', title: '# Первая ночь', quantity: '' },
+                { url: 'https://jable.tv/tags/car/', title: '# Автомобиль', quantity: '' },
+                { url: 'https://jable.tv/tags/bathing-place/', title: '# Место для купания', quantity: '' },
+                { url: 'https://jable.tv/tags/video-recording/', title: '# Видеозапись', quantity: '' },
+                { url: 'https://jable.tv/tags/variety-show/', title: '# Варьете (Шоу)', quantity: '' },
+                { url: 'https://jable.tv/tags/thanksgiving/', title: '# День благодарения', quantity: '' },
+                { url: 'https://jable.tv/tags/more-than-4-hours/', title: '# Более 4 часов', quantity: '' },
+                { url: 'https://jable.tv/tags/festival/', title: '# Фестиваль', quantity: '' },
+                { url: 'https://jable.tv/tags/debut-retires/', title: '# Дебют / Уходит в отставку', quantity: '' }
             ],
             list: catalogs[0].list,
             search: catalogs[0].search
