@@ -14,9 +14,8 @@
         var last;
         var waitload;
         var total_pages;
-        var cors = 'https://api.allorigins.win/get?url='; // Прокси по умолчанию
+        var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
-        // PC_UA, UA, UC_UA, IOS_UA удалены как неиспользуемые
 
         var activity = {
             url: '',
@@ -28,22 +27,12 @@
             page: 1
         };
 
-        // Логика CORS: если datatype не 'json', cors-прокси не используется.
-        // Для Jable.tv (datatype: 'text'), запросы пойдут напрямую или как их обработает Lampa.
-        // Это оригинальное поведение, оставляем его.
-        // if (Lampa.Platform.is('android')) { // Закомментировано в оригинале
-        //     cors = '';
-        // } else {
-        //     cors = 'https://cors.eu.org/';
-        // }
-
         this.create = function () {
             var _this = this;
             this.activity.loader(true);
 
-            // Установка cors в зависимости от datatype (оригинальная логика)
             var current_cors = cors;
-            if (object.setup.datatype !== 'json') { // Для Jable (text) cors будет ''
+            if (object.setup.datatype !== 'json') {
                 current_cors = '';
             }
 
@@ -56,20 +45,19 @@
                     _this.build(data);
                 }, function (a, c) {
                     Lampa.Noty.show(network.errorDecode(a, c));
-                    _this.activity.loader(false); // Остановить загрузчик при ошибке
+                    _this.activity.loader(false); 
                 }, false, {
                     dataType: object.setup.datatype,
-                    // headers: {} // User-Agent можно будет добавить сюда при необходимости
                 });
             }
             
             return this.render();
         };
 
-        this.next = function (page_url_from_card) { // Переименовал параметр для ясности
+        this.next = function (page_url_from_card) { 
             var _this2 = this;
 
-            if (total_pages === 1 || total_pages === 0) waitload = true; // Если всего одна страница или нет страниц
+            if (total_pages === 1 || total_pages === 0) waitload = true; 
             if (waitload) return;
 
             var current_cors = cors;
@@ -78,68 +66,39 @@
             }
 
             waitload = true;
-            object.page++; // Увеличиваем номер текущей страницы в activity
+            object.page++; 
             
             network.clear();
             network.timeout(1000 * 40);
 
             if (typeof page_url_from_card == 'undefined' || page_url_from_card.indexOf('undefined') != -1) {
-                // Если URL следующей страницы не был предоставлен (например, из this.card),
-                // и если это конец, то не делаем ничего.
-                // Эта ситуация маловероятна, если `total_pages` корректно обрабатывается.
-                waitload = false; // Разблокируем, если нет URL
-                // Lampa.Noty.show('Не удалось определить URL следующей страницы.'); // Можно добавить уведомление
+                waitload = false; 
                 return;
             }
             
-            // Логика формирования URL следующей страницы (оригинальная, может потребовать настройки для Jable)
-            // Эта логика может быть упрощена, если Jable всегда предоставляет полный URL следующей страницы.
-            // Пока оставляем, как было, для совместимости, но это кандидат на ревизию.
             var next_page_url_to_fetch = page_url_from_card;
-            if (page_url_from_card.indexOf('before=') === -1) { // Если не специфичный URL пагинации
-                var regex = /page=(\d+)/; // Поиск ?page=N
+            if (page_url_from_card.indexOf('before=') === -1) { 
+                var regex = /page=(\d+)/; 
                 var match = page_url_from_card.match(regex);
                 if (match) {
-                    // Если есть page=N, пытаемся инкрементировать. 
-                    // ВАЖНО: object.page уже инкрементирован выше, нужно решить, какой использовать.
-                    // Используем object.page как более надежный счетчик страниц, полученных плагином.
                     next_page_url_to_fetch = page_url_from_card.replace('page=' + match[1], 'page=' + object.page);
                 } else {
-                    // Если нет page=N, пытаемся добавить номер страницы в конец URL
-                    // /[0-9]+(?=[^0-9]*$)(.*)/ - ищет последнее число в строке
-                    var num_match = page_url_from_card.match(/[0-9]+(?=[^0-9]*$)/); // Только число
-                    var suffix_match = page_url_from_card.match(/[^0-9]*$/); // Все не-цифры в конце
+                    var num_match = page_url_from_card.match(/[0-9]+(?=[^0-9]*$)/); 
+                    var suffix_match = page_url_from_card.match(/[^0-9]*$/); 
                     var suffix = suffix_match ? suffix_match[0] : '';
 
                     if (num_match) {
                         var base_url_part = page_url_from_card.substring(0, page_url_from_card.lastIndexOf(num_match[0]));
                         next_page_url_to_fetch = base_url_part + object.page + suffix;
                     } else {
-                         // Если число не найдено, возможно, пагинация работает по-другому
-                         // Для Jable.tv может быть `/?page=2` или `/page/2/`
-                         // Попробуем добавить `?page=` если его нет, или другую логику на основе object.setup
                          if (page_url_from_card.includes('?')) {
                             next_page_url_to_fetch = page_url_from_card + '&page=' + object.page;
                          } else {
                             next_page_url_to_fetch = page_url_from_card + '?page=' + object.page;
                          }
-                         // Для Jable: `https://jable.tv/latest-updates/?page=2&lang=en`
-                         // Так что добавление `?page=` или `&page=` может быть правильным.
-                         // Оригинальная логика с lang=en:
-                         // page = page.replace(page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[0], '') + object.page + (page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[1] ? page.match(/[0-9]+(?=[^0-9]*$)(.*)/)[1] : '') + '?lang=en';
-                         // Эта логика кажется слишком сложной и хрупкой.
-                         // Упростим: если URL следующей страницы получен от парсера, он должен быть полным.
-                         // Если мы его конструируем, то используем object.page.
-                         // Для Jable.tv '?lang=en' часто присутствует.
-                         // Если page_url_from_card - это, например, "https://jable.tv/latest-updates/",
-                         // то next_page_url_to_fetch станет "https://jable.tv/latest-updates/?page=X"
-                         // Если "https://jable.tv/latest-updates/?lang=en", то "https://jable.tv/latest-updates/?lang=en&page=X"
-                         // Если `page_url_from_card` уже содержит `page=`, то он был обработан выше.
                     }
                 }
             }
-            // Добавим ?lang=en если его нет и это Jable (часто требуется)
-            // Лучше, если сам парсер возвращает полный корректный URL следующей страницы
             if (next_page_url_to_fetch.indexOf('jable.tv') !== -1 && next_page_url_to_fetch.indexOf('lang=en') === -1) {
                 if (next_page_url_to_fetch.includes('?')) {
                     next_page_url_to_fetch += '&lang=en';
@@ -147,7 +106,6 @@
                     next_page_url_to_fetch += '?lang=en';
                 }
             }
-
 
             var headers = { 'User-Agent': MOBILE_UA };
             if (object.setup.use_referer && object.url) {
@@ -162,8 +120,6 @@
                 if (data.card.length) {
                     waitload = false;
                 } else {
-                    // Если карточек нет, возможно, это действительно последняя страница
-                    // total_pages мог быть неточным
                     Lampa.Noty.show('Больше элементов не найдено.');
                 }
                 _this2.activity.loader(false);
@@ -174,7 +130,7 @@
                     Lampa.Noty.show(network.errorDecode(a, c));
                 }
                 _this2.activity.loader(false);
-                waitload = false; // Разблокируем загрузку в случае ошибки, чтобы можно было попробовать еще раз или если это не 404.
+                waitload = false; 
             }, false, {
                 dataType: object.setup.datatype,
                 headers: headers
@@ -183,97 +139,81 @@
 
         this.card = function (str) {
             var card = [];
-            var next_page_url_from_parser; // URL следующей страницы, как его вернул парсер
+            var next_page_url_from_parser; 
 
-            var current_setup = object.setup; // Используем object.setup напрямую
+            var current_setup = object.setup; 
 
-            if (current_setup.datatype == 'json' && typeof str === 'string') { // allorigins.win для JSON возвращает строку
+            if (current_setup.datatype == 'json' && typeof str === 'string') { 
                 try {
                     str = JSON.parse(str);
-                    if (str.contents) str = str.contents; // Если JSON обернут в contents (как от allorigins)
-                     else { // Если это уже валидный JSON ответа
-                        // Ничего не делаем, str уже объект
+                    if (str.contents) str = str.contents; 
+                     else { 
                     }
                 } catch (e) {
                     Lampa.Noty.show('Ошибка парсинга JSON ответа');
                     return { card: [], page: undefined, total_pages: total_pages || 0 };
                 }
             }
-            if (typeof str === 'object' && current_setup.datatype == 'json' && str.contents) { // Если allorigins вернул объект с contents
+            if (typeof str === 'object' && current_setup.datatype == 'json' && str.contents) { 
                  str = str.contents;
-                 try { str = JSON.parse(str); } catch(e){} // Если contents это строка JSON
+                 try { str = JSON.parse(str); } catch(e){} 
             }
 
-
-            // Для HTML (text) ответа, который может быть обернут allorigins
             if (current_setup.datatype == 'text' && typeof str === 'object' && str.contents) {
-                str = str.contents; // Получаем HTML из объекта allorigins
+                str = str.contents; 
             }
-            str = str.replace(/\n/g, ''); // Удаляем переносы строк для HTML
+            str = str.replace(/\n/g, ''); 
 
             var v = current_setup.list.videoscontainer.selector;
             var t = current_setup.list.title.selector;
             var th = current_setup.list.thumb.selector;
             var l = current_setup.list.link.selector;
-            var p = current_setup.list.page.selector; // Селектор для пагинации
+            var p = current_setup.list.page.selector; 
             var m = current_setup.list.mnumber.selector;
 
-            // Определение базового URL для относительных ссылок
-            var base_url = current_setup.link; // Например, "https://jable.tv"
+            var base_url = current_setup.link; 
 
-            // Пагинация
-            // total_pages и next_page_url_from_parser определяются здесь
             var pagination_elements = $(p, str);
             if (pagination_elements.length > 0) {
-                // Пытаемся найти ссылку на последнюю страницу или просто количество ссылок
                 var last_page_link = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])').last();
                 var all_page_links = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])');
                 
                 if (last_page_link.length) {
                     next_page_url_from_parser = last_page_link.attr('href');
-                     // total_pages может быть определен по тексту последней ссылки или по их количеству
                     var last_page_text = last_page_link.text().trim();
                     if ($.isNumeric(last_page_text)) {
                         total_pages = parseInt(last_page_text, 10);
                     } else {
-                        total_pages = all_page_links.length; // Приблизительно
-                         // Если есть активный элемент, можно посчитать страницы до и после него
+                        total_pages = all_page_links.length; 
                         var active_page_elem = pagination_elements.find('.active, .current, .selected').first();
                         if (active_page_elem.length) {
                             var current_page_num_text = active_page_elem.text().trim();
                             if ($.isNumeric(current_page_num_text)) {
-                                object.page = parseInt(current_page_num_text, 10); // Обновляем текущую страницу из пагинации
+                                object.page = parseInt(current_page_num_text, 10); 
                             }
                         }
                     }
-                } else if (pagination_elements.is('a') && pagination_elements.attr('href')) { // Если сам селектор p это ссылка
+                } else if (pagination_elements.is('a') && pagination_elements.attr('href')) { 
                     next_page_url_from_parser = pagination_elements.attr('href');
-                    total_pages = pagination_elements.length > 1 ? pagination_elements.length : 2; // Если одна ссылка "далее", то как минимум 2 стр.
+                    total_pages = pagination_elements.length > 1 ? pagination_elements.length : 2; 
                 } else {
-                    // Если пагинации нет или не найдена по селектору
-                    total_pages = 1; // Предполагаем, что это единственная страница
+                    total_pages = 1; 
                 }
 
                 if (next_page_url_from_parser && next_page_url_from_parser.indexOf('http') === -1) {
                     next_page_url_from_parser = base_url + (next_page_url_from_parser.startsWith('/') ? next_page_url_from_parser : '/' + next_page_url_from_parser);
                 }
-                if (next_page_url_from_parser && next_page_url_from_parser.indexOf('#') !== -1) { // Ссылки-якоря не для пагинации
+                if (next_page_url_from_parser && next_page_url_from_parser.indexOf('#') !== -1) { 
                     next_page_url_from_parser = undefined; 
                 }
 
             } else {
-                // Если блок пагинации не найден
                 total_pages = 1;
             }
-            // Если URL следующей страницы не был найден, но есть еще страницы по счетчику
             if (!next_page_url_from_parser && object.page < total_pages) {
-                // Пытаемся сконструировать на основе текущего object.url и object.page + 1
-                // Это делается в this.next, если next_page_url_from_parser не передан.
-                // Здесь мы передаем текущий URL, чтобы this.next его обработал.
                 next_page_url_from_parser = object.url; 
             } else if (!next_page_url_from_parser && object.page >= total_pages) {
-                // Если нет URL и мы на последней (или за последней) странице
-                next_page_url_from_parser = undefined; // Явно указываем, что следующей страницы нет
+                next_page_url_from_parser = undefined; 
             }
 
 
@@ -285,20 +225,18 @@
                 
                 var tt, uu, ii, mm;
 
-                // Title
                 switch (current_setup.list.title.attrName) {
                     case 'text': tt = t1.text(); break;
                     case 'html': tt = t1.html(); break;
                     default: tt = t1.attr(current_setup.list.title.attrName);
                 }
-                if (typeof tt === 'undefined') return true; // continue .each
+                if (typeof tt === 'undefined') return true; 
                 tt = tt.trim();
                 if (current_setup.list.title.filter) {
                     var title_match = tt.match(new RegExp(current_setup.list.title.filter));
                     tt = title_match ? (title_match[1] || title_match[0]) : tt;
                 }
 
-                // Link
                 switch (current_setup.list.link.attrName) {
                     case 'text': uu = u1.text(); break;
                     case 'html': uu = u1.html(); break;
@@ -313,7 +251,6 @@
                     uu = link_match ? (link_match[1] || link_match[0]) : uu;
                 }
 
-                // Thumb
                 switch (current_setup.list.thumb.attrName) {
                     case 'text': ii = i1.text(); break;
                     case 'html': ii = i1.html(); break;
@@ -327,9 +264,8 @@
                     var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter));
                     ii = thumb_match ? (thumb_match[1] || thumb_match[0]) : ii;
                 }
-                if (!ii) ii = './img/img_broken.svg'; // Fallback
+                if (!ii) ii = './img/img_broken.svg'; 
 
-                // mnumber (episodes_info)
                 switch (current_setup.list.mnumber.attrName) {
                     case 'text': mm = m1.text(); break;
                     case 'html': mm = m1.html(); break;
@@ -343,27 +279,27 @@
                 
                 card.push({
                     title: tt,
-                    original_title: '', // Можно добавить парсинг, если есть
+                    original_title: '', 
                     url: uu,
                     img: ii,
-                    quantity: '', // Можно добавить парсинг, если есть (например, просмотры, качество)
-                    year: '', // Можно добавить парсинг
+                    quantity: '', 
+                    year: '', 
                     rate: $(current_setup.list.m_time.selector, html_item).text().trim().replace(/\n/g, '').replace(/\S+\s+/g, ''),
                     episodes_info: mm.toUpperCase(),
-                    update: '', // Можно добавить парсинг (например, дата обновления)
-                    score: '', // Можно добавить парсинг (рейтинг)
+                    update: '', 
+                    score: '', 
                 });
             });
             
             return {
                 card: card,
-                page: next_page_url_from_parser, // Передаем URL следующей страницы для this.next
+                page: next_page_url_from_parser, 
                 total_pages: total_pages
             };
         };
 
         this.cardfavor = function (json) {
-            var page; // undefined
+            var page; 
             var total_pages = 1;
             
             var site_favorites = json.filter(function (fp) {
@@ -397,7 +333,7 @@
                         g = parseInt(hex.slice(2, 4), 16),
                         b = parseInt(hex.slice(4, 6), 16);
                     var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                    card.find('.card__img').replaceWith('<div class="card__img">' + Lampa.Utils.subText(element.title, 50) + '</div>'); // Используем Lampa.Utils.subText
+                    card.find('.card__img').replaceWith('<div class="card__img">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
                     card.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText });
                     card.addClass('card--loaded');
                 };
@@ -407,31 +343,30 @@
                     card.find('.card__view').append('<div class="card__type"></div>');
                     card.find('.card__type').text(element.rate);
                 }
-                if (element.quantity) { // Если есть поле quantity (например, качество HD, SD)
+                if (element.quantity) { 
                     card.find('.card__icons-inner').text(element.quantity).css({ 'padding': '0.4em 0.4em' });
                 }
-                if (element.update) { // Если есть поле update (например, "Обновлено: Сегодня")
+                if (element.update) { 
                     card.find('.card__view').append('<div class="card__quality"></div>');
                     card.find('.card__quality').text(element.update);
                 }
-                // episodes_info отображается в info блоке при фокусе
 
                 card.on('hover:focus', function () {
                     last = card[0];
                     scroll.update(card, true);
-                    info.find('.info__title').text(element.episodes_info || element.title); // episodes_info или title если первое пустое
+                    info.find('.info__title').text(element.episodes_info || element.title); 
                     info.find('.info__title-original').text(element.original_title || '');
                     info.find('.info__rate span').text(element.rate || '');
-                    info.find('.info__create').text(element.year || ''); // Отображаем год здесь
+                    info.find('.info__create').text(element.year || ''); 
                     info.find('.info__rate').toggleClass('hide', !(element.rate));
                     
-                    var max_row_index = Math.ceil(items.length / scroll.render().find('.card').width() === 0 ? 7 : Math.floor(scroll.render().width() / (card.width() + parseInt(card.css('margin-right'))))) -1; // Приблизительный расчет колонок
+                    var max_row_index = Math.ceil(items.length / scroll.render().find('.card').width() === 0 ? 7 : Math.floor(scroll.render().width() / (card.width() + parseInt(card.css('margin-right'))))) -1; 
                     var current_item_index = items.indexOf(card);
                     var items_per_row_approx = Math.floor(scroll.render().width() / (card.width() + parseInt(card.css('margin-right'), 10) * 2));
-                    if (items_per_row_approx <= 0) items_per_row_approx = 1; // Защита от деления на ноль или отрицательного
+                    if (items_per_row_approx <= 0) items_per_row_approx = 1; 
 
                     if (current_item_index >= 0 && Math.ceil((current_item_index + 1) / items_per_row_approx) >= max_row_index) {
-                         if (data.page) _this3.next(data.page); // data.page это URL следующей страницы
+                         if (data.page) _this3.next(data.page); 
                     }
 
                     if (element.img && element.img !== './img/img_broken.svg') Lampa.Background.change(cardImgBackground(element.img));
@@ -440,7 +375,6 @@
                 
                 card.on('hover:enter', function () {
                     last = card[0];
-                    // Логика для Jable.tv (единственный оставшийся источник)
                     if (element.url.indexOf('jable.tv') !== -1) {
                         Lampa.Modal.open({
                             title: '',
@@ -455,7 +389,7 @@
                         network["native"](detail_cors + element.url, function (str_detail) {
                             Lampa.Modal.close();
                             if (object.setup.datatype === 'text' && typeof str_detail === 'object' && str_detail.contents) {
-                                str_detail = str_detail.contents; // для allorigins
+                                str_detail = str_detail.contents; 
                             }
                             
                             var v = str_detail.replace(/\n|\r/g, '').replace(/\\/g, '').match(/https?:\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|](.mp4|.m3u8)/);
@@ -471,7 +405,7 @@
                             Lampa.Modal.close();
                             Lampa.Noty.show(network.errorDecode(a, c));
                         }, false, {
-                            dataType: object.setup.datatype // Должен быть 'text' для Jable
+                            dataType: object.setup.datatype 
                         });
                     } else {
                         Lampa.Noty.show("Действие для этого типа ссылки не определено.");
@@ -479,7 +413,6 @@
                 });
 
                 card.on('hover:long', function () {
-                     // Логика для Jable.tv
                     if (element.url.indexOf('jable.tv') !== -1) {
                         Lampa.Modal.open({
                             title: '',
@@ -500,19 +433,17 @@
                             var favtext = isFavorite(element.url) ? 'Удалить из коллекции' : 'Добавить в коллекцию';
                             archiveMenu.push({ title: favtext, url: '', type: 'fav' });
                             
-                            // Поиск связанных видео по коду (episodes_info)
                             if (element.episodes_info && element.episodes_info.trim() !== '') {
                                 var video_code = element.episodes_info.split('-')[0].trim();
                                 if (video_code) {
                                      archiveMenu.push({
                                         title: video_code + ' - Все видео (поиск)',
-                                        url: 'https://jable.tv/search/?q='+encodeURIComponent(video_code)+'&from_videos=1', // URL поиска Jable
+                                        url: 'https://jable.tv/search/?q='+encodeURIComponent(video_code)+'&from_videos=1', 
                                         type: 'list'
                                     });
                                 }
                             }
                            
-                            // Поиск связанных видео по моделям (актрисам)
                             $('.models a.model', str_detail).each(function (i, html_link) {
                                 var model_name = $('.placeholder,img', html_link).attr('title') || $(html_link).text().trim();
                                 var model_url = $(html_link).attr('href');
@@ -530,7 +461,7 @@
                                 title: 'Связанный контент',
                                 items: archiveMenu,
                                 onSelect: function (sel) {
-                                    element.website = object.setup.title; // Jable.tv
+                                    element.website = object.setup.title; 
                                     if (sel.type === 'fav') {
                                         var notify_text = '';
                                         if (isFavorite(element.url)) {
@@ -541,7 +472,7 @@
                                             notify_text = 'Добавлено в коллекцию';
                                         }
                                         if (object.type === 'fav') {
-                                            Lampa.Activity.replace(activity); // Обновить список избранного
+                                            Lampa.Activity.replace(activity); 
                                         } else {
                                             Lampa.Noty.show(notify_text);
                                             Lampa.Controller.toggle('content');
@@ -549,10 +480,10 @@
                                     } else if (sel.type === 'list') {
                                         Lampa.Activity.push({
                                             url: sel.url,
-                                            title: object.setup.title + ' - ' + sel.title.replace(' - Все видео','').replace(' (поиск)',''), // Укороченный заголовок
+                                            title: object.setup.title + ' - ' + sel.title.replace(' - Все видео','').replace(' (поиск)',''), 
                                             component: 'jaja',
-                                            quantity: '', // Для списков обычно не нужен особый фильтр количества
-                                            setup: object.setup, // Используем ту же конфигурацию Jable
+                                            quantity: '', 
+                                            setup: object.setup, 
                                             page: 1
                                         });
                                     }
@@ -576,7 +507,6 @@
 
         this.build = function (data) {
             var _this2 = this;
-            // Кнопки: Сортировать (основные категории), Категории (жанры), Теги, Источник (сейчас только Jable), Коллекция, Поиск
             var viewsort = '<div class="full-start__button selector view--sort"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Сортировать</span></div>';
             var viewcategory = '<div class="full-start__button selector view--category"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Категории</span></div>';
             var viewtags = '<div class="full-start__button selector view--tags"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Теги</span></div>';
@@ -592,17 +522,17 @@
             info.find('#web_filtr_jaja').append(btn_panel);
 
             info.find('.view--channel').on('hover:enter hover:click', function () { _this2.selectGroup(); });
-            info.find('.view--sort').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs[0], "Сортировка"); }); // catalogs[0] это Jable.tv
-            info.find('.view--category').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs2[0], "Категории"); }); // catalogs2[0] это категории Jable.tv
-            info.find('.view--tags').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs3[0], "Теги"); }); // catalogs3[0] это теги Jable.tv
+            info.find('.view--sort').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs[0], "Сортировка"); }); 
+            info.find('.view--category').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs2[0], "Категории"); }); 
+            info.find('.view--tags').on('hover:enter hover:click', function () { showSourceCategorySelection(catalogs3[0], "Теги"); }); 
             
             info.find('.open--favorite').on('hover:enter hover:click', function () {
                 Lampa.Activity.push({
                     url: '',
-                    title: object.setup.title + ' - Коллекция', // object.setup.title будет "Jable.tv"
+                    title: object.setup.title + ' - Коллекция', 
                     component: 'jaja',
                     quantity: '',
-                    setup: object.setup, // Передаем текущую конфигурацию источника (Jable.tv)
+                    setup: object.setup, 
                     type: 'fav',
                     page: 1
                 });
@@ -629,24 +559,18 @@
             });
 
             this.selectGroup = function () {
-                // Так как остался только Jable.tv, выбор источника упрощается.
-                // Можно просто перезагрузить текущий источник или показать информацию.
-                // Для совместимости оставим Lampa.Select, но он покажет только Jable.tv.
-                var currentSourceConfig = catalogs[0]; // Jable.tv - единственный источник в catalogs
+                var currentSourceConfig = catalogs[0]; 
                  Lampa.Select.show({
                     title: 'Источник',
-                    items: [ // Массив из одного элемента
+                    items: [ 
                         {
                             title: currentSourceConfig.title,
-                            selected: true, // Он всегда выбран
-                            // Дополнительные поля, если нужны для Select
+                            selected: true, 
                             category: currentSourceConfig.category, 
                             config: currentSourceConfig
                         }
                     ],
                     onSelect: function onSelect(a) {
-                        // a.config содержит currentSourceConfig
-                        // Можно перейти на первую категорию этого источника
                         Lampa.Activity.push({
                             url: a.config.category[0].url,
                             title: a.config.title + ' - ' + a.config.category[0].title,
@@ -665,47 +589,46 @@
                 html.append(info);
                 scroll.minus();
                 html.append(scroll.render());
-                this.append(data); // data содержит {card, page, total_pages}
+                this.append(data); 
                 scroll.append(body);
                 this.activity.loader(false);
                 this.activity.toggle();
-                 // Устанавливаем начальное значение total_pages, если оно пришло
                 if (data.total_pages !== undefined) {
                     total_pages = data.total_pages;
                 }
             } else {
-                html.append(scroll.render()); // Добавляем скролл даже если пусто
-                _this2.empty(); // Показать сообщение "пусто"
+                html.append(scroll.render()); 
+                _this2.empty(); 
             }
         };
 
         this.empty = function () {
             var empty = new Lampa.Empty();
-            scroll.append(empty.render()); // Добавляем в scroll, а не в html напрямую
-            this.start = empty.start; // Для возможности запуска извне, если нужно
+            scroll.append(empty.render()); 
+            this.start = empty.start; 
             this.activity.loader(false);
             this.activity.toggle();
         };
 
-        var FAVORITE_RADIOS_KEY = 'favorite_jaja'; // Ключ для localStorage
+        // ***** ИСПРАВЛЕННЫЕ ФУНКЦИИ РАБОТЫ С ИЗБРАННЫМ *****
+        var FAVORITE_RADIOS_KEY = 'favorite_jaja'; 
 
         function getFavoriteRadios() {
-            return Lampa.Storage.getJSON(FAVORITE_RADIOS_KEY, []); // Используем Lampa.Storage
+            var favorites = localStorage.getItem(FAVORITE_RADIOS_KEY);
+            return favorites ? JSON.parse(favorites) : [];
         }
 
         function saveFavoriteRadio(el) {
             var favoriteRadios = getFavoriteRadios();
-            if (!favoriteRadios.find(function(r) { return r.url === el.url; })) { // Предотвращаем дубликаты
+            if (!favoriteRadios.find(function(r) { return r.url === el.url; })) { 
                 favoriteRadios.push(el);
-                Lampa.Storage.setJSON(FAVORITE_RADIOS_KEY, favoriteRadios);
+                localStorage.setItem(FAVORITE_RADIOS_KEY, JSON.stringify(favoriteRadios));
             }
         }
 
-        // removeFavoriteRadio(index) удалена, т.к. removeFavorite(el) удобнее
-
         function removeFavorite(el_to_remove) {
             var updatedHistory = getFavoriteRadios().filter(function (obj) { return obj.url !== el_to_remove.url; });
-            Lampa.Storage.setJSON(FAVORITE_RADIOS_KEY, updatedHistory);
+            localStorage.setItem(FAVORITE_RADIOS_KEY, JSON.stringify(updatedHistory));
         }
 
         function isFavorite(url_to_check) {
@@ -713,10 +636,12 @@
                 return a.url === url_to_check;
             });
         }
+        // ***** КОНЕЦ ИСПРАВЛЕННЫХ ФУНКЦИЙ *****
+
 
         function cardImgBackground(card_img_url) {
             if (Lampa.Storage.field('background')) {
-                return Lampa.Storage.get('background_type', 'complex') === 'poster' && card_img_url ? card_img_url : card_img_url; // Оригинальная логика, может быть упрощена
+                return Lampa.Storage.get('background_type', 'complex') === 'poster' && card_img_url ? card_img_url : card_img_url; 
             }
             return '';
         }
@@ -735,28 +660,27 @@
                 },
                 right: function () {
                     if (Navigator.canmove('right')) Navigator.move('right');
-                    else _this.selectGroup(); // Кнопка "Источник" или другая логика при достижении края
+                    else _this.selectGroup(); 
                 },
                 up: function () {
                     if (Navigator.canmove('up')) {
                         Navigator.move('up');
                     } else {
-                        if (info && info.find('.selector').length > 0) { // Если есть кнопки в info-панели
-                             // Проверяем, есть ли кнопки во фокусе, и если да, то не переходим на head
+                        if (info && info.find('.selector').length > 0) { 
                             var focused_button_in_info = info.find('.selector.focus');
-                            if (focused_button_in_info.length === 0) { // Если кнопки не в фокусе
-                                Lampa.Controller.collectionSet(info); // Устанавливаем фокус на панель кнопок
-                                Navigator.move('right'); // или 'left' чтобы сфокусироваться на первой кнопке
+                            if (focused_button_in_info.length === 0) { 
+                                Lampa.Controller.collectionSet(info); 
+                                Navigator.move('right'); 
                             } else {
-                                Lampa.Controller.toggle('head'); // Если уже на кнопках, то наверх
+                                Lampa.Controller.toggle('head'); 
                             }
                         } else Lampa.Controller.toggle('head');
                     }
                 },
                 down: function () {
                     if (Navigator.canmove('down')) Navigator.move('down');
-                    else if (info && info.find('.selector.focus').length > 0) { // Если фокус на кнопках в info
-                         Lampa.Controller.collectionSet(scroll.render()); // Переводим фокус на карточки
+                    else if (info && info.find('.selector.focus').length > 0) { 
+                         Lampa.Controller.collectionSet(scroll.render()); 
                          Lampa.Controller.collectionFocus(last || false, scroll.render());
                     }
                 },
@@ -776,51 +700,45 @@
             if (info) info.remove();
             html.remove();
             body.remove();
-            // Обнуляем переменные
             network = null; items = null; html = null; body = null; info = null; last = null;
-            Lampa.Template.remove('button_category_jaja'); // Удаляем добавленные шаблоны
+            Lampa.Template.remove('button_category_jaja'); 
             Lampa.Template.remove('info_web_jaja');
         };
     }
 
-    // ***** КОНФИГУРАЦИЯ ИСТОЧНИКОВ *****
-
-    // Основные категории (Сортировка) - теперь только Jable.tv
     var catalogs = [
         {
             title: "Jable.tv",
-            link: "https://jable.tv", // Базовый URL сайта
-            datatype: "text",    // Тип ответа (text для HTML, json для JSON)
-            use_referer: true,   // Использовать ли Referer
+            link: "https://jable.tv", 
+            datatype: "text",    
+            use_referer: true,   
             category: [
                 { title: 'Недавно обновленное', url: 'https://jable.tv/latest-updates/?lang=en', quantity: '' },
                 { title: 'Новое', url: 'https://jable.tv/new-release/?lang=en', quantity: '' },
                 { title: 'Популярные за неделю', url: 'https://jable.tv/hot/?lang=en', quantity: '' }
             ],
-            list: { // Селекторы для списка элементов
-                page: { selector: ".pagination" }, // Селектор блока пагинации
+            list: { 
+                page: { selector: ".pagination" }, 
                 videoscontainer: { selector: "div.video-img-box" },
                 title: { selector: "h6.title a", attrName: "text" },
-                thumb: { selector: "img", attrName: "data-src" }, // data-src или src
+                thumb: { selector: "img", attrName: "data-src" }, 
                 link: { selector: "h6.title a", attrName: "href" },
-                mnumber: { selector: "h6.title a", attrName: "href", filter: "\/([a-zA-Z0-9-]+)\/?$" }, // Получение кода видео из ссылки
-                m_time: { selector: ".meta-data .duration, .video-duration, .label", attrName: "text" } // Длительность или другая инфа
+                mnumber: { selector: "h6.title a", attrName: "href", filter: "\/([a-zA-Z0-9-]+)\/?$" }, 
+                m_time: { selector: ".meta-data .duration, .video-duration, .label", attrName: "text" } 
             },
             search: {
-                url: 'https://jable.tv/search/?q=#msearchword&from_videos=1' // URL для поиска
+                url: 'https://jable.tv/search/?q=#msearchword&from_videos=1' 
             }
         }
-        // NJAV.tv удален
     ];
 
-    // Категории (Жанры) для Jable.tv
     var catalogs2 = [
         {
-            title: "Jable.tv", // Должно совпадать с title в catalogs для связи
+            title: "Jable.tv", 
             link: "https://jable.tv",
             datatype: "text",
             use_referer: true,
-            category: [ // Список категорий/жанров
+            category: [ 
                 { title: 'BDSM', url: 'https://jable.tv/categories/bdsm/?lang=en' },
                 { title: 'Только секс', url: 'https://jable.tv/categories/sex-only/?lang=en' },
                 { title: 'Китайские субтитры', url: 'https://jable.tv/categories/chinese-subtitle/?lang=en' },
@@ -834,19 +752,18 @@
                 { title: 'В чулках', url: 'https://jable.tv/categories/pantyhose/?lang=en' },
                 { title: 'Лесби', url: 'https://jable.tv/categories/lesbian/?lang=en' }
             ],
-            list: catalogs[0].list, // Используем те же селекторы списка, что и для основного Jable.tv
-            search: catalogs[0].search // И тот же поиск
+            list: catalogs[0].list, 
+            search: catalogs[0].search 
         }
     ];
 	
-    // Теги для Jable.tv
 	var catalogs3 = [
         {
             title: "Jable.tv",
             link: "https://jable.tv",
             datatype: "text",
             use_referer: true,
-            category: [ // Длинный список тегов
+            category: [ 
 		    { "url": "https://jable.tv/tags/wedding-dress/?lang=en", "title": "# Свадебное платье" },
 		    { "url": "https://jable.tv/tags/swimsuit/?lang=en", "title": "# Купальник" },
 		    { "url": "https://jable.tv/tags/stockings/?lang=en", "title": "# Чулки" },
@@ -962,7 +879,6 @@
         }
     ];
 	
-    // Общая функция для отображения выбора категорий/тегов/сортировки
     function showSourceCategorySelection(sourceConfig, navigationTitle) {
         if (!sourceConfig) {
             Lampa.Noty.show("Ошибка: Конфигурация источника не найдена.");
@@ -972,12 +888,12 @@
 
         Lampa.Select.show({
             title: navigationTitle + ' - ' + sourceConfig.title,
-            items: sourceConfig.category.map(function(cat) { // Добавляем setup в каждый элемент для передачи
+            items: sourceConfig.category.map(function(cat) { 
                 return {
                     title: cat.title,
                     url: cat.url,
                     quantity: cat.quantity,
-                    setup: sourceConfig // Передаем всю конфигурацию источника
+                    setup: sourceConfig 
                 };
             }),
             onSelect: function (selected_item) {
@@ -986,7 +902,7 @@
                     title: selected_item.setup.title + ' - ' + selected_item.title,
                     quantity: selected_item.quantity || '',
                     component: 'jaja',
-                    setup: selected_item.setup, // Используем переданный setup
+                    setup: selected_item.setup, 
                     page: 1
                 });
             },
@@ -1002,8 +918,7 @@
             var ico = '<svg width="800px" height="800px" viewBox="20 50 115 115" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M120.69 101.68C114.53 101.68 110.33 97.91 110.16 92.51C110.03 88.1 112.58 84.29 116.64 84.29C121.81 84.29 123.93 89.44 120.86 92.48L116.37 89.26C114.99 90.77 115.48 96.19 120.14 96.19C124.21 96.19 126.14 93.36 126.14 88.92C126.14 84 123.06 80.06 114.73 80.06C107.31 80.06 103.5 86.06 103.5 94.71C103.5 99.24 106.09 102.87 109.02 106.51C114.36 105.51 119.48 112.89 116.27 117.41C116.932 119.172 117.271 121.038 117.27 122.92C117.267 123.857 117.17 124.792 116.98 125.71C121.82 130.96 113.98 140.37 107.98 136.29C105.07 137.594 101.919 138.275 98.73 138.29C95.56 143.71 85.15 140.96 85.73 134.44C83.709 133.184 81.5645 132.138 79.33 131.32C79.43 137.13 71.18 140.81 66.73 137.54C64.8991 140.142 62.5541 142.34 59.84 144C59.84 144.19 59.84 144.38 59.84 144.58C60.02 154.52 43.12 154.76 42.94 145.06C42.94 144.92 42.94 144.8 42.94 144.67C40.0878 143.796 37.3889 142.483 34.94 140.78C27.28 145.35 18.48 133.22 24.79 127.39C23.5874 123.872 22.9823 120.178 23 116.46C14.28 113.63 18.09 98.69 26.8 100.06C28.4235 97.1054 30.6398 94.5181 33.31 92.46C31.77 83.58 46.16 80 49.41 87.69C51.7941 87.7882 54.1517 88.2294 56.41 89L56.61 88.81C63.07 83.23 72.5 94.16 66.36 99.67C67.67 105.19 65.73 110.94 61.99 112.96C56.99 105.56 46.49 107.96 46.49 117.06C46.49 123.42 50.99 125.85 55.84 125.85C61.84 125.85 65.47 114.53 73.73 114.53C85.95 114.53 93.05 126.21 98.44 126.21C102.7 126.21 103.82 124.3 103.82 121.48C103.82 112.99 94.6 108.32 94.6 94.93C94.6 82.63 102.6 72.6 114.6 72.6C125.74 72.6 131.96 79.43 131.96 87.85C131.96 96.27 127.74 101.68 120.69 101.68ZM63.6 96.91C66.08 94.77 61.6 89.57 59.07 91.76C56.54 93.95 60.88 99.26 63.6 96.91ZM43.68 135.45C47.38 133.26 43.11 125.64 39.18 127.97C35.58 130.1 40 137.62 43.68 135.45ZM26.57 104.58C22.9 103.64 20.9 111.32 24.66 112.28C28.42 113.24 30.6 105.62 26.57 104.58ZM28.37 130.32C25.29 132.54 29.91 138.99 33.06 136.72C36.21 134.45 31.74 127.89 28.37 130.32ZM35.49 111.21C31.41 109.63 28.07 118.21 32.26 119.78C36.45 121.35 40 112.94 35.49 111.21ZM45.49 90.09C44.63 86.39 36.89 88.16 37.77 91.95C38.65 95.74 46.43 94.14 45.49 90.09ZM46.49 99.73C45.09 95.79 36.86 98.73 38.28 102.73C39.7 106.73 48 104 46.47 99.73H46.49ZM47.49 144.81C47.56 148.61 55.49 148.49 55.42 144.6C55.35 140.71 47.4 140.66 47.47 144.81H47.49ZM52.84 135.61C53.33 139.76 62.01 138.76 61.5 134.51C60.99 130.26 52.29 131.07 52.82 135.61H52.84ZM68.38 133.11C69.68 136.31 76.38 133.61 75.03 130.33C73.68 127.05 66.93 129.61 68.36 133.11H68.38ZM72.93 122.57C72.41 126.33 80.26 127.46 80.8 123.57C81.34 119.68 73.49 118.45 72.91 122.57H72.93ZM89.48 134.21C88.77 137.21 95.15 138.76 95.88 135.63C96.61 132.5 90.23 130.86 89.46 134.21H89.48ZM109.82 133C112.26 135 116.41 129.9 113.92 127.87C111.43 125.84 107.16 130.86 109.82 133ZM112.6 115.82C115.12 113.94 111.22 108.67 108.6 110.59C105.98 112.51 109.85 117.9 112.6 115.85V115.82Z" fill="currentcolor"/></svg>';
             var menu_item = $('<li class="menu__item selector" data-action="jaja"><div class="menu__ico">' + ico + '</div><div class="menu__text">JaJa 18+</div></li>');
             menu_item.on('hover:enter', function () {
-                // При клике на пункт меню, открываем первую категорию (Недавно обновленное) Jable.tv
-                var jableConfig = catalogs[0]; // Jable.tv
+                var jableConfig = catalogs[0]; 
                 showSourceCategorySelection(jableConfig, "Сортировка");
             });
             $('.menu .menu__list').eq(0).append(menu_item);
