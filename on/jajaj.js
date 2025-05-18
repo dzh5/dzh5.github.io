@@ -70,7 +70,7 @@
 
 
                 network["native"](current_cors + initial_url_to_load, function (str) {
-                    var parsedData = _this.card(str);
+                    var parsedData = _(str);
                     _this.build(parsedData); // parsedData содержит {card, page, total_pages}
                 }, function (a, c) {
                     Lampa.Noty.show(network.errorDecode(a, c));
@@ -84,9 +84,9 @@
             return this.render();
         };
 
-        this.next = function (page_url_from_data) { // page_url_from_data - это data.page из this.card
+        this.next = function (page_url_from_data) { // page_url_from_data - это data.page из 
             var _this2 = this;
-            // total_pages устанавливается в this.card и используется здесь
+            // total_pages устанавливается в  и используется здесь
             if (total_pages == 1 || total_pages == 0 || (activity.page >= total_pages && total_pages > 0) ) waitload = true; // Блокируем, если это последняя страница
             
             if (waitload) return;
@@ -120,7 +120,7 @@
                     // var nextPageNum = parseInt(match[1], 10) + 1; // Это если URL от парсера - текущий, а не следующий
                     // url_to_fetch = url_to_fetch.replace('page=' + match[1], 'page=' + nextPageNum);
                     // НО! Если page_url_from_data - это УЖЕ URL СЛЕДУЮЩЕЙ страницы, то ничего менять не надо.
-                    // В вашем оригинальном this.card 'page' - это URL следующей страницы.
+                    // В вашем оригинальном  'page' - это URL следующей страницы.
                 } else { // Если нет page=N, пытаемся сформировать на основе activity.page + 1
                     var nextPageForConstruct = activity.page + 1;
                     // Пытаемся заменить последнее число в URL или добавить /page/N или ?page=N
@@ -158,7 +158,7 @@
 
 
             network["native"](current_cors_to_use + url_to_fetch, function (result) {
-                var parsedData = _this2.card(result); // this.card должен вернуть {card, page, total_pages}
+                var parsedData = _this2.card(result); //  должен вернуть {card, page, total_pages}
                 
                 if (parsedData.card.length) {
                     activity.page++; // Инкрементируем только если успешно загрузили и есть карточки
@@ -190,191 +190,126 @@
             });
         };
 
-        this.card = function (str) {
-            var card_list = []; // Используем card_list локально
-            var page_url_next; // URL следующей страницы
-            var total_pages_on_site = 0; // Общее количество страниц на сайте
+this.card = function (str_data_from_network, currentPageNumberForParsing) {
+            var card_list = []; 
+            var next_page_url_parsed; 
+            var total_pages_parsed = currentPageNumberForParsing; 
 
-            var current_catalog_setup = catalogs.find(function (fp) { // Находим текущий каталог по object.setup.title
-                return fp.title === object.setup.title;
-            });
-
-            if (!current_catalog_setup) { // Если конфигурация не найдена
-                Lampa.Noty.show('Конфигурация для источника "' + object.setup.title + '" не найдена.');
+            var current_setup = object.setup; 
+            if (!current_setup) {
+                Lampa.Noty.show("Ошибка: Конфигурация источника (setup) отсутствует.");
                 return { card: [], page: undefined, total_pages: 0 };
             }
+            var response_content = str_data_from_network;
+            // ... (обработка JSON и allorigins)
+            if (current_setup.datatype == 'json' && typeof response_content === 'string') { try { var parsed_json = JSON.parse(response_content); response_content = parsed_json.contents ? parsed_json.contents : parsed_json; if(typeof response_content === 'string' && (response_content.startsWith('{') || response_content.startsWith('['))) { response_content = JSON.parse(response_content);}} catch (e) {}}
+            if (typeof response_content === 'object' && current_setup.datatype == 'json' && response_content.contents) { response_content = response_content.contents; try { if(typeof response_content === 'string') response_content = JSON.parse(response_content); } catch(e){}}
+            if (current_setup.datatype == 'text' && typeof response_content === 'object' && response_content.contents) { response_content = response_content.contents; }
+            
+            var html_content_str = typeof response_content === 'string' ? response_content.replace(/\n/g, '') : '';
 
-            if (current_catalog_setup.datatype == 'json' && typeof str === 'string') { // allorigins для JSON
-                try {
-                    var parsedJson = JSON.parse(str);
-                    str = parsedJson.contents ? parsedJson.contents : parsedJson;
-                    if(typeof str === 'string' && (str.startsWith('{') || str.startsWith('['))) { // Если contents сам был строкой JSON
-                        str = JSON.parse(str);
+            // Используем правильные имена переменных, как они были определены
+            var v = current_setup.list.videoscontainer.selector; // Имя переменной 'v'
+            var t = current_setup.list.title.selector;
+            var th = current_setup.list.thumb.selector; 
+            var l = current_setup.list.link.selector;
+            var p_selector = current_setup.list.page.selector; 
+            var m = current_setup.list.mnumber.selector;
+            var base_url = current_setup.link; 
+
+            // ... (логика пагинации остается прежней) ...
+            var pagination_elements = $(p_selector, html_content_str);
+            if (pagination_elements.length > 0) {
+                var page_links = pagination_elements.find('a.page-link[href]:not([href="#"]):not([href="javascript:;"])');
+                var current_page_span = pagination_elements.find('span.page-link.active.disabled, span.page-numbers.current').first();
+                var next_link_element;
+                if (current_page_span.length) {
+                    next_link_element = current_page_span.parent().nextAll('li.page-item').find('a.page-link').first();
+                } else { 
+                    page_links.each(function() {
+                        var $this = $(this);
+                        var link_text = $this.text().trim().toLowerCase();
+                        var link_page_num = parseInt(link_text, 10);
+                        if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $this.is('[rel="next"]')) {
+                            next_link_element = $this;
+                            return false;
+                        }
+                        if ($.isNumeric(link_page_num) && link_page_num === currentPageNumberForParsing + 1) {
+                             next_link_element = $this;
+                        }
+                    });
+                }
+                if (next_link_element && next_link_element.length) {
+                    next_page_url_parsed = next_link_element.attr('href');
+                }
+                var last_page_link = page_links.filter(function() { return $(this).text().trim().toLowerCase().includes('last') || $.isNumeric($(this).text().trim()); }).last();
+                if (last_page_link.length) {
+                    var last_page_text = last_page_link.text().trim();
+                    var last_page_num_from_text = parseInt(last_page_text, 10);
+                    if ($.isNumeric(last_page_num_from_text)) {
+                        total_pages_parsed = last_page_num_from_text;
+                    } else { 
+                        var href_last = last_page_link.attr('href');
+                        var match_page_num = href_last ? href_last.match(/\/(\d+)\/?$/) : null; 
+                        if (match_page_num && match_page_num[1]) {
+                            total_pages_parsed = parseInt(match_page_num[1], 10);
+                        } else if (current_page_span.length && (!next_link_element || !next_link_element.length)) { 
+                             var current_text_num = parseInt(current_page_span.text().trim(), 10);
+                             total_pages_parsed = $.isNumeric(current_text_num) ? current_text_num : currentPageNumberForParsing;
+                        } else {
+                             total_pages_parsed = currentPageNumberForParsing; 
+                        }
                     }
-                } catch (e) { /* console.error("JSON parse error in card:", e); */ }
-            } else if (current_catalog_setup.datatype == 'text' && typeof str === 'object' && str.contents) { // allorigins для HTML
-                 str = str.contents;
+                } else if (current_page_span.length && (!next_link_element || !next_link_element.length)) {
+                     var current_text_num = parseInt(current_page_span.text().trim(), 10);
+                     total_pages_parsed = $.isNumeric(current_text_num) ? current_text_num : currentPageNumberForParsing;
+                } else {
+                     total_pages_parsed = currentPageNumberForParsing;
+                }
+                 total_pages_parsed = Math.max(total_pages_parsed, currentPageNumberForParsing); 
+                if (next_page_url_parsed && next_page_url_parsed.indexOf('http') === -1) {
+                    next_page_url_parsed = base_url + (next_page_url_parsed.startsWith('/') ? next_page_url_parsed : '/' + next_page_url_parsed);
+                }
+                if (next_page_url_parsed && (next_page_url_parsed.indexOf('#') !== -1 || next_page_url_parsed.startsWith('javascript:'))) { 
+                    next_page_url_parsed = undefined; 
+                }
+            } else { 
+                 total_pages_parsed = currentPageNumberForParsing;
             }
             
-            var html_content_str = typeof str === 'string' ? str.replace(/\n/g, '') : '';
-
-            var v = current_catalog_setup.list.videoscontainer.selector;
-            var t = current_catalog_setup.list.title.selector;
-            var th = current_catalog_setup.list.thumb.selector; // Селектор для <img>
-            var l = current_catalog_setup.list.link.selector;
-            var p_selector = current_catalog_setup.list.page.selector;
-            var m = current_catalog_setup.list.mnumber.selector;
-
-            var host_url_from_object = object.url.indexOf('http') == -1 ? '' : object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0];
-            
-            // Определение base_url для относительных ссылок (из конфигурации каталога)
-            var base_url_for_links = current_catalog_setup.link || host_url_from_object;
-
-
-            // Пагинация из вашего оригинального кода
-            var $pagination_elements = $(p_selector, html_content_str);
-            if ($pagination_elements.length) {
-                var $last_page_link = $pagination_elements.find('a[href]').not('[href="#"],[href="javascript:;"]').last();
-                var $next_page_link = $pagination_elements.find('a.page-link:not(.disabled):contains("Next"), a.page-link:not(.disabled):contains("»"), a.page-link[rel="next"]').first();
-                if (!$next_page_link.length) { // Если не нашли по тексту, ищем следующую цифровую ссылку после активной
-                    var $active_page_span = $pagination_elements.find('span.page-link.active.disabled, span.page-numbers.current').first();
-                    if ($active_page_span.length) {
-                        $next_page_link = $active_page_span.parent().nextAll('li.page-item').find('a.page-link').first();
-                    }
-                }
-
-                if ($next_page_link.length && $next_page_link.attr('href')) {
-                    page_url_next = $next_page_link.attr('href');
-                } else if ($last_page_link.length && $last_page_link.attr('href') && !$last_page_link.text().toLowerCase().includes('last')) {
-                    // Если нет явной "Next", но есть последняя цифровая ссылка, которая не является текущей
-                    var last_link_num = parseInt($last_page_link.text().trim(), 10);
-                    if ($.isNumeric(last_link_num) && last_link_num > activity.page) {
-                         page_url_next = $last_page_link.attr('href'); // Это может быть ссылка на последнюю, а не на следующую
-                         // Для Jable, если это ссылка на последнюю, а не на следующую, то next() сам сформирует
-                    }
-                }
-
-
-                if (page_url_next) {
-                    if (page_url_next.indexOf('http') == -1) {
-                        page_url_next = base_url_for_links + (page_url_next.startsWith('/') ? page_url_next : '/' + page_url_next);
-                    }
-                    if (page_url_next.indexOf('#') !== -1 || page_url_next.startsWith('javascript:')) {
-                        page_url_next = undefined;
-                    }
-                }
-                
-                // Определение total_pages
-                var $last_numeric_link = $pagination_elements.find('a.page-link').filter(function() { return $.isNumeric($(this).text().trim()); }).last();
-                if ($last_numeric_link.length) {
-                    total_pages_on_site = parseInt($last_numeric_link.text().trim(), 10);
-                } else if ($pagination_elements.find('a:contains("Last"), a:contains("»")').last().attr('href')) {
-                     var last_href = $pagination_elements.find('a:contains("Last"), a:contains("»")').last().attr('href');
-                     var page_match = last_href.match(/page=(\d+)|[/](\d+)[\/?]?$/);
-                     if (page_match) {
-                        total_pages_on_site = parseInt(page_match[1] || page_match[2], 10);
-                     }
-                }
-                if (total_pages_on_site === 0 && $(v_selector, html_content_str).length > 0) { // Если не смогли распарсить, но есть контент
-                    total_pages_on_site = activity.page; // Предполагаем, что текущая последняя, если нет инфо
-                }
-                 total_pages_on_site = Math.max(total_pages_on_site, activity.page);
-
-
-            } else { // Если блока пагинации нет
-                total_pages_on_site = activity.page; // Считаем текущую страницу последней
+            var items_on_page = $(v, html_content_str); // ИСПРАВЛЕНО: v_selector -> v
+            if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
+                next_page_url_parsed = undefined;
+                total_pages_parsed = currentPageNumberForParsing -1; 
             }
 
-
-            $(v_selector + (object.quantity || ''), html_content_str).each(function (i, html_item) {
-                var $html_item = $(html_item);
-                var t1 = t ? $html_item.find(t) : $html_item;
-                var u1 = l ? $html_item.find(l) : $html_item;
-                var i1 = th ? $html_item.find(th) : $html_item; // Это элемент <img>
-                var m1 = m ? $html_item.find(m) : $html_item;
-                
-                var tt, uu, ii, mm, pp = ''; // pp для data-preview
-
-                switch (current_catalog_setup.list.title.attrName) {
-                    case 'text': tt = t1.text(); break;
-                    case 'html': tt = t1.html(); break;
-                    default: tt = t1.attr(current_catalog_setup.list.title.attrName);
+            items_on_page.each(function (i, html_item_el) { // ИСПРАВЛЕНО: v_selector -> v (неявно, т.к. items_on_page уже использует v)
+                // ... (внутренняя логика парсинга карточки - без изменений) ...
+                var $html_item = $(html_item_el); 
+                var t1_el = t ? $html_item.find(t) : $html_item; // Используем t
+                var u1_el = l ? $html_item.find(l) : $html_item; // Используем l
+                var i1_el = th ? $html_item.find(th) : $html_item; // Используем th
+                var m1_el = m ? $html_item.find(m) : $html_item; // Используем m
+                var tt, uu, ii, mm, pp = ''; 
+                switch (current_setup.list.title.attrName) { case 'text': tt = t1_el.text(); break; case 'html': tt = t1_el.html(); break; default: tt = t1_el.attr(current_setup.list.title.attrName); }
+                if (typeof tt === 'undefined') return true; tt = tt.trim();
+                if (current_setup.list.title.filter) { var title_match = tt.match(new RegExp(current_setup.list.title.filter)); tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt; }
+                switch (current_setup.list.link.attrName) { case 'text': uu = u1_el.text(); break; case 'html': uu = u1_el.html(); break; default: uu = u1_el.attr(current_setup.list.link.attrName); }
+                uu = (uu || "").trim(); if (uu.indexOf('http') === -1 && uu) { uu = base_url + (uu.startsWith('/') ? uu : '/' + uu); }
+                if (current_setup.list.link.filter) { var link_match = uu.match(new RegExp(current_setup.list.link.filter)); uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu; }
+                if (i1_el.length) { 
+                    ii = i1_el.attr(current_setup.list.thumb.attrName); 
+                    pp = i1_el.attr('data-preview'); 
                 }
-                if (typeof tt === 'undefined') return;
-                tt = tt.trim();
-                if (current_catalog_setup.list.title.filter) { 
-                    var title_match = tt.match(new RegExp(current_catalog_setup.list.title.filter));
-                    tt = title_match && title_match[1] ? title_match[1] : tt;
-                }
-
-                switch (current_catalog_setup.list.link.attrName) {
-                    case 'text': uu = u1.text(); break;
-                    case 'html': uu = u1.html(); break;
-                    default: uu = u1.attr(current_catalog_setup.list.link.attrName);
-                }
-                uu = (uu || "").trim();
-                if (uu.indexOf('http') == -1 && uu) {
-                    uu = base_url_for_links + (uu.startsWith('/') ? uu : '/' + uu);
-                }
-                if (current_catalog_setup.list.link.filter) { 
-                    var link_match = uu.match(new RegExp(current_catalog_setup.list.link.filter));
-                    uu = link_match && link_match[1] ? link_match[1] : uu;
-                }
-
-                // Извлечение img src и data-preview
-                if (i1.length) {
-                    ii = i1.attr(current_catalog_setup.list.thumb.attrName); // data-src или src
-                    pp = i1.attr('data-preview');
-                }
-
-                ii = (ii || "").trim(); 
-                if (ii.startsWith('//')) ii = 'https:' + ii;
-                if (ii.indexOf('http') == -1 && ii) { 
-                    ii = base_url_for_links + (ii.startsWith('/') ? ii : '/' + ii); 
-                }
-                if (current_catalog_setup.list.thumb.filter && ii) { 
-                    var thumb_match = ii.match(new RegExp(current_catalog_setup.list.thumb.filter));
-                    ii = thumb_match && thumb_match[1] ? thumb_match[1] : ii;
-                }
-                if (!ii) ii = './img/img_broken.svg';
-
-                pp = (pp || "").trim();
-                if (pp.startsWith('//')) pp = 'https:' + pp;
-                if (pp.indexOf('http') == -1 && pp && base_url_for_links) { 
-                    pp = base_url_for_links + (pp.startsWith('/') ? pp : '/' + pp); 
-                }
-
-
-                switch (current_catalog_setup.list.mnumber.attrName) {
-                    case 'text': mm = m1.text(); break;
-                    case 'html': mm = m1.html(); break;
-                    default: mm = m1.attr(current_catalog_setup.list.mnumber.attrName);
-                }
-                mm = (mm || "").trim();
-                if (current_catalog_setup.list.mnumber.filter) { 
-                    var mnumber_match = mm.match(new RegExp(current_catalog_setup.list.mnumber.filter));
-                    mm = mnumber_match && mnumber_match[1] ? mnumber_match[1] : mm;
-                }
-
-                card_list.push({
-                    title: tt,
-                    original_title: '',
-                    url: uu,
-                    img: ii,
-                    preview: pp, // Добавили поле preview
-                    quantity: '',
-                    year: '',
-                    rate: $html_item.find(current_catalog_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '),
-                    episodes_info: mm ? mm.toUpperCase() : '',
-                    update: '',
-                    score: '',
-                });
+                ii = (ii || "").trim(); if (ii.startsWith('//')) ii = 'https:' + ii; if (ii.indexOf('http') === -1 && ii) { ii = base_url + (ii.startsWith('/') ? ii : '/' + ii); }
+                if (current_setup.list.thumb.filter && ii) { var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter)); ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii; }
+                if (!ii) ii = './img/img_broken.svg'; 
+                pp = (pp || "").trim(); if (pp.startsWith('//')) pp = 'https:' + pp; if (pp.indexOf('http') === -1 && pp && base_url) { pp = base_url + (pp.startsWith('/') ? pp : '/' + pp); }
+                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
+                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
+                card_list.push({ title: tt, original_title: '', url: uu, img: ii, preview: pp, quantity: '', year: '', rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '), episodes_info: mm.toUpperCase(), update: '', score: '', });
             });
-            return {
-                card: card_list,
-                page: page_url_next, // URL следующей страницы
-                total_pages: total_pages_parsed
-            };
+            return { card: card_list, page: next_page_url_parsed, total_pages: total_pages_parsed };
         };
         
     // --- КОНЕЦ ЧАСТИ 1 ---
