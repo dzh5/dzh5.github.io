@@ -91,12 +91,10 @@
             var _this2 = this;
             
             var next_page_to_load = activity.page + 1;
-            var url_to_request = current_url_for_next_page_from_parser;
+            var url_to_request = current_url_for_next_page_from_parser; // Используем URL от парсера
 
-            if (!url_to_request) { 
-                 if (current_total_pages_from_parser > 0 && next_page_to_load > current_total_pages_from_parser) {
-                    return; 
-                 }
+            // Если URL от парсера нет, но мы еще не достигли конца, пытаемся сформировать сами
+            if (!url_to_request && (current_total_pages_from_parser === 0 || next_page_to_load <= current_total_pages_from_parser)) {
                 var base_url_for_next = object.url.replace(/&?page=\d+/, '');
                  if (base_url_for_next.endsWith('?')) { 
                     base_url_for_next = base_url_for_next.slice(0, -1);
@@ -112,17 +110,21 @@
                     var param_separator = (q_mark_present && existing_params !== '') ? '&' : (q_mark_present ? '' : '?');
                     url_to_request += param_separator + 'lang=en';
                 }
-            } else { 
-                 if (current_total_pages_from_parser > 0 && next_page_to_load > current_total_pages_from_parser) {
-                    return;
-                 }
             }
             
-            if (!url_to_request) return; 
+            if (!url_to_request) { // Если URL так и не удалось получить/сформировать
+                return; 
+            }
+            
+            // Дополнительная проверка, чтобы не уйти за total_pages, если он известен
+            if (current_total_pages_from_parser > 0 && next_page_to_load > current_total_pages_from_parser) {
+                return;
+            }
+
             if (waitload) return;
 
             waitload = true;
-            // this.activity.loader(true); // АНИМАЦИЯ ОТКЛЮЧЕНА ДЛЯ NEXT
+            // this.activity.loader(true); // Анимация загрузки для next отключена
 
             var current_cors_to_use = cors;
             if (object.setup && object.setup.datatype !== 'json') {
@@ -166,21 +168,19 @@
                     _this2.append(parsedData, true);
                     waitload = false;
                 } else {
-                    // Lampa.Noty.show('Больше элементов не найдено.'); // Можно раскомментировать для отладки
                     current_url_for_next_page_from_parser = undefined; 
                     current_total_pages_from_parser = activity.page; 
                     waitload = true; 
                 }
-                // this.activity.loader(false); // АНИМАЦИЯ ОТКЛЮЧЕНА ДЛЯ NEXT
+                // this.activity.loader(false); 
             }, function (a, c) {
                 if (a.status == 404) {
-                    // Lampa.Noty.show('Страница ' + next_page_to_load + ' не найдена (404).');
                     current_total_pages_from_parser = activity.page > 0 ? activity.page : 1; 
                     current_url_for_next_page_from_parser = undefined;
                 } else {
                     Lampa.Noty.show(network.errorDecode(a, c));
                 }
-                // this.activity.loader(false); // АНИМАЦИЯ ОТКЛЮЧЕНА ДЛЯ NEXT
+                // this.activity.loader(false); 
                 waitload = false; 
             }, false, {
                 dataType: object.setup ? object.setup.datatype : 'text',
@@ -189,49 +189,129 @@
         };
 
         this.card = function (str_data_from_network, currentPageNumberForParsing) {
-            // ... (Код this.card остается таким же, как в предыдущем ПОЛНОМ ответе)
-            var card_list = []; var next_page_url_parsed; var total_pages_parsed = currentPageNumberForParsing; 
-            var current_setup = object.setup; if (!current_setup) { Lampa.Noty.show("Ошибка: Конфигурация источника (setup) отсутствует."); return { card: [], page: undefined, total_pages: 0 };}
+            var card_list = []; 
+            var next_page_url_parsed; 
+            var total_pages_parsed = currentPageNumberForParsing; 
+
+            var current_setup = object.setup; 
+            if (!current_setup) {
+                Lampa.Noty.show("Ошибка: Конфигурация источника (setup) отсутствует.");
+                return { card: [], page: undefined, total_pages: 0 };
+            }
             var response_content = str_data_from_network;
             if (current_setup.datatype == 'json' && typeof response_content === 'string') { try { var parsed_json = JSON.parse(response_content); response_content = parsed_json.contents ? parsed_json.contents : parsed_json; if(typeof response_content === 'string' && (response_content.startsWith('{') || response_content.startsWith('['))) { response_content = JSON.parse(response_content);}} catch (e) {}}
             if (typeof response_content === 'object' && current_setup.datatype == 'json' && response_content.contents) { response_content = response_content.contents; try { if(typeof response_content === 'string') response_content = JSON.parse(response_content); } catch(e){}}
             if (current_setup.datatype == 'text' && typeof response_content === 'object' && response_content.contents) { response_content = response_content.contents; }
             var html_content_str = typeof response_content === 'string' ? response_content.replace(/\n/g, '') : '';
-            var v_selector = current_setup.list.videoscontainer.selector; var t_selector = current_setup.list.title.selector; var th_selector = current_setup.list.thumb.selector; var l_selector = current_setup.list.link.selector; var p_selector = current_setup.list.page.selector; var m_selector = current_setup.list.mnumber.selector; var base_url = current_setup.link; 
+            var v_selector = current_setup.list.videoscontainer.selector;
+            var t_selector = current_setup.list.title.selector;
+            var th_selector = current_setup.list.thumb.selector;
+            var l_selector = current_setup.list.link.selector;
+            var p_selector = current_setup.list.page.selector; 
+            var m_selector = current_setup.list.mnumber.selector;
+            var base_url = current_setup.link; 
             var pagination_elements = $(p_selector, html_content_str);
             if (pagination_elements.length > 0) {
-                var page_links = pagination_elements.find('a.page-link[href]:not([href="#"]):not([href="javascript:;"])'); var current_page_span = pagination_elements.find('span.page-link.active.disabled, span.page-numbers.current').first(); var next_link_element;
-                if (current_page_span.length) { next_link_element = current_page_span.parent().nextAll('li.page-item').find('a.page-link').first(); } else { page_links.each(function() { var $this = $(this); var link_text = $this.text().trim().toLowerCase(); var link_page_num = parseInt(link_text, 10); if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $this.is('[rel="next"]')) { next_link_element = $this; return false; } if ($.isNumeric(link_page_num) && link_page_num === currentPageNumberForParsing + 1) { next_link_element = $this; } }); }
-                if (next_link_element && next_link_element.length) { next_page_url_parsed = next_link_element.attr('href'); }
-                var last_page_link_num_text = ''; var temp_page_numbers = [];
-                page_links.each(function() { var text = $(this).text().trim(); if ($.isNumeric(text)) { last_page_link_num_text = text; temp_page_numbers.push(parseInt(text,10)); } });
-                if (temp_page_numbers.length > 0) { total_pages_parsed = Math.max.apply(null, temp_page_numbers); } else if ($.isNumeric(last_page_link_num_text)) { total_pages_parsed = parseInt(last_page_link_num_text, 10); } else if (current_page_span.length && (!next_link_element || !next_link_element.length)) { var current_text_num = parseInt(current_page_span.text().trim(), 10); total_pages_parsed = $.isNumeric(current_text_num) ? current_text_num : currentPageNumberForParsing; } else { total_pages_parsed = currentPageNumberForParsing; }
+                var page_links = pagination_elements.find('a.page-link[href]:not([href="#"]):not([href="javascript:;"])');
+                var current_page_span = pagination_elements.find('span.page-link.active.disabled, span.page-numbers.current').first();
+                var next_link_element;
+                if (current_page_span.length) {
+                    next_link_element = current_page_span.parent().nextAll('li.page-item').find('a.page-link').first();
+                } else { 
+                    page_links.each(function() {
+                        var $this = $(this);
+                        var link_text = $this.text().trim().toLowerCase();
+                        var link_page_num = parseInt(link_text, 10);
+                        if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $this.is('[rel="next"]')) {
+                            next_link_element = $this;
+                            return false;
+                        }
+                        if ($.isNumeric(link_page_num) && link_page_num === currentPageNumberForParsing + 1) {
+                             next_link_element = $this;
+                        }
+                    });
+                }
+                if (next_link_element && next_link_element.length) {
+                    next_page_url_parsed = next_link_element.attr('href');
+                }
+                var last_page_link = page_links.filter(function() { return $(this).text().trim().toLowerCase().includes('last') || $.isNumeric($(this).text().trim()); }).last();
+                if (last_page_link.length) {
+                    var last_page_text = last_page_link.text().trim();
+                    var last_page_num_from_text = parseInt(last_page_text, 10);
+                    if ($.isNumeric(last_page_num_from_text)) {
+                        total_pages_parsed = last_page_num_from_text;
+                    } else { 
+                        var href_last = last_page_link.attr('href');
+                        var match_page_num = href_last ? href_last.match(/\/(\d+)\/?$/) : null; 
+                        if (match_page_num && match_page_num[1]) {
+                            total_pages_parsed = parseInt(match_page_num[1], 10);
+                        } else if (current_page_span.length && (!next_link_element || !next_link_element.length)) { 
+                             var current_text_num = parseInt(current_page_span.text().trim(), 10);
+                             total_pages_parsed = $.isNumeric(current_text_num) ? current_text_num : currentPageNumberForParsing;
+                        } else {
+                             total_pages_parsed = currentPageNumberForParsing; 
+                        }
+                    }
+                } else if (current_page_span.length && (!next_link_element || !next_link_element.length)) {
+                     var current_text_num = parseInt(current_page_span.text().trim(), 10);
+                     total_pages_parsed = $.isNumeric(current_text_num) ? current_text_num : currentPageNumberForParsing;
+                } else {
+                     total_pages_parsed = currentPageNumberForParsing;
+                }
                  total_pages_parsed = Math.max(total_pages_parsed, currentPageNumberForParsing); 
-                if (next_page_url_parsed && next_page_url_parsed.indexOf('http') === -1) { next_page_url_parsed = base_url + (next_page_url_parsed.startsWith('/') ? next_page_url_parsed : '/' + next_page_url_parsed); }
-                if (next_page_url_parsed && (next_page_url_parsed.indexOf('#') !== -1 || next_page_url_parsed.startsWith('javascript:'))) { next_page_url_parsed = undefined; }
-            } else { total_pages_parsed = currentPageNumberForParsing; }
+                if (next_page_url_parsed && next_page_url_parsed.indexOf('http') === -1) {
+                    next_page_url_parsed = base_url + (next_page_url_parsed.startsWith('/') ? next_page_url_parsed : '/' + next_page_url_parsed);
+                }
+                if (next_page_url_parsed && (next_page_url_parsed.indexOf('#') !== -1 || next_page_url_parsed.startsWith('javascript:'))) { 
+                    next_page_url_parsed = undefined; 
+                }
+            } else { 
+                 total_pages_parsed = currentPageNumberForParsing;
+            }
+            
             var items_on_page = $(v_selector, html_content_str);
-            if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { next_page_url_parsed = undefined; total_pages_parsed = currentPageNumberForParsing -1; }
+            if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
+                next_page_url_parsed = undefined;
+                total_pages_parsed = currentPageNumberForParsing -1; 
+            }
+
             items_on_page.each(function (i, html_item_el) {
-                var $html_item = $(html_item_el); var t1_el = t_selector ? $html_item.find(t_selector) : $html_item; var u1_el = l_selector ? $html_item.find(l_selector) : $html_item; var i1_el = th_selector ? $html_item.find(th_selector) : $html_item; var m1_el = m_selector ? $html_item.find(m_selector) : $html_item; var tt, uu, ii, mm;
+                var $html_item = $(html_item_el); 
+                var t1_el = t_selector ? $html_item.find(t_selector) : $html_item;
+                var u1_el = l_selector ? $html_item.find(l_selector) : $html_item;
+                var i1_el = th_selector ? $html_item.find(th_selector) : $html_item;
+                var m1_el = m_selector ? $html_item.find(m_selector) : $html_item;
+                var tt, uu, ii, mm, pp; // pp для data-preview
+
+                // ... (парсинг title, link, episodes_info (mm) - без изменений)
                 switch (current_setup.list.title.attrName) { case 'text': tt = t1_el.text(); break; case 'html': tt = t1_el.html(); break; default: tt = t1_el.attr(current_setup.list.title.attrName); }
                 if (typeof tt === 'undefined') return true; tt = tt.trim();
                 if (current_setup.list.title.filter) { var title_match = tt.match(new RegExp(current_setup.list.title.filter)); tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt; }
                 switch (current_setup.list.link.attrName) { case 'text': uu = u1_el.text(); break; case 'html': uu = u1_el.html(); break; default: uu = u1_el.attr(current_setup.list.link.attrName); }
                 uu = (uu || "").trim(); if (uu.indexOf('http') === -1 && uu) { uu = base_url + (uu.startsWith('/') ? uu : '/' + uu); }
                 if (current_setup.list.link.filter) { var link_match = uu.match(new RegExp(current_setup.list.link.filter)); uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu; }
-                switch (current_setup.list.thumb.attrName) { case 'text': ii = i1_el.text(); break; case 'html': ii = i1_el.html(); break; default: ii = i1_el.attr(current_setup.list.thumb.attrName); }
+                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
+                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
+                
+                // Парсинг thumb (img src) и data-preview
+                var thumb_img_element = i1_el; // Это элемент <img>
+                ii = thumb_img_element.attr(current_setup.list.thumb.attrName); // data-src или src
+                pp = thumb_img_element.attr('data-preview'); // Получаем data-preview
+
                 ii = (ii || "").trim(); if (ii.startsWith('//')) ii = 'https:' + ii; if (ii.indexOf('http') === -1 && ii) { ii = base_url + (ii.startsWith('/') ? ii : '/' + ii); }
                 if (current_setup.list.thumb.filter) { var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter)); ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii; }
                 if (!ii) ii = './img/img_broken.svg'; 
-                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
-                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
-                card_list.push({ title: tt, original_title: '', url: uu, img: ii, quantity: '', year: '', rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '), episodes_info: mm.toUpperCase(), update: '', score: '', });
+
+                pp = (pp || "").trim(); if (pp.startsWith('//')) pp = 'https:' + pp; if (pp.indexOf('http') === -1 && pp && base_url) { pp = base_url + (pp.startsWith('/') ? pp : '/' + pp); }
+
+
+                card_list.push({ title: tt, original_title: '', url: uu, img: ii, preview: pp, quantity: '', year: '', rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '), episodes_info: mm.toUpperCase(), update: '', score: '', });
             });
             return { card: card_list, page: next_page_url_parsed, total_pages: total_pages_parsed };
         };
         
     // --- КОНЕЦ ЧАСТИ 1 ---
+
     // --- НАЧАЛО ЧАСТИ 2 ---
         this.cardfavor = function (json) {
             var page; 
@@ -264,19 +344,50 @@
                     release_year: element.year || ''
                 });
                 card_element.addClass('card--collection');
-                var img = card_element.find('.card__img')[0];
-                img.onload = function () { card_element.addClass('card--loaded'); };
-                img.onerror = function (e) {
-                    var hex = (Lampa.Utils.hash(element.title) * 1).toString(16);
-                    while (hex.length < 6) hex += hex;
-                    hex = hex.substring(0, 6);
-                    var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
-                    var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                    card_element.find('.card__img').replaceWith('<div class="card__img">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
-                    card_element.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText });
-                    card_element.addClass('card--loaded');
+                var card_img_container = card_element.find('.card__img'); 
+
+                var restoreImg = function() {
+                    // Проверяем, есть ли видео и нужно ли его заменять
+                    var video_player = card_img_container.find('video.card__video-preview');
+                    if (video_player.length) {
+                        video_player.remove(); // Удаляем видеоплеер
+                        // Создаем и добавляем img только если его еще нет или он был удален
+                        if (card_img_container.find('img').length === 0) {
+                             var img_tag_jq = $('<img>'); // Создаем jQuery объект
+                             card_img_container.append(img_tag_jq);
+                             var img_tag = img_tag_jq[0];
+
+                            img_tag.onload = function () { card_element.addClass('card--loaded'); };
+                            img_tag.onerror = function (e) {
+                                var hex = (Lampa.Utils.hash(element.title) * 1).toString(16); while (hex.length < 6) hex += hex; hex = hex.substring(0, 6);
+                                var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+                                var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
+                                card_img_container.empty().append('<div class="card__img-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 5px; box-sizing: border-box;">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
+                                card_element.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText }); // Убедитесь, что card__view существует
+                                card_element.addClass('card--loaded');
+                            };
+                            if (element.img) img_tag.src = element.img; else img_tag.onerror();
+                        }
+                    } else if (card_img_container.find('img').length === 0 && card_img_container.find('.card__img-placeholder').length === 0) {
+                        // Если нет ни видео, ни img, ни плейсхолдера, добавляем img (начальная загрузка)
+                        var img_tag_jq = $('<img>');
+                        card_img_container.append(img_tag_jq);
+                        var img_tag = img_tag_jq[0];
+                        img_tag.onload = function () { card_element.addClass('card--loaded'); };
+                        img_tag.onerror = function (e) {
+                            var hex = (Lampa.Utils.hash(element.title) * 1).toString(16); while (hex.length < 6) hex += hex; hex = hex.substring(0, 6);
+                            var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+                            var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
+                            card_img_container.empty().append('<div class="card__img-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 5px; box-sizing: border-box;">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
+                            if(card_element.find('.card__view').length) card_element.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText });
+                            card_element.addClass('card--loaded');
+                        };
+                        if (element.img) img_tag.src = element.img; else img_tag.onerror();
+                    }
                 };
-                if (element.img) img.src = element.img; else img.onerror();
+                
+                restoreImg(); 
+
                 if (element.rate) { card_element.find('.card__view').append('<div class="card__type"></div>'); card_element.find('.card__type').text(element.rate); }
                 if (element.quantity) { card_element.find('.card__icons-inner').text(element.quantity).css({ 'padding': '0.4em 0.4em' }); }
                 if (element.update) { card_element.find('.card__view').append('<div class="card__quality"></div>'); card_element.find('.card__quality').text(element.update); }
@@ -292,6 +403,17 @@
                         info.find('.info__rate').toggleClass('hide', !(element.rate));
                     }
                     
+                    if (element.preview) {
+                        card_img_container.empty(); 
+                        var video_preview = $('<video autoplay loop muted playsinline class="card__video-preview" style="width: 100%; height: 100%; object-fit: cover;"></video>');
+                        video_preview.attr('src', element.preview);
+                        video_preview.on('error', function() { restoreImg(); });
+                        video_preview.on('canplay', function() { this.play().catch(function(){}); }); // Попытка запустить, если браузер остановил
+                        card_img_container.append(video_preview);
+                    } else if (element.img) { 
+                         Lampa.Background.change(cardImgBackground(element.img)); 
+                    }
+
                     var card_width_with_margin = card_element.outerWidth(true);
                     if (card_width_with_margin > 0) { 
                         var scroll_width = scroll.render().width();
@@ -302,9 +424,11 @@
                            _this3.next(); 
                         }
                     }
-
-                    if (element.img && element.img !== './img/img_broken.svg') Lampa.Background.change(cardImgBackground(element.img));
                     if (Lampa.Helper) Lampa.Helper.show('jaja_detail', 'Нажмите (ОК) для просмотра или удерживайте (ОК) для доп. опций.', card_element);
+                });
+
+                card_element.on('hover:lost', function() {
+                    restoreImg();
                 });
                 
                 card_element.on('hover:enter', function () {
@@ -345,6 +469,7 @@
                         Lampa.Noty.show("Действие для этого типа ссылки не определено.");
                     }
                 });
+
                 card_element.on('hover:long', function () {
                     if (element.url.indexOf('jable.tv') !== -1 && object.setup) { 
                         Lampa.Modal.open({
@@ -440,6 +565,7 @@
 
         this.build = function (data_for_build) {
             var _this2 = this;
+            // ... (HTML для кнопок и info-панели - без изменений)
             var viewsort = '<div class="full-start__button selector view--sort"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Сортировать</span></div>';
             var viewcategory = '<div class="full-start__button selector view--category"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Категории</span></div>';
             var viewtags = '<div class="full-start__button selector view--tags"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Теги</span></div>';
@@ -473,7 +599,7 @@
                 scroll_element.off('scroll.jaja_autonext wheel.jaja_autonext'); 
                 
                 var scroll_timeout;
-                var scrollHandler = function(event) { // Объединяем обработчики
+                var scrollHandler = function(event) { 
                     clearTimeout(scroll_timeout);
                     scroll_timeout = setTimeout(function() { 
                         if (waitload) return;
@@ -481,11 +607,9 @@
                         var isWheelScrollDown = event && event.type === 'wheel' && event.originalEvent && event.originalEvent.deltaY > 0;
                         var isRegularScroll = event && event.type === 'scroll';
                         
-                        // Проверяем только если скролл вниз или обычный скролл (тач, скроллбар)
-                        if (isWheelScrollDown || isRegularScroll) {
+                        if (isWheelScrollDown || isRegularScroll) { 
                             var el = scroll_element[0];
-                            // Условие достижения конца или близости к нему
-                            if ((scroll_component.isEnd && scroll_component.isEnd()) || (el.scrollHeight - el.scrollTop - el.clientHeight < 250) ) {
+                            if (el.scrollHeight - el.scrollTop - el.clientHeight < 250 ) { // Уменьшил порог для большей чувствительности
                                _this2.next(); 
                             }
                         }
@@ -493,7 +617,7 @@
                 };
                 
                 scroll_element.on('scroll.jaja_autonext', scrollHandler);
-                scroll_element.on('wheel.jaja_autonext', scrollHandler); // wheel тоже будет вызывать тот же handler
+                scroll_element.on('wheel.jaja_autonext', scrollHandler); 
 
 
                 this.activity.loader(false); 
