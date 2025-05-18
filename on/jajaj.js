@@ -13,8 +13,8 @@
         var info;
         var last;
         var waitload = false; 
-        var current_total_pages_from_parser = 0; 
-        var current_url_for_next_page_from_parser; 
+        var current_total_pages = 0; 
+        var next_page_url_from_card_data; // Хранит URL следующей страницы из data.page
 
         var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
@@ -26,7 +26,7 @@
             quantity: object.quantity || '', 
             setup: object.setup,
             type: object.type || 'movie', 
-            page: 0, 
+            page: 1, // Начинаем с 1, т.к. первая страница загружается в create
         };
         
         this.create = function () {
@@ -34,9 +34,9 @@
             this.activity.loader(true);
             waitload = true; 
 
-            activity.page = 0; 
-            current_total_pages_from_parser = 0; 
-            current_url_for_next_page_from_parser = undefined;
+            activity.page = 1; 
+            current_total_pages = 0; 
+            next_page_url_from_card_data = undefined;
 
             var current_cors_to_use = cors; 
             if (object.setup && object.setup.datatype !== 'json') {
@@ -45,45 +45,32 @@
 
             if (object.type == 'fav') {
                 var favData = _this.cardfavor(getFavoriteRadios());
-                current_total_pages_from_parser = favData.total_pages; 
-                current_url_for_next_page_from_parser = favData.page; 
-                _this.build(favData);
+                current_total_pages = favData.total_pages;
+                // next_page_url_from_card_data для fav обычно undefined
+                _this.build(favData); // favData содержит { card, page, total_pages }
                 waitload = false;
                 this.activity.loader(false);
             } else {
-                var first_page_url = object.url; 
-                // Для Jable и других сайтов, где первая страница не имеет ?page=1, но последующие имеют
-                // Если в object.url уже есть page=, то используем его как есть.
-                // Иначе, для Jable, добавляем page=1 и lang=en к базовому URL категории.
-                if (first_page_url.indexOf('page=') === -1 && object.setup && object.setup.link && object.setup.link.includes('jable.tv')) { 
-                    if (first_page_url.includes('?')) {
-                        first_page_url += '&page=1';
+                // Загружаем первую страницу
+                var url_to_load_first = object.url;
+                // Если это Jable и нет page=, добавляем page=1 и lang=en
+                if (url_to_load_first.indexOf('jable.tv') !== -1 && url_to_load_first.indexOf('page=') === -1) {
+                    if (url_to_load_first.includes('?')) {
+                        url_to_load_first += '&page=1';
                     } else {
-                        first_page_url += '?page=1';
+                        url_to_load_first += '?page=1';
                     }
-                     if (first_page_url.indexOf('lang=en') === -1) { // Добавляем lang=en если его нет
-                        if (first_page_url.includes('&page=1') || first_page_url.includes('?page=1')) { // Проверяем, что page=1 уже есть
-                            var parts = first_page_url.split('?');
-                            if (parts.length > 1 && parts[1].includes('page=1') && parts[1].split('&').length > 1) { // page=1 не единственный параметр
-                                first_page_url += '&lang=en';
-                            } else if (parts.length > 1 && parts[1] === 'page=1') { // page=1 единственный параметр
-                                first_page_url += '&lang=en';
-                            } else if (parts.length === 1 && !first_page_url.includes('?')){ // Если ? нет вообще
-                                 first_page_url += '?lang=en'; // Это условие маловероятно после добавления ?page=1
-                            }
-                        } else { // Если page=1 еще не добавлен (маловероятно здесь)
-                             if (first_page_url.includes('?')) first_page_url += '&lang=en'; else first_page_url += '?lang=en';
-                        }
-                     }
+                    if (url_to_load_first.indexOf('lang=en') === -1) {
+                        url_to_load_first += '&lang=en';
+                    }
                 }
 
 
-                network["native"](current_cors_to_use + first_page_url, function (str) {
-                    activity.page = 1; 
-                    var parsedData = _this.card(str, 1); 
-                    current_total_pages_from_parser = parsedData.total_pages;
-                    current_url_for_next_page_from_parser = parsedData.page;
-                    _this.build(parsedData);
+                network["native"](current_cors_to_use + url_to_load_first, function (str) {
+                    var parsedData = _this.card(str); 
+                    current_total_pages = parsedData.total_pages;
+                    next_page_url_from_card_data = parsedData.page; // Сохраняем URL для следующей страницы
+                    _this.build(parsedData); // parsedData содержит { card, page, total_pages }
                     waitload = false; 
                 }, function (a, c) {
                     Lampa.Noty.show(network.errorDecode(a, c));
@@ -96,58 +83,65 @@
             }
             return this.render();
         };
-
-        this.next = function () { 
+        
+        // Используем логику, похожую на оригинальную this.next из вашего первого скрипта
+        this.next = function () {
             var _this2 = this;
-            
-            var url_to_request = current_url_for_next_page_from_parser;
 
-            // Если парсер не дал URL следующей страницы, пытаемся сформировать его сами
-            if (!url_to_request && (activity.page < current_total_pages_from_parser || current_total_pages_from_parser === 0) ) {
-                var next_page_num_to_try = activity.page + 1;
-                // Используем object.url как базовый для формирования, но без существующего ?page=N
-                var base_url_for_next = object.url.replace(/&?page=\d+/, '');
-                 if (base_url_for_next.endsWith('?')) { // Убираем '?' если он остался в конце
-                    base_url_for_next = base_url_for_next.slice(0, -1);
+            // Если waitload уже true, или если total_pages равен 1 (или 0), или если activity.page уже >= total_pages, не грузим
+            if (waitload || current_total_pages === 1 || current_total_pages === 0 || (current_total_pages > 0 && activity.page >= current_total_pages)) {
+                if (activity.page >= current_total_pages && current_total_pages > 0) {
+                    // Lampa.Noty.show("Достигнут конец списка."); // Можно раскомментировать для отладки
                 }
-
-                if (base_url_for_next.includes('?')) {
-                    url_to_request = base_url_for_next + '&page=' + next_page_num_to_try;
-                } else {
-                    url_to_request = base_url_for_next + '?page=' + next_page_num_to_try;
-                }
-                // Добавляем lang=en для Jable, если его нет
-                if (url_to_request.indexOf('jable.tv') !== -1 && url_to_request.indexOf('lang=en') === -1) {
-                     if (url_to_request.includes('&page=')) { 
-                         url_to_request += '&lang=en';
-                    } else if (url_to_request.includes('?page=')){ 
-                         url_to_request += '&lang=en';
-                    } else { 
-                        url_to_request += '?lang=en';
-                    }
-                }
-            }
-
-
-            if (!url_to_request) {
-                return; 
-            }
-            
-            if (current_total_pages_from_parser > 0 && (activity.page + 1) > current_total_pages_from_parser) {
                 return;
             }
 
-
-            if (waitload) return;
-
             waitload = true;
-            this.activity.loader(true); 
+            this.activity.loader(true);
 
             var current_cors_to_use = cors;
             if (object.setup && object.setup.datatype !== 'json') {
                 current_cors_to_use = '';
             }
-            
+
+            activity.page++; // Инкрементируем номер страницы, которую собираемся запросить
+
+            var url_to_request;
+
+            // Пытаемся использовать URL, который вернул парсер (next_page_url_from_card_data)
+            // НО! Этот URL (если он есть) был для страницы (activity.page - 1) + 1.
+            // Нам нужен URL для текущего нового activity.page.
+            // Поэтому, если next_page_url_from_card_data содержит номер страницы, его надо обновить.
+            // Проще всего формировать URL всегда на основе activity.page.
+
+            url_to_request = object.url; // Базовый URL из activity
+            // Удаляем существующий параметр page=N из базового URL, если он там есть (на случай, если в object.url он уже был)
+            url_to_request = url_to_request.replace(/&?page=\d+/, '');
+            if (url_to_request.endsWith('?')) { // Убираем '?' если он остался в конце
+                url_to_request = url_to_request.slice(0, -1);
+            }
+
+            if (url_to_request.includes('?')) {
+                url_to_request += '&page=' + activity.page;
+            } else {
+                url_to_request += '?page=' + activity.page;
+            }
+            // Добавляем lang=en для Jable, если его нет
+            if (url_to_request.indexOf('jable.tv') !== -1 && url_to_request.indexOf('lang=en') === -1) {
+                // Проверяем, чтобы не добавить &lang=en если ?page=N - единственный параметр
+                if (url_to_request.endsWith('page=' + activity.page)) { // Если заканчивается на page=N
+                    url_to_request += '&lang=en';
+                } else if (url_to_request.includes('page=' + activity.page + '&')) { // Если page=N и есть другие параметры после
+                     // lang=en уже должен быть добавлен, если это необходимо, или добавится к существующим параметрам
+                } else if (url_to_request.includes('?')) {
+                    url_to_request += '&lang=en';
+                }
+                 else {
+                     url_to_request += '?lang=en'; // Маловероятно
+                }
+            }
+
+
             network.clear();
             network.timeout(1000 * 40);
 
@@ -158,29 +152,26 @@
                 } catch (e) {/* ignore */}
             }
             
-            var loading_page_number = activity.page + 1; 
-
             network["native"](current_cors_to_use + url_to_request, function (result) {
-                var parsedData = _this2.card(result, loading_page_number); 
+                var parsedData = _this2.card(result); 
                 
                 if (parsedData.card.length > 0) {
-                    activity.page = loading_page_number; 
-                    current_total_pages_from_parser = parsedData.total_pages; 
-                    current_url_for_next_page_from_parser = parsedData.page; 
+                    current_total_pages = parsedData.total_pages; 
+                    next_page_url_from_card_data = parsedData.page; // Сохраняем URL для СЛЕДУЮЩЕЙ за ЭТОЙ
                     _this2.append(parsedData, true);
                     waitload = false;
                 } else {
-                    Lampa.Noty.show('Больше элементов не найдено на странице ' + loading_page_number + '.');
-                    current_url_for_next_page_from_parser = undefined; 
-                    current_total_pages_from_parser = activity.page; 
+                    Lampa.Noty.show('Больше элементов не найдено на странице ' + activity.page + '.');
+                    current_total_pages = activity.page; // Считаем текущую страницу последней
+                    next_page_url_from_card_data = undefined;
                     waitload = true; 
                 }
                 _this2.activity.loader(false);
             }, function (a, c) {
                 if (a.status == 404) {
-                    Lampa.Noty.show('Страница ' + loading_page_number + ' не найдена (404). Это последняя.');
-                    current_total_pages_from_parser = activity.page; 
-                    current_url_for_next_page_from_parser = undefined; 
+                    Lampa.Noty.show('Страница ' + activity.page + ' не найдена (404). Это последняя.');
+                    current_total_pages = activity.page -1; // Предыдущая была последней
+                    next_page_url_from_card_data = undefined;
                 } else {
                     Lampa.Noty.show(network.errorDecode(a, c));
                 }
@@ -192,10 +183,16 @@
             });
         };
 
-        this.card = function (str_data_from_network, currentPageNumberForParsing) {
+        // this.card теперь НЕ принимает currentPageNumberForParsing, так как activity.page сам отслеживает текущую
+        this.card = function (str_data_from_network) {
+            // ... (Логика парсинга карточек из предыдущего ответа остается ЗДЕСЬ)
+            // Важно, чтобы она возвращала: { card: [], page: next_page_url, total_pages: X }
+            // `next_page_url` должен быть URL для activity.page + 1 (если есть)
+            // `total_pages` - общее количество страниц на сайте
+            // Я скопирую сюда реализацию this.card из предыдущего ответа, внеся коррективы
             var card_list = []; 
             var next_page_url_parsed; 
-            var total_pages_parsed = currentPageNumberForParsing; 
+            var total_pages_parsed = activity.page; // По умолчанию, если не найдем пагинацию, считаем текущую последней
 
             var current_setup = object.setup; 
             if (!current_setup) {
@@ -205,23 +202,10 @@
 
             var response_content = str_data_from_network;
 
-            if (current_setup.datatype == 'json' && typeof response_content === 'string') { 
-                try {
-                    var parsed_json = JSON.parse(response_content);
-                    response_content = parsed_json.contents ? parsed_json.contents : parsed_json; 
-                     if(typeof response_content === 'string' && (response_content.startsWith('{') || response_content.startsWith('['))) { 
-                        response_content = JSON.parse(response_content);
-                    }
-                } catch (e) { /* console.log('Jaja - JSON parse error:', e); */ }
-            }
-            if (typeof response_content === 'object' && current_setup.datatype == 'json' && response_content.contents) { 
-                 response_content = response_content.contents;
-                 try { if(typeof response_content === 'string') response_content = JSON.parse(response_content); } catch(e){/* console.log('Jaja - JSON parse error 2:', e); */} 
-            }
-
-            if (current_setup.datatype == 'text' && typeof response_content === 'object' && response_content.contents) {
-                response_content = response_content.contents; 
-            }
+            // ... (обработка JSON и allorigins - без изменений)
+             if (current_setup.datatype == 'json' && typeof response_content === 'string') { try { var parsed_json = JSON.parse(response_content); response_content = parsed_json.contents ? parsed_json.contents : parsed_json; if(typeof response_content === 'string' && (response_content.startsWith('{') || response_content.startsWith('['))) { response_content = JSON.parse(response_content);}} catch (e) {}}
+             if (typeof response_content === 'object' && current_setup.datatype == 'json' && response_content.contents) { response_content = response_content.contents; try { if(typeof response_content === 'string') response_content = JSON.parse(response_content); } catch(e){}}
+             if (current_setup.datatype == 'text' && typeof response_content === 'object' && response_content.contents) { response_content = response_content.contents; }
             
             var html_content_str = typeof response_content === 'string' ? response_content.replace(/\n/g, '') : '';
 
@@ -231,14 +215,12 @@
             var l_selector = current_setup.list.link.selector;
             var p_selector = current_setup.list.page.selector; 
             var m_selector = current_setup.list.mnumber.selector;
-
             var base_url = current_setup.link; 
 
             var pagination_elements = $(p_selector, html_content_str);
             if (pagination_elements.length > 0) {
                 var page_links = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])');
                 var current_page_element = pagination_elements.find('.active, .current, .selected, span.page-numbers.current').first();
-                
                 var next_link_candidate = current_page_element.nextAll('a[href]').first();
                 if (!next_link_candidate.length) { 
                      page_links.each(function(){
@@ -270,11 +252,11 @@
                     total_pages_parsed = parseInt(last_page_link_num_text, 10);
                 } else if (current_page_element.length && !next_link_candidate.length) { 
                      var current_text = current_page_element.text().trim();
-                     total_pages_parsed = $.isNumeric(current_text) ? parseInt(current_text, 10) : currentPageNumberForParsing;
-                } else {
-                     total_pages_parsed = currentPageNumberForParsing; 
+                     total_pages_parsed = $.isNumeric(current_text) ? parseInt(current_text, 10) : activity.page;
+                } else { // Если пагинация есть, но цифр не нашли, и нет "следующей" ссылки
+                     total_pages_parsed = activity.page; 
                 }
-                 total_pages_parsed = Math.max(total_pages_parsed, currentPageNumberForParsing); 
+                 total_pages_parsed = Math.max(total_pages_parsed, activity.page); 
 
                 if (next_page_url_parsed && next_page_url_parsed.indexOf('http') === -1) {
                     next_page_url_parsed = base_url + (next_page_url_parsed.startsWith('/') ? next_page_url_parsed : '/' + next_page_url_parsed);
@@ -283,16 +265,20 @@
                     next_page_url_parsed = undefined; 
                 }
             } else { 
-                 total_pages_parsed = currentPageNumberForParsing;
+                 total_pages_parsed = activity.page; // Если блока пагинации нет, текущая страница - последняя
             }
             
             var items_on_page = $(v_selector, html_content_str);
-            if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
+            if (items_on_page.length === 0 && activity.page > 1) { 
+                // Если это не первая страница и мы не нашли на ней карточек,
+                // значит предыдущая была действительно последней.
                 next_page_url_parsed = undefined;
-                total_pages_parsed = currentPageNumberForParsing -1; 
+                total_pages_parsed = activity.page -1; 
             }
 
+
             items_on_page.each(function (i, html_item_el) {
+                // ... (внутренняя логика парсинга карточки - без изменений) ...
                 var $html_item = $(html_item_el); 
                 var t1_el = t_selector ? $html_item.find(t_selector) : $html_item;
                 var u1_el = l_selector ? $html_item.find(l_selector) : $html_item;
@@ -316,10 +302,13 @@
             
             return {
                 card: card_list,
-                page: next_page_url_parsed, // Возвращаем URL следующей страницы, если парсер его нашел
+                page: next_page_url_parsed, // URL следующей страницы, если парсер его нашел
                 total_pages: total_pages_parsed
             };
         };
+        
+    // --- КОНЕЦ ЧАСТИ 1 ---
+    // --- НАЧАЛО ЧАСТИ 2 ---
         this.cardfavor = function (json) {
             var page; 
             var total_pages = 1;
@@ -385,8 +374,9 @@
                         var items_per_row = Math.max(1, Math.floor(scroll_width / card_width_with_margin));
                         var current_card_index = items.indexOf(card_element);
                         
+                        // Загружаем следующую, если это предпоследний ряд И есть куда грузить
                         if (current_card_index >= items.length - (items_per_row * 1.5) && !waitload) {
-                           _this3.next(); 
+                           _this3.next(); // Вызываем next() без параметров, он использует current_url_for_next_page_from_parser или формирует сам
                         }
                     }
 
@@ -733,7 +723,7 @@
                 { url: 'https://jable.tv/tags/rainy-day/', title: '# Дождливый день', quantity: '' },
                 { url: 'https://jable.tv/tags/ntr/', title: '# Измена', quantity: '' }, 
                 { url: 'https://jable.tv/tags/love-potion/', title: '# Любовное зелье', quantity: '' },
-                { url: 'https://jable.tv/tags/hidden-cam/', title: '# Скрытая камера', quantity: '' }, // Важно: Убедитесь, что это не дублирует тег "Утечка"
+                { url: 'https://jable.tv/tags/hidden-cam/', title: '# Скрытая камера', quantity: '' }, 
                 { url: 'https://jable.tv/tags/incest/', title: '# Инцест', quantity: '' }, 
                 { url: 'https://jable.tv/tags/hypnosis/', title: '# Гипноз', quantity: '' },
                 { url: 'https://jable.tv/tags/giant/', title: '# Гигант', quantity: '' },
