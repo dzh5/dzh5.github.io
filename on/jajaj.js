@@ -828,7 +828,7 @@
                 { url: 'https://jable.tv/tagstr/?lang=en', title: '# Измена', quantity: '' },
                 { url: 'https://jable.tv/tags/love-potion/?lang=en', title: '# Любовное зелье', quantity: '' },
                 { url: 'https://jable.tv/tags/hidden-cam/?lang=en', title: '# Утечка', quantity: '' },
-                { url: 'https://jable.tv/tags/inc__t/?lang=en', title: '# Инцест', quantity: '' },
+                { url: 'https://jable.tv/tags/kinship/?lang=en', title: '# Инцест', quantity: '' },
                 { url: 'https://jable.tv/tags/hypnosis/?lang=en', title: '# Гипноз', quantity: '' },
                 { url: 'https://jable.tv/tags/giant/?lang=en', title: '# Гигант', quantity: '' },
                 { url: 'https://jable.tv/tags/black/?lang=en', title: '# Черный', quantity: '' },
