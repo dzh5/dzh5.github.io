@@ -208,8 +208,8 @@ this.card = function (str_data_from_network, currentPageNumberForParsing) {
             
             var html_content_str = typeof response_content === 'string' ? response_content.replace(/\n/g, '') : '';
 
-            // Используем правильные имена переменных, как они были определены
-            var v = current_setup.list.videoscontainer.selector; // Имя переменной 'v'
+            // Здесь имена переменных должны совпадать с теми, что используются ниже
+            var v = current_setup.list.videoscontainer.selector; // Используем 'v'
             var t = current_setup.list.title.selector;
             var th = current_setup.list.thumb.selector; 
             var l = current_setup.list.link.selector;
@@ -277,19 +277,20 @@ this.card = function (str_data_from_network, currentPageNumberForParsing) {
                  total_pages_parsed = currentPageNumberForParsing;
             }
             
-            var items_on_page = $(v, html_content_str); // ИСПРАВЛЕНО: v_selector -> v
+            // ИСПРАВЛЕНИЕ ЗДЕСЬ: используем 'v' вместо 'v_selector'
+            var items_on_page = $(v, html_content_str); 
             if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
                 next_page_url_parsed = undefined;
                 total_pages_parsed = currentPageNumberForParsing -1; 
             }
 
-            items_on_page.each(function (i, html_item_el) { // ИСПРАВЛЕНО: v_selector -> v (неявно, т.к. items_on_page уже использует v)
-                // ... (внутренняя логика парсинга карточки - без изменений) ...
+            items_on_page.each(function (i, html_item_el) {
                 var $html_item = $(html_item_el); 
-                var t1_el = t ? $html_item.find(t) : $html_item; // Используем t
-                var u1_el = l ? $html_item.find(l) : $html_item; // Используем l
-                var i1_el = th ? $html_item.find(th) : $html_item; // Используем th
-                var m1_el = m ? $html_item.find(m) : $html_item; // Используем m
+                // И здесь используем правильные имена переменных 't', 'l', 'th', 'm'
+                var t1_el = t ? $html_item.find(t) : $html_item; 
+                var u1_el = l ? $html_item.find(l) : $html_item; 
+                var i1_el = th ? $html_item.find(th) : $html_item; 
+                var m1_el = m ? $html_item.find(m) : $html_item; 
                 var tt, uu, ii, mm, pp = ''; 
                 switch (current_setup.list.title.attrName) { case 'text': tt = t1_el.text(); break; case 'html': tt = t1_el.html(); break; default: tt = t1_el.attr(current_setup.list.title.attrName); }
                 if (typeof tt === 'undefined') return true; tt = tt.trim();
