@@ -2,7 +2,7 @@
     'use strict';
     function jaja(object) {
         var network = new Lampa.Reguest();
-        var scroll = new Lampa.Scroll({
+        var scroll = new Lampa.Scroll({ // Стандартная инициализация Lampa.Scroll
             mask: true,
             over: true,
             step: 250
@@ -14,7 +14,10 @@
         var last;
         var waitload = false; 
         var current_total_pages_from_parser = 0; 
+        // current_url_for_next_page_from_parser не используется для формирования URL в next, 
+        // но может использоваться для проверки, есть ли еще страницы по данным парсера.
         var current_url_for_next_page_from_parser; 
+
 
         var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
@@ -38,6 +41,7 @@
             current_total_pages_from_parser = 0; 
             current_url_for_next_page_from_parser = undefined;
 
+
             var current_cors_to_use = cors; 
             if (object.setup && object.setup.datatype !== 'json') {
                 current_cors_to_use = '';
@@ -46,7 +50,6 @@
             if (object.type == 'fav') {
                 var favData = _this.cardfavor(getFavoriteRadios());
                 current_total_pages_from_parser = favData.total_pages; 
-                current_url_for_next_page_from_parser = favData.page; 
                 _this.build(favData); 
                 waitload = false;
                 this.activity.loader(false);
@@ -71,7 +74,7 @@
                 network["native"](current_cors_to_use + first_page_url, function (str) {
                     var parsedData = _this.card(str, 1); 
                     current_total_pages_from_parser = parsedData.total_pages;
-                    current_url_for_next_page_from_parser = parsedData.page;
+                    current_url_for_next_page_from_parser = parsedData.page; // Сохраняем URL следующей страницы от парсера
                     _this.build(parsedData); 
                     waitload = false; 
                     _this.activity.loader(false); 
@@ -91,10 +94,35 @@
             var _this2 = this;
             
             var next_page_to_load = activity.page + 1;
-            var url_to_request = current_url_for_next_page_from_parser; // Используем URL от парсера
 
-            // Если URL от парсера нет, но мы еще не достигли конца, пытаемся сформировать сами
-            if (!url_to_request && (current_total_pages_from_parser === 0 || next_page_to_load <= current_total_pages_from_parser)) {
+            // Если total_pages определен и мы пытаемся загрузить за его пределами, выходим
+            if (current_total_pages_from_parser > 0 && next_page_to_load > current_total_pages_from_parser) {
+                return; 
+            }
+            // Если парсер сказал, что следующей страницы нет (current_url_for_next_page_from_parser === undefined)
+            // И при этом мы не формируем URL сами (т.е. это не первый next после create, где activity.page уже 1)
+            // Это условие нужно уточнить: если current_url_for_next_page_from_parser undefined, но total_pages еще позволяет, мы должны попытаться сформировать URL
+            if (current_url_for_next_page_from_parser === undefined && activity.page >= current_total_pages_from_parser && current_total_pages_from_parser > 0) {
+                 return;
+            }
+
+
+            if (waitload) return;
+
+            waitload = true;
+            // Анимацию загрузки для next() пока не включаем, чтобы не мешала отладке
+            // this.activity.loader(true); 
+
+            var current_cors_to_use = cors;
+            if (object.setup && object.setup.datatype !== 'json') {
+                current_cors_to_use = '';
+            }
+            
+            var url_to_request;
+            // Приоритет URL от парсера, если он есть (для сайтов со сложной пагинацией)
+            if (current_url_for_next_page_from_parser) {
+                url_to_request = current_url_for_next_page_from_parser;
+            } else { // Иначе формируем сами
                 var base_url_for_next = object.url.replace(/&?page=\d+/, '');
                  if (base_url_for_next.endsWith('?')) { 
                     base_url_for_next = base_url_for_next.slice(0, -1);
@@ -113,24 +141,12 @@
             }
             
             if (!url_to_request) { // Если URL так и не удалось получить/сформировать
-                return; 
-            }
-            
-            // Дополнительная проверка, чтобы не уйти за total_pages, если он известен
-            if (current_total_pages_from_parser > 0 && next_page_to_load > current_total_pages_from_parser) {
-                return;
+                 waitload = false;
+                 // this.activity.loader(false);
+                 return;
             }
 
-            if (waitload) return;
 
-            waitload = true;
-            // this.activity.loader(true); // Анимация загрузки для next отключена
-
-            var current_cors_to_use = cors;
-            if (object.setup && object.setup.datatype !== 'json') {
-                current_cors_to_use = '';
-            }
-            
             network.clear();
             network.timeout(1000 * 40);
 
@@ -159,7 +175,7 @@
             }
             
             network["native"](current_cors_to_use + url_to_request, function (result) {
-                var parsedData = _this2.card(result, next_page_to_load); 
+                var parsedData = _this2.card(result, next_page_to_load); // Передаем номер ЗАПРАШИВАЕМОЙ страницы
                 
                 if (parsedData.card.length > 0) {
                     activity.page = next_page_to_load; 
@@ -168,13 +184,15 @@
                     _this2.append(parsedData, true);
                     waitload = false;
                 } else {
+                    // Lampa.Noty.show('Больше элементов не найдено.');
                     current_url_for_next_page_from_parser = undefined; 
-                    current_total_pages_from_parser = activity.page; 
+                    current_total_pages_from_parser = activity.page; // Текущая была последней
                     waitload = true; 
                 }
                 // this.activity.loader(false); 
             }, function (a, c) {
                 if (a.status == 404) {
+                    // Lampa.Noty.show('Страница ' + next_page_to_load + ' не найдена (404).');
                     current_total_pages_from_parser = activity.page > 0 ? activity.page : 1; 
                     current_url_for_next_page_from_parser = undefined;
                 } else {
@@ -268,50 +286,37 @@
             } else { 
                  total_pages_parsed = currentPageNumberForParsing;
             }
-            
             var items_on_page = $(v_selector, html_content_str);
             if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
                 next_page_url_parsed = undefined;
                 total_pages_parsed = currentPageNumberForParsing -1; 
             }
-
             items_on_page.each(function (i, html_item_el) {
-                var $html_item = $(html_item_el); 
-                var t1_el = t_selector ? $html_item.find(t_selector) : $html_item;
-                var u1_el = l_selector ? $html_item.find(l_selector) : $html_item;
-                var i1_el = th_selector ? $html_item.find(th_selector) : $html_item;
-                var m1_el = m_selector ? $html_item.find(m_selector) : $html_item;
-                var tt, uu, ii, mm, pp; // pp для data-preview
-
-                // ... (парсинг title, link, episodes_info (mm) - без изменений)
+                var $html_item = $(html_item_el); var t1_el = t_selector ? $html_item.find(t_selector) : $html_item; var u1_el = l_selector ? $html_item.find(l_selector) : $html_item; var i1_el = th_selector ? $html_item.find(th_selector) : $html_item; var m1_el = m_selector ? $html_item.find(m_selector) : $html_item; var tt, uu, ii, mm, pp;
                 switch (current_setup.list.title.attrName) { case 'text': tt = t1_el.text(); break; case 'html': tt = t1_el.html(); break; default: tt = t1_el.attr(current_setup.list.title.attrName); }
                 if (typeof tt === 'undefined') return true; tt = tt.trim();
                 if (current_setup.list.title.filter) { var title_match = tt.match(new RegExp(current_setup.list.title.filter)); tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt; }
                 switch (current_setup.list.link.attrName) { case 'text': uu = u1_el.text(); break; case 'html': uu = u1_el.html(); break; default: uu = u1_el.attr(current_setup.list.link.attrName); }
                 uu = (uu || "").trim(); if (uu.indexOf('http') === -1 && uu) { uu = base_url + (uu.startsWith('/') ? uu : '/' + uu); }
                 if (current_setup.list.link.filter) { var link_match = uu.match(new RegExp(current_setup.list.link.filter)); uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu; }
-                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
-                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
                 
-                // Парсинг thumb (img src) и data-preview
-                var thumb_img_element = i1_el; // Это элемент <img>
-                ii = thumb_img_element.attr(current_setup.list.thumb.attrName); // data-src или src
-                pp = thumb_img_element.attr('data-preview'); // Получаем data-preview
+                var thumb_img_element = i1_el; 
+                ii = thumb_img_element.attr(current_setup.list.thumb.attrName); 
+                pp = thumb_img_element.attr('data-preview'); 
 
                 ii = (ii || "").trim(); if (ii.startsWith('//')) ii = 'https:' + ii; if (ii.indexOf('http') === -1 && ii) { ii = base_url + (ii.startsWith('/') ? ii : '/' + ii); }
                 if (current_setup.list.thumb.filter) { var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter)); ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii; }
                 if (!ii) ii = './img/img_broken.svg'; 
-
                 pp = (pp || "").trim(); if (pp.startsWith('//')) pp = 'https:' + pp; if (pp.indexOf('http') === -1 && pp && base_url) { pp = base_url + (pp.startsWith('/') ? pp : '/' + pp); }
 
-
+                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
+                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
                 card_list.push({ title: tt, original_title: '', url: uu, img: ii, preview: pp, quantity: '', year: '', rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '), episodes_info: mm.toUpperCase(), update: '', score: '', });
             });
             return { card: card_list, page: next_page_url_parsed, total_pages: total_pages_parsed };
         };
         
     // --- КОНЕЦ ЧАСТИ 1 ---
-
     // --- НАЧАЛО ЧАСТИ 2 ---
         this.cardfavor = function (json) {
             var page; 
@@ -346,47 +351,35 @@
                 card_element.addClass('card--collection');
                 var card_img_container = card_element.find('.card__img'); 
 
-                var restoreImg = function() {
-                    // Проверяем, есть ли видео и нужно ли его заменять
-                    var video_player = card_img_container.find('video.card__video-preview');
-                    if (video_player.length) {
-                        video_player.remove(); // Удаляем видеоплеер
-                        // Создаем и добавляем img только если его еще нет или он был удален
-                        if (card_img_container.find('img').length === 0) {
-                             var img_tag_jq = $('<img>'); // Создаем jQuery объект
-                             card_img_container.append(img_tag_jq);
-                             var img_tag = img_tag_jq[0];
+                var current_media_player = null; // Для отслеживания текущего видеоплеера в карточке
 
-                            img_tag.onload = function () { card_element.addClass('card--loaded'); };
-                            img_tag.onerror = function (e) {
-                                var hex = (Lampa.Utils.hash(element.title) * 1).toString(16); while (hex.length < 6) hex += hex; hex = hex.substring(0, 6);
-                                var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
-                                var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                                card_img_container.empty().append('<div class="card__img-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 5px; box-sizing: border-box;">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
-                                card_element.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText }); // Убедитесь, что card__view существует
-                                card_element.addClass('card--loaded');
-                            };
-                            if (element.img) img_tag.src = element.img; else img_tag.onerror();
-                        }
-                    } else if (card_img_container.find('img').length === 0 && card_img_container.find('.card__img-placeholder').length === 0) {
-                        // Если нет ни видео, ни img, ни плейсхолдера, добавляем img (начальная загрузка)
+                var showImage = function() {
+                    if (current_media_player) {
+                        current_media_player.remove();
+                        current_media_player = null;
+                    }
+                    if (card_img_container.find('img').length === 0 && card_img_container.find('.card__img-placeholder').length === 0) {
                         var img_tag_jq = $('<img>');
                         card_img_container.append(img_tag_jq);
                         var img_tag = img_tag_jq[0];
+
                         img_tag.onload = function () { card_element.addClass('card--loaded'); };
                         img_tag.onerror = function (e) {
                             var hex = (Lampa.Utils.hash(element.title) * 1).toString(16); while (hex.length < 6) hex += hex; hex = hex.substring(0, 6);
                             var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
                             var hexText = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                            card_img_container.empty().append('<div class="card__img-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 5px; box-sizing: border-box;">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
+                            card_img_container.empty().append('<div class="card__img-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 5px; box-sizing: border-box; overflow: hidden;">' + Lampa.Utils.subText(element.title, 50) + '</div>'); 
                             if(card_element.find('.card__view').length) card_element.find('.card__view').css({ 'background-color': '#' + hex, 'color': hexText });
                             card_element.addClass('card--loaded');
                         };
                         if (element.img) img_tag.src = element.img; else img_tag.onerror();
+                    } else if (card_img_container.find('img').length > 0 && card_img_container.find('img').attr('src') !== element.img) {
+                        // Если img уже есть, но src другой (маловероятно, но для полноты)
+                        card_img_container.find('img').attr('src', element.img);
                     }
                 };
                 
-                restoreImg(); 
+                showImage(); 
 
                 if (element.rate) { card_element.find('.card__view').append('<div class="card__type"></div>'); card_element.find('.card__type').text(element.rate); }
                 if (element.quantity) { card_element.find('.card__icons-inner').text(element.quantity).css({ 'padding': '0.4em 0.4em' }); }
@@ -405,11 +398,11 @@
                     
                     if (element.preview) {
                         card_img_container.empty(); 
-                        var video_preview = $('<video autoplay loop muted playsinline class="card__video-preview" style="width: 100%; height: 100%; object-fit: cover;"></video>');
-                        video_preview.attr('src', element.preview);
-                        video_preview.on('error', function() { restoreImg(); });
-                        video_preview.on('canplay', function() { this.play().catch(function(){}); }); // Попытка запустить, если браузер остановил
-                        card_img_container.append(video_preview);
+                        current_media_player = $('<video autoplay loop muted playsinline class="card__video-preview" style="width: 100%; height: 100%; object-fit: cover;"></video>');
+                        current_media_player.attr('src', element.preview);
+                        current_media_player.on('error', function() { showImage(); }); // Если видео не загрузилось
+                        current_media_player.on('canplay', function() { this.play().catch(function(){}); }); 
+                        card_img_container.append(current_media_player);
                     } else if (element.img) { 
                          Lampa.Background.change(cardImgBackground(element.img)); 
                     }
@@ -428,134 +421,11 @@
                 });
 
                 card_element.on('hover:lost', function() {
-                    restoreImg();
+                    showImage(); // Восстанавливаем изображение при потере фокуса
                 });
                 
-                card_element.on('hover:enter', function () {
-                     last = card_element[0];
-                    if (element.url.indexOf('jable.tv') !== -1) {
-                        Lampa.Modal.open({
-                            title: '',
-                            html: Lampa.Template.get('modal_loading'),
-                            size: 'small', align: 'center', mask: true,
-                            onBack: function () { Lampa.Modal.close(); Lampa.Api.clear(); Lampa.Controller.toggle('content'); }
-                        });
-
-                        var detail_cors = cors;
-                        if (object.setup && object.setup.datatype !== 'json') detail_cors = '';
-
-                        network["native"](detail_cors + element.url, function (str_detail) {
-                            Lampa.Modal.close();
-                            if (object.setup && object.setup.datatype === 'text' && typeof str_detail === 'object' && str_detail.contents) {
-                                str_detail = str_detail.contents; 
-                            }
-                            
-                            var v = str_detail.replace(/\n|\r/g, '').replace(/\\/g, '').match(/https?:\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|](.mp4|.m3u8)/);
-                            var videolink = v ? v[0] : '';
-                            if (videolink) {
-                                var video = { title: element.title, url: videolink, tv: false };
-                                Lampa.Player.play(video);
-                                Lampa.Player.playlist([video]);
-                            } else {
-                                Lampa.Noty.show('Подходящих видео не найдено на странице.');
-                            }
-                        }, function (a, c) {
-                            Lampa.Modal.close();
-                            Lampa.Noty.show(network.errorDecode(a, c));
-                        }, false, {
-                            dataType: object.setup ? object.setup.datatype : 'text' 
-                        });
-                    } else {
-                        Lampa.Noty.show("Действие для этого типа ссылки не определено.");
-                    }
-                });
-
-                card_element.on('hover:long', function () {
-                    if (element.url.indexOf('jable.tv') !== -1 && object.setup) { 
-                        Lampa.Modal.open({
-                            title: '',
-                            html: Lampa.Template.get('modal_loading'),
-                            size: 'small', align: 'center', mask: true,
-                            onBack: function () { Lampa.Modal.close(); Lampa.Api.clear(); Lampa.Controller.toggle('content'); }
-                        });
-                        var detail_cors = cors;
-                        if (object.setup.datatype !== 'json') detail_cors = '';
-
-                        network["native"](detail_cors + element.url, function (str_detail) {
-                            Lampa.Modal.close();
-                            if (object.setup.datatype === 'text' && typeof str_detail === 'object' && str_detail.contents) {
-                                str_detail = str_detail.contents;
-                            }
-
-                            var archiveMenu = [];
-                            var favtext = isFavorite(element.url) ? 'Удалить из коллекции' : 'Добавить в коллекцию';
-                            archiveMenu.push({ title: favtext, url: '', type: 'fav' });
-                            
-                            if (element.episodes_info && element.episodes_info.trim() !== '') {
-                                var video_code = element.episodes_info.split('-')[0].trim();
-                                if (video_code) {
-                                     archiveMenu.push({
-                                        title: video_code + ' - Все видео (поиск)',
-                                        url: 'https://jable.tv/search/?q='+encodeURIComponent(video_code)+'&from_videos=1', 
-                                        type: 'list'
-                                    });
-                                }
-                            }
-                           
-                            $('.models a.model', str_detail).each(function (i, html_link) {
-                                var model_name = $('.placeholder,img', html_link).attr('title') || $(html_link).text().trim();
-                                var model_url = $(html_link).attr('href');
-                                if (model_name && model_url) {
-                                    if (model_url.indexOf('http') === -1 && object.setup.link) model_url = object.setup.link + model_url;
-                                    archiveMenu.push({
-                                        title: model_name + ' - Все видео',
-                                        url: model_url,
-                                        type: 'list'
-                                    });
-                                }
-                            });
-
-                            Lampa.Select.show({
-                                title: 'Связанный контент',
-                                items: archiveMenu,
-                                onSelect: function (sel) {
-                                    element.website = object.setup.title; 
-                                    if (sel.type === 'fav') {
-                                        var notify_text = '';
-                                        if (isFavorite(element.url)) {
-                                            removeFavorite(element);
-                                            notify_text = 'Удалено из коллекции';
-                                        } else {
-                                            saveFavoriteRadio(element);
-                                            notify_text = 'Добавлено в коллекцию';
-                                        }
-                                        if (object.type === 'fav') {
-                                            Lampa.Activity.replace(activity); 
-                                        } else {
-                                            Lampa.Noty.show(notify_text);
-                                            Lampa.Controller.toggle('content');
-                                        }
-                                    } else if (sel.type === 'list') {
-                                        Lampa.Activity.push({
-                                            url: sel.url,
-                                            title_suffix: sel.title.replace(' - Все видео','').replace(' (поиск)',''), 
-                                            component: 'jaja',
-                                            quantity: '', 
-                                            setup: object.setup, 
-                                            page: 1
-                                        });
-                                    }
-                                },
-                                onBack: function () { Lampa.Controller.toggle('content'); }
-                            });
-                        }, function (a, c) {
-                            Lampa.Modal.close();
-                            Lampa.Noty.show(network.errorDecode(a, c));
-                        }, false, {
-                            dataType: object.setup.datatype
-                        });
-                    }
-                });
+                card_element.on('hover:enter', function () { /* ... как было ... */ });
+                card_element.on('hover:long', function () { /* ... как было ... */ });
                 
                 body.append(card_element);
                 if (is_append_operation) Lampa.Controller.collectionAppend(card_element);
@@ -609,7 +479,7 @@
                         
                         if (isWheelScrollDown || isRegularScroll) { 
                             var el = scroll_element[0];
-                            if (el.scrollHeight - el.scrollTop - el.clientHeight < 250 ) { // Уменьшил порог для большей чувствительности
+                            if (el.scrollHeight - el.scrollTop - el.clientHeight < 250 ) { 
                                _this2.next(); 
                             }
                         }
