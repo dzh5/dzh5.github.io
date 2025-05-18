@@ -306,11 +306,14 @@
                 };
 
                 card.on('hover:focus', function () {
+console.log('Hover/Focus событие сработало');
+    console.log('Элемент:', element);
+                    
                     last = card[0];
                     scroll.update(card, true);
-
+                    
                     let previewUrl = element.preview_url ? element.preview_url : element.img;
-
+ console.log('Используется превью:', previewUrl);
                     let videoEl = $('<video autoplay loop muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: auto; display: none;"></video>');
                     let sourceEl = $('<source src="' + previewUrl + '" type="video/mp4">');
                     videoEl.append(sourceEl);
