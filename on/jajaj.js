@@ -14,7 +14,7 @@
         var last;
         var waitload = false; 
         var current_total_pages = 0; 
-        var current_page_from_parser; 
+        var current_url_for_next_page_from_parser; // URL следующей страницы, полученный от парсера
 
         var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
@@ -26,7 +26,8 @@
             quantity: object.quantity || '', 
             setup: object.setup,
             type: object.type || 'movie', 
-            page: object.page || 1 
+            // page: 1, // activity.page будет отражать номер ЗАГРУЖЕННОЙ страницы (начинается с 1)
+                        // Инициализируется в create
         };
         
         this.create = function () {
@@ -34,26 +35,27 @@
             this.activity.loader(true);
             waitload = true; 
 
+            activity.page = 1; // Инициализируем страницу для текущего Activity
             current_total_pages = 0; 
-            current_page_from_parser = undefined;
+            current_url_for_next_page_from_parser = undefined;
 
-            var current_cors = cors;
+            var current_cors_to_use = cors; // Локальная переменная для CORS в этом запросе
             if (object.setup && object.setup.datatype !== 'json') {
-                current_cors = '';
+                current_cors_to_use = '';
             }
 
             if (object.type == 'fav') {
                 var favData = _this.cardfavor(getFavoriteRadios());
                 current_total_pages = favData.total_pages;
-                current_page_from_parser = favData.page; 
+                current_url_for_next_page_from_parser = favData.page; 
                 _this.build(favData);
                 waitload = false;
                 this.activity.loader(false);
             } else {
-                network["native"](current_cors + object.url, function (str) {
-                    var parsedData = _this.card(str);
+                network["native"](current_cors_to_use + object.url, function (str) {
+                    var parsedData = _this.card(str, 1); // Передаем текущий номер страницы 1
                     current_total_pages = parsedData.total_pages;
-                    current_page_from_parser = parsedData.page;
+                    current_url_for_next_page_from_parser = parsedData.page;
                     _this.build(parsedData);
                     waitload = false; 
                 }, function (a, c) {
@@ -68,20 +70,43 @@
             return this.render();
         };
 
-        this.next = function (url_to_fetch) { 
+        this.next = function () { 
             var _this2 = this;
+            
+            // Используем URL, который был получен от парсера для следующей страницы
+            var url_to_request = current_url_for_next_page_from_parser;
 
-            if (!url_to_fetch || (activity.page >= current_total_pages && current_total_pages > 0)) {
-                return;
+            if (!url_to_request) {
+                // Если URL от парсера нет, и мы еще не достигли общего числа страниц (если оно известно > 0)
+                // и activity.page > 0 (т.е. хотя бы одна страница загружена)
+                if (activity.page > 0 && activity.page < current_total_pages && current_total_pages > 0) {
+                    // Попытка сформировать URL для следующей страницы на основе object.url и activity.page + 1
+                    var base_url_for_paging = object.url; 
+                    var next_page_num = activity.page + 1;
+                    if (base_url_for_paging.includes('page=')) {
+                        url_to_request = base_url_for_paging.replace(/page=\d+/, 'page=' + next_page_num);
+                    } else if (base_url_for_paging.includes('?')) {
+                        url_to_request = base_url_for_paging + '&page=' + next_page_num;
+                    } else {
+                        url_to_request = base_url_for_paging + '?page=' + next_page_num;
+                    }
+                    if (url_to_request.indexOf('jable.tv') !== -1 && url_to_request.indexOf('lang=en') === -1) {
+                         if (url_to_request.includes('?')) url_to_request += '&lang=en'; else url_to_request += '?lang=en';
+                     }
+                } else {
+                    // Lampa.Noty.show('Нет URL для следующей страницы или достигнут конец.');
+                    return; // Выходим, если нет URL и нет оснований его формировать
+                }
             }
+            
             if (waitload) return;
 
             waitload = true;
             this.activity.loader(true); 
 
-            var current_cors = cors;
+            var current_cors_to_use = cors;
             if (object.setup && object.setup.datatype !== 'json') {
-                current_cors = '';
+                current_cors_to_use = '';
             }
             
             network.clear();
@@ -93,18 +118,22 @@
                     headers['Referer'] = object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0] + '/';
                 } catch (e) {/* ignore */}
             }
+            
+            var requested_page_number = activity.page + 1; // Номер страницы, которую мы пытаемся загрузить
 
-            network["native"](current_cors + url_to_fetch, function (result) {
-                activity.page++; 
-                var parsedData = _this2.card(result); 
-                current_total_pages = parsedData.total_pages; 
-                current_page_from_parser = parsedData.page; 
-
-                _this2.append(parsedData, true);
+            network["native"](current_cors_to_use + url_to_request, function (result) {
+                var parsedData = _this2.card(result, requested_page_number); 
+                
                 if (parsedData.card.length > 0) {
+                    activity.page = requested_page_number; 
+                    current_total_pages = parsedData.total_pages; 
+                    current_url_for_next_page_from_parser = parsedData.page; 
+                    _this2.append(parsedData, true);
                     waitload = false;
                 } else {
-                    Lampa.Noty.show('Больше элементов не найдено для загрузки.');
+                    Lampa.Noty.show('Больше элементов не найдено.');
+                    current_url_for_next_page_from_parser = undefined; 
+                    current_total_pages = activity.page; // Считаем текущую последней, раз ничего не пришло
                     waitload = true; 
                 }
                 _this2.activity.loader(false);
@@ -112,7 +141,7 @@
                 if (a.status == 404) {
                     Lampa.Noty.show('Ох, это последняя страница (404).');
                     current_total_pages = activity.page; 
-                    current_page_from_parser = undefined; 
+                    current_url_for_next_page_from_parser = undefined; 
                 } else {
                     Lampa.Noty.show(network.errorDecode(a, c));
                 }
@@ -124,10 +153,10 @@
             });
         };
 
-        this.card = function (str_data_from_network) {
+        this.card = function (str_data_from_network, currentPageNumberForParsing) {
             var card_list = []; 
-            var next_page_url_from_parser; 
-            var parsed_total_pages = 1; 
+            var next_page_url_parsed; 
+            var total_pages_parsed = currentPageNumberForParsing; 
 
             var current_setup = object.setup; 
             if (!current_setup) {
@@ -170,145 +199,85 @@
             if (pagination_elements.length > 0) {
                 var page_links = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])');
                 var current_page_element = pagination_elements.find('.active, .current, .selected, span.page-numbers.current').first();
-                var next_link_element = current_page_element.nextAll('a[href]').first(); 
-                if (!next_link_element.length) { 
+                
+                var next_link_candidate = current_page_element.nextAll('a[href]').first();
+                if (!next_link_candidate.length) { 
                      page_links.each(function(){
-                        var link_text = $(this).text().trim().toLowerCase();
-                        if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $(this).hasClass('next') || $(this).is('[rel="next"]')) {
-                            next_link_element = $(this);
+                        var $this_link = $(this);
+                        var link_text = $this_link.text().trim().toLowerCase();
+                        if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $this_link.hasClass('next') || $this_link.is('[rel="next"]')) {
+                            next_link_candidate = $this_link;
                             return false; 
                         }
                     });
                 }
-                 if (next_link_element.length) {
-                    next_page_url_from_parser = next_link_element.attr('href');
+                if (next_link_candidate.length) {
+                    next_page_url_parsed = next_link_candidate.attr('href');
                 }
 
-                var last_page_link_candidate = page_links.filter(function() { return $.isNumeric($(this).text().trim()); }).last();
-                if (last_page_link_candidate.length) {
-                     parsed_total_pages = parseInt(last_page_link_candidate.text().trim(), 10);
-                } else { 
-                    var page_numbers = [];
-                    page_links.each(function() {
-                        var num = parseInt($(this).text().trim(), 10);
-                        if (!isNaN(num)) page_numbers.push(num);
-                    });
-                    if (page_numbers.length > 0) {
-                        parsed_total_pages = Math.max.apply(null, page_numbers);
-                    } else if (current_page_element.length && !next_link_element.length) { 
-                        var current_num_text = current_page_element.text().trim();
-                        parsed_total_pages = $.isNumeric(current_num_text) ? parseInt(current_num_text,10) : activity.page;
-                    } else {
-                         parsed_total_pages = activity.page; 
+                var last_page_link_num_text = '';
+                var temp_page_numbers = [];
+                page_links.each(function() { 
+                    var text = $(this).text().trim();
+                    if ($.isNumeric(text)) {
+                        last_page_link_num_text = text; // Берем последнее число из ссылок
+                        temp_page_numbers.push(parseInt(text,10));
                     }
+                });
+                if (temp_page_numbers.length > 0) {
+                     total_pages_parsed = Math.max.apply(null, temp_page_numbers);
+                } else if ($.isNumeric(last_page_link_num_text)) {
+                    total_pages_parsed = parseInt(last_page_link_num_text, 10);
+                } else if (current_page_element.length && !next_link_candidate.length) { 
+                     var current_text = current_page_element.text().trim();
+                     total_pages_parsed = $.isNumeric(current_text) ? parseInt(current_text, 10) : currentPageNumberForParsing;
+                } else {
+                     total_pages_parsed = currentPageNumberForParsing; 
                 }
-                 parsed_total_pages = Math.max(parsed_total_pages, activity.page); 
+                 total_pages_parsed = Math.max(total_pages_parsed, currentPageNumberForParsing); 
 
-                if (next_page_url_from_parser && next_page_url_from_parser.indexOf('http') === -1) {
-                    next_page_url_from_parser = base_url + (next_page_url_from_parser.startsWith('/') ? next_page_url_from_parser : '/' + next_page_url_from_parser);
+                if (next_page_url_parsed && next_page_url_parsed.indexOf('http') === -1) {
+                    next_page_url_parsed = base_url + (next_page_url_parsed.startsWith('/') ? next_page_url_parsed : '/' + next_page_url_parsed);
                 }
-                if (next_page_url_from_parser && (next_page_url_from_parser.indexOf('#') !== -1 || next_page_url_from_parser.startsWith('javascript:'))) { 
-                    next_page_url_from_parser = undefined; 
+                if (next_page_url_parsed && (next_page_url_parsed.indexOf('#') !== -1 || next_page_url_parsed.startsWith('javascript:'))) { 
+                    next_page_url_parsed = undefined; 
                 }
             } else { 
-                 parsed_total_pages = activity.page;
+                 total_pages_parsed = currentPageNumberForParsing;
             }
-            if (!next_page_url_from_parser && activity.page < parsed_total_pages) {
-                var temp_next_url = object.url; 
-                var next_page_num_to_try = activity.page + 1;
-                if (temp_next_url.includes('page=')) {
-                    temp_next_url = temp_next_url.replace(/page=\d+/, 'page=' + next_page_num_to_try);
-                } else if (temp_next_url.includes('?')) {
-                    temp_next_url += '&page=' + next_page_num_to_try;
-                } else {
-                    temp_next_url += '?page=' + next_page_num_to_try;
-                }
-                 if (temp_next_url.indexOf('jable.tv') !== -1 && temp_next_url.indexOf('lang=en') === -1) {
-                     if (temp_next_url.includes('?')) temp_next_url += '&lang=en'; else temp_next_url += '?lang=en';
-                 }
-                next_page_url_from_parser = temp_next_url;
+            
+            var items_on_page = $(v_selector, html_content_str);
+            if (items_on_page.length === 0 && currentPageNumberForParsing > 1) { 
+                next_page_url_parsed = undefined;
+                total_pages_parsed = currentPageNumberForParsing -1; 
             }
 
-            $(v_selector, html_content_str).each(function (i, html_item_el) {
+            items_on_page.each(function (i, html_item_el) {
                 var $html_item = $(html_item_el); 
                 var t1_el = t_selector ? $html_item.find(t_selector) : $html_item;
                 var u1_el = l_selector ? $html_item.find(l_selector) : $html_item;
                 var i1_el = th_selector ? $html_item.find(th_selector) : $html_item;
                 var m1_el = m_selector ? $html_item.find(m_selector) : $html_item;
-                
                 var tt, uu, ii, mm;
-
-                switch (current_setup.list.title.attrName) {
-                    case 'text': tt = t1_el.text(); break;
-                    case 'html': tt = t1_el.html(); break;
-                    default: tt = t1_el.attr(current_setup.list.title.attrName);
-                }
-                if (typeof tt === 'undefined') return true; 
-                tt = tt.trim();
-                if (current_setup.list.title.filter) {
-                    var title_match = tt.match(new RegExp(current_setup.list.title.filter));
-                    tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt;
-                }
-
-                switch (current_setup.list.link.attrName) {
-                    case 'text': uu = u1_el.text(); break;
-                    case 'html': uu = u1_el.html(); break;
-                    default: uu = u1_el.attr(current_setup.list.link.attrName);
-                }
-                uu = (uu || "").trim();
-                if (uu.indexOf('http') === -1 && uu) {
-                    uu = base_url + (uu.startsWith('/') ? uu : '/' + uu);
-                }
-                if (current_setup.list.link.filter) {
-                    var link_match = uu.match(new RegExp(current_setup.list.link.filter));
-                    uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu;
-                }
-
-                switch (current_setup.list.thumb.attrName) {
-                    case 'text': ii = i1_el.text(); break;
-                    case 'html': ii = i1_el.html(); break;
-                    default: ii = i1_el.attr(current_setup.list.thumb.attrName);
-                }
-                ii = (ii || "").trim();
-                 if (ii.startsWith('//')) ii = 'https:' + ii;
-                if (ii.indexOf('http') === -1 && ii) {
-                    ii = base_url + (ii.startsWith('/') ? ii : '/' + ii);
-                }
-                if (current_setup.list.thumb.filter) {
-                    var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter));
-                    ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii;
-                }
+                switch (current_setup.list.title.attrName) { case 'text': tt = t1_el.text(); break; case 'html': tt = t1_el.html(); break; default: tt = t1_el.attr(current_setup.list.title.attrName); }
+                if (typeof tt === 'undefined') return true; tt = tt.trim();
+                if (current_setup.list.title.filter) { var title_match = tt.match(new RegExp(current_setup.list.title.filter)); tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt; }
+                switch (current_setup.list.link.attrName) { case 'text': uu = u1_el.text(); break; case 'html': uu = u1_el.html(); break; default: uu = u1_el.attr(current_setup.list.link.attrName); }
+                uu = (uu || "").trim(); if (uu.indexOf('http') === -1 && uu) { uu = base_url + (uu.startsWith('/') ? uu : '/' + uu); }
+                if (current_setup.list.link.filter) { var link_match = uu.match(new RegExp(current_setup.list.link.filter)); uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu; }
+                switch (current_setup.list.thumb.attrName) { case 'text': ii = i1_el.text(); break; case 'html': ii = i1_el.html(); break; default: ii = i1_el.attr(current_setup.list.thumb.attrName); }
+                ii = (ii || "").trim(); if (ii.startsWith('//')) ii = 'https:' + ii; if (ii.indexOf('http') === -1 && ii) { ii = base_url + (ii.startsWith('/') ? ii : '/' + ii); }
+                if (current_setup.list.thumb.filter) { var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter)); ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii; }
                 if (!ii) ii = './img/img_broken.svg'; 
-
-                switch (current_setup.list.mnumber.attrName) {
-                    case 'text': mm = m1_el.text(); break;
-                    case 'html': mm = m1_el.html(); break;
-                    default: mm = m1_el.attr(current_setup.list.mnumber.attrName);
-                }
-                mm = (mm || "").trim();
-                if (current_setup.list.mnumber.filter) {
-                    var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter));
-                    mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm;
-                }
-                
-                card_list.push({
-                    title: tt,
-                    original_title: '', 
-                    url: uu,
-                    img: ii,
-                    quantity: '', 
-                    year: '', 
-                    rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '),
-                    episodes_info: mm.toUpperCase(),
-                    update: '', 
-                    score: '', 
-                });
+                switch (current_setup.list.mnumber.attrName) { case 'text': mm = m1_el.text(); break; case 'html': mm = m1_el.html(); break; default: mm = m1_el.attr(current_setup.list.mnumber.attrName); }
+                mm = (mm || "").trim(); if (current_setup.list.mnumber.filter) { var mnumber_match = mm.match(new RegExp(current_setup.list.mnumber.filter)); mm = mnumber_match ? (mnumber_match[1] !== undefined ? mnumber_match[1] : mnumber_match[0]) : mm; }
+                card_list.push({ title: tt, original_title: '', url: uu, img: ii, quantity: '', year: '', rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '), episodes_info: mm.toUpperCase(), update: '', score: '', });
             });
             
             return {
                 card: card_list,
-                page: next_page_url_from_parser, 
-                total_pages: parsed_total_pages
+                page: next_page_url_parsed, 
+                total_pages: total_pages_parsed
             };
         };
         
@@ -372,13 +341,17 @@
                     }
                     
                     var card_width_with_margin = card_element.outerWidth(true);
-                    var scroll_width = scroll.render().width();
-                    var items_per_row = card_width_with_margin > 0 ? Math.max(1, Math.floor(scroll_width / card_width_with_margin)) : 5;
-                    var current_card_index = items.indexOf(card_element);
-                    
-                    if (current_card_index >= items.length - (items_per_row * 1.5) && current_page_from_parser && !waitload) {
-                       _this3.next(current_page_from_parser);
+                    if (card_width_with_margin > 0) { // Защита от деления на ноль
+                        var scroll_width = scroll.render().width();
+                        var items_per_row = Math.max(1, Math.floor(scroll_width / card_width_with_margin));
+                        var current_card_index = items.indexOf(card_element);
+                        
+                        // Если это одна из последних (items_per_row * 1.5) карточек и есть куда грузить
+                        if (current_card_index >= items.length - (items_per_row * 1.5) && current_url_for_next_page_from_parser && !waitload) {
+                           _this3.next(current_url_for_next_page_from_parser);
+                        }
                     }
+
 
                     if (element.img && element.img !== './img/img_broken.svg') Lampa.Background.change(cardImgBackground(element.img));
                     if (Lampa.Helper) Lampa.Helper.show('jaja_detail', 'Нажмите (ОК) для просмотра или удерживайте (ОК) для доп. опций.', card_element);
@@ -544,16 +517,14 @@
                 html.append(scroll.render());
                 this.append(data_for_build, false); 
                 scroll.append(body);
-
-                current_total_pages = data_for_build.total_pages; 
-                current_page_from_parser = data_for_build.page;
-
+                
                 var scroll_element = scroll.render();
+                scroll_element.off('scroll.jaja_autonext'); // Сначала отписываемся, чтобы избежать дублирования
                 scroll_element.on('scroll.jaja_autonext', function() { 
                     var element = $(this);
                     if (element[0].scrollHeight - element.scrollTop() - element.outerHeight() < 350) { 
-                         if (!waitload && current_page_from_parser) { 
-                            _this2.next(current_page_from_parser);
+                         if (!waitload && current_url_for_next_page_from_parser) { 
+                            _this2.next(current_url_for_next_page_from_parser);
                         }
                     }
                 });
