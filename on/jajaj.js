@@ -5,223 +5,277 @@
         var scroll = new Lampa.Scroll({
             mask: true,
             over: true,
-            step: 250
+            step: 250 // Шаг скролла для клавиатуры/пульта, для мыши/тачскрина Lampa использует свои значения
         });
         var items = [];
         var html = $('<div class="info_jaja"></div>');
         var body = $('<div class="freetv_jaja category-full"></div>');
         var info;
         var last;
-        var waitload;
-        var total_pages;
+        var waitload = false; // Инициализируем false
+        var total_pages = 1; // Инициализируем 1
         var cors = 'https://api.allorigins.win/get?url=';
         var MOBILE_UA = "Mozilla/5.0 (Linux; Android 11; M2007J3SC Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045714 Mobile Safari/537.36";
 
         var activity = {
-            url: '',
-            title: object.setup.title + ' - Коллекция',
+            url: object.url || '', // Убедимся, что url есть
+            title: (object.setup ? object.setup.title : 'JaJa') + ' - Коллекция', // Проверка object.setup
             component: 'jaja',
-            quantity: '',
+            quantity: object.quantity || '', 
             setup: object.setup,
-            type: 'fav',
-            page: 1
+            type: object.type || 'movie', 
+            page: object.page || 1 
         };
+         // Сохраняем исходные данные в object, чтобы иметь к ним доступ
+        object.data = null; 
 
         this.create = function () {
             var _this = this;
             this.activity.loader(true);
+            waitload = true; 
 
             var current_cors = cors;
-            if (object.setup.datatype !== 'json') {
+            // Проверка, что object.setup существует перед доступом к datatype
+            if (object.setup && object.setup.datatype !== 'json') {
                 current_cors = '';
             }
 
             if (object.type == 'fav') {
-                var data = _this.cardfavor(getFavoriteRadios());
-                _this.build(data);
+                var favData = _this.cardfavor(getFavoriteRadios());
+                object.data = favData; 
+                total_pages = favData.total_pages;
+                _this.build(favData);
+                waitload = false;
+                 this.activity.loader(false); // Скрыть лоадер после загрузки избранного
             } else {
                 network["native"](current_cors + object.url, function (str) {
-                    var data = _this.card(str);
-                    _this.build(data);
+                    var parsedData = _this.card(str);
+                    object.data = parsedData; 
+                    total_pages = parsedData.total_pages;
+                    _this.build(parsedData);
+                    waitload = false;
+                     // Лоадер скрывается в build или empty
                 }, function (a, c) {
                     Lampa.Noty.show(network.errorDecode(a, c));
                     _this.activity.loader(false); 
+                    waitload = false;
+                    _this.empty(); 
                 }, false, {
-                    dataType: object.setup.datatype,
+                    dataType: object.setup ? object.setup.datatype : 'text', // Проверка object.setup
                 });
             }
             
             return this.render();
         };
 
-        this.next = function (page_url_from_card) { 
+        this.next = function (url_for_next_page_request) { 
             var _this2 = this;
 
-            if (total_pages === 1 || total_pages === 0) waitload = true; 
+            if (object.page >= total_pages && total_pages > 0) { 
+                waitload = true; 
+                return;
+            }
             if (waitload) return;
 
+            waitload = true;
+            this.activity.loader(true); 
+
             var current_cors = cors;
-            if (object.setup.datatype !== 'json') {
+            if (object.setup && object.setup.datatype !== 'json') {
                 current_cors = '';
             }
-
-            waitload = true;
+            
             object.page++; 
             
             network.clear();
             network.timeout(1000 * 40);
 
-            if (typeof page_url_from_card == 'undefined' || page_url_from_card.indexOf('undefined') != -1) {
-                waitload = false; 
+            var requestUrl = url_for_next_page_request;
+            if (!requestUrl && object.data && object.data.page) {
+                requestUrl = object.data.page;
+            } else if (!requestUrl && object.url) { // Если нет URL от парсера, но есть базовый URL
+                 requestUrl = object.url; // Будем пытаться сформировать из него
+            } else if (!requestUrl) {
+                Lampa.Noty.show('Не удалось определить URL для следующей страницы.');
+                this.activity.loader(false);
+                waitload = false;
                 return;
             }
             
-            var next_page_url_to_fetch = page_url_from_card;
-            if (page_url_from_card.indexOf('before=') === -1) { 
-                var regex = /page=(\d+)/; 
-                var match = page_url_from_card.match(regex);
-                if (match) {
-                    next_page_url_to_fetch = page_url_from_card.replace('page=' + match[1], 'page=' + object.page);
+            // Формирование URL если передан базовый URL, а не готовый URL следующей страницы
+            if (requestUrl.indexOf('page=') === -1 && (requestUrl === object.url || !object.data || !object.data.page) ) { 
+                var baseUrlForPaging = (object.data && object.data.page_base_for_next) ? object.data.page_base_for_next : object.url;
+                if (baseUrlForPaging.includes('?')) {
+                    requestUrl = baseUrlForPaging + '&page=' + object.page;
                 } else {
-                    var num_match = page_url_from_card.match(/[0-9]+(?=[^0-9]*$)/); 
-                    var suffix_match = page_url_from_card.match(/[^0-9]*$/); 
-                    var suffix = suffix_match ? suffix_match[0] : '';
+                    requestUrl = baseUrlForPaging + '?page=' + object.page;
+                }
+                if (requestUrl.indexOf('jable.tv') !== -1 && requestUrl.indexOf('lang=en') === -1) {
+                     if (requestUrl.includes('?')) requestUrl += '&lang=en'; else requestUrl += '?lang=en';
+                }
+            }
 
-                    if (num_match) {
-                        var base_url_part = page_url_from_card.substring(0, page_url_from_card.lastIndexOf(num_match[0]));
-                        next_page_url_to_fetch = base_url_part + object.page + suffix;
-                    } else {
-                         if (page_url_from_card.includes('?')) {
-                            next_page_url_to_fetch = page_url_from_card + '&page=' + object.page;
-                         } else {
-                            next_page_url_to_fetch = page_url_from_card + '?page=' + object.page;
-                         }
-                    }
-                }
-            }
-            if (next_page_url_to_fetch.indexOf('jable.tv') !== -1 && next_page_url_to_fetch.indexOf('lang=en') === -1) {
-                if (next_page_url_to_fetch.includes('?')) {
-                    next_page_url_to_fetch += '&lang=en';
-                } else {
-                    next_page_url_to_fetch += '?lang=en';
-                }
-            }
 
             var headers = { 'User-Agent': MOBILE_UA };
-            if (object.setup.use_referer && object.url) {
+            if (object.setup && object.setup.use_referer && object.url) {
                 try {
                     headers['Referer'] = object.url.match(/(http|https):\/\/(www.)?(\w+(\.)?)+/)[0] + '/';
                 } catch (e) {/* ignore */}
             }
 
-            network["native"](current_cors + next_page_url_to_fetch, function (result) {
-                var data = _this2.card(result);
-                _this2.append(data, true);
-                if (data.card.length) {
+            network["native"](current_cors + requestUrl, function (result) {
+                var parsedData = _this2.card(result); 
+                object.data = parsedData; 
+                total_pages = parsedData.total_pages; 
+
+                _this2.append(parsedData, true);
+                if (parsedData.card.length > 0) {
                     waitload = false;
                 } else {
-                    Lampa.Noty.show('Больше элементов не найдено.');
+                    Lampa.Noty.show('Больше элементов не найдено для загрузки.');
+                    waitload = true; 
                 }
                 _this2.activity.loader(false);
             }, function (a, c) {
                 if (a.status == 404) {
-                    Lampa.Noty.show('Ох, это последняя страница.');
+                    Lampa.Noty.show('Ох, это последняя страница (404).');
+                    total_pages = object.page; 
                 } else {
                     Lampa.Noty.show(network.errorDecode(a, c));
                 }
                 _this2.activity.loader(false);
                 waitload = false; 
             }, false, {
-                dataType: object.setup.datatype,
+                dataType: object.setup ? object.setup.datatype : 'text',
                 headers: headers
             });
         };
 
-        this.card = function (str) {
+        this.card = function (str_data_from_network) {
             var card = [];
             var next_page_url_from_parser; 
+            var page_base_for_next_request; // Базовый URL для формирования URL след. страницы, если next_page_url_from_parser неполный
 
             var current_setup = object.setup; 
+            if (!current_setup) { // Защита, если setup не передан
+                Lampa.Noty.show("Ошибка: Конфигурация источника (setup) отсутствует.");
+                return { card: [], page: undefined, total_pages: 0, page_base_for_next: undefined };
+            }
 
-            if (current_setup.datatype == 'json' && typeof str === 'string') { 
+
+            var original_response_str = str_data_from_network; // Сохраняем для дальнейшего использования если нужно
+
+            if (current_setup.datatype == 'json' && typeof original_response_str === 'string') { 
                 try {
-                    str = JSON.parse(str);
-                    if (str.contents) str = str.contents; 
-                     else { 
+                    var parsed_json = JSON.parse(original_response_str);
+                    original_response_str = parsed_json.contents ? parsed_json.contents : parsed_json; 
+                     if(typeof original_response_str === 'string' && original_response_str.startsWith('{') && original_response_str.endsWith('}')) { // Если contents сам был строкой JSON
+                        original_response_str = JSON.parse(original_response_str);
                     }
                 } catch (e) {
-                    Lampa.Noty.show('Ошибка парсинга JSON ответа');
-                    return { card: [], page: undefined, total_pages: total_pages || 0 };
+                    Lampa.Noty.show('Ошибка парсинга JSON ответа: ' + e.message);
+                    return { card: [], page: undefined, total_pages: total_pages || 0, page_base_for_next: undefined };
                 }
             }
-            if (typeof str === 'object' && current_setup.datatype == 'json' && str.contents) { 
-                 str = str.contents;
-                 try { str = JSON.parse(str); } catch(e){} 
+            if (typeof original_response_str === 'object' && current_setup.datatype == 'json' && original_response_str.contents) { 
+                 original_response_str = original_response_str.contents;
+                 try { if(typeof original_response_str === 'string') original_response_str = JSON.parse(original_response_str); } catch(e){} 
             }
 
-            if (current_setup.datatype == 'text' && typeof str === 'object' && str.contents) {
-                str = str.contents; 
+            if (current_setup.datatype == 'text' && typeof original_response_str === 'object' && original_response_str.contents) {
+                original_response_str = original_response_str.contents; 
             }
-            str = str.replace(/\n/g, ''); 
+            
+            var html_content_str = typeof original_response_str === 'string' ? original_response_str.replace(/\n/g, '') : '';
+            var $parsed_html = typeof original_response_str === 'string' ? $(html_content_str) : $(original_response_str); // jQuery объект для парсинга
 
             var v = current_setup.list.videoscontainer.selector;
             var t = current_setup.list.title.selector;
             var th = current_setup.list.thumb.selector;
             var l = current_setup.list.link.selector;
-            var p = current_setup.list.page.selector; 
+            var p_selector = current_setup.list.page.selector; 
             var m = current_setup.list.mnumber.selector;
 
             var base_url = current_setup.link; 
+            page_base_for_next_request = object.url; // По умолчанию используем текущий URL activity
 
-            var pagination_elements = $(p, str);
+            var temp_total_pages = 1; // Временная переменная для total_pages из этого парсинга
+
+            var pagination_elements = $parsed_html.find(p_selector);
+            if (pagination_elements.length === 0 && typeof original_response_str === 'string') { // Если не нашли в распарсенном, пробуем в исходной строке (для некоторых структур)
+                pagination_elements = $(p_selector, html_content_str);
+            }
+
+
             if (pagination_elements.length > 0) {
-                var last_page_link = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])').last();
-                var all_page_links = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])');
+                var page_links = pagination_elements.find('a[href]:not([href="#"]):not([href="javascript:;"])');
+                var current_page_element = pagination_elements.find('.active, .current, .selected, span.current').first();
+
+                if (current_page_element.length) {
+                    var current_page_text = current_page_element.text().trim();
+                    if ($.isNumeric(current_page_text)) {
+                        // object.page = parseInt(current_page_text, 10); // Не обновляем object.page здесь, это делает this.next
+                    }
+                }
                 
-                if (last_page_link.length) {
-                    next_page_url_from_parser = last_page_link.attr('href');
+                var next_link_element = current_page_element.next('a[href]'); // Ищем следующую ссылку после активной
+                if (!next_link_element.length) { // Если нет, ищем по тексту "Next", "Далее" и т.п.
+                    page_links.each(function(){
+                        var link_text = $(this).text().trim().toLowerCase();
+                        if (link_text.includes('next') || link_text.includes('далее') || link_text === '»' || $(this).is('.next')) {
+                            next_link_element = $(this);
+                            return false; // break .each
+                        }
+                    });
+                }
+
+                if (next_link_element.length) {
+                    next_page_url_from_parser = next_link_element.attr('href');
+                }
+
+                var last_page_link = page_links.last();
+                 if (last_page_link.length) {
                     var last_page_text = last_page_link.text().trim();
                     if ($.isNumeric(last_page_text)) {
-                        total_pages = parseInt(last_page_text, 10);
-                    } else {
-                        total_pages = all_page_links.length; 
-                        var active_page_elem = pagination_elements.find('.active, .current, .selected').first();
-                        if (active_page_elem.length) {
-                            var current_page_num_text = active_page_elem.text().trim();
-                            if ($.isNumeric(current_page_num_text)) {
-                                object.page = parseInt(current_page_num_text, 10); 
-                            }
+                       temp_total_pages = parseInt(last_page_text, 10);
+                    } else { // Если текст не число, считаем количество ссылок как грубую оценку
+                        var numeric_links = page_links.filter(function() { return $.isNumeric($(this).text().trim()); });
+                        if (numeric_links.length > 0) {
+                            var max_num = 0;
+                            numeric_links.each(function(){ max_num = Math.max(max_num, parseInt($(this).text().trim(),10)); });
+                            temp_total_pages = max_num;
+                        } else {
+                            temp_total_pages = page_links.length > 0 ? page_links.length : 1;
                         }
                     }
-                } else if (pagination_elements.is('a') && pagination_elements.attr('href')) { 
-                    next_page_url_from_parser = pagination_elements.attr('href');
-                    total_pages = pagination_elements.length > 1 ? pagination_elements.length : 2; 
-                } else {
-                    total_pages = 1; 
+                } else if (current_page_element.length && !next_link_element.length) { // Если есть текущая, но нет следующей - это последняя
+                    temp_total_pages = object.page;
+                } else if (page_links.length === 0 && pagination_elements.length > 0) { // Если сам блок пагинации есть, но ссылок нет
+                     temp_total_pages = 1;
                 }
+
 
                 if (next_page_url_from_parser && next_page_url_from_parser.indexOf('http') === -1) {
                     next_page_url_from_parser = base_url + (next_page_url_from_parser.startsWith('/') ? next_page_url_from_parser : '/' + next_page_url_from_parser);
                 }
-                if (next_page_url_from_parser && next_page_url_from_parser.indexOf('#') !== -1) { 
+                if (next_page_url_from_parser && (next_page_url_from_parser.indexOf('#') !== -1 || next_page_url_from_parser.startsWith('javascript:'))) { 
                     next_page_url_from_parser = undefined; 
                 }
-
             } else {
-                total_pages = 1;
-            }
-            if (!next_page_url_from_parser && object.page < total_pages) {
-                next_page_url_from_parser = object.url; 
-            } else if (!next_page_url_from_parser && object.page >= total_pages) {
-                next_page_url_from_parser = undefined; 
+                temp_total_pages = object.page; // Если блока пагинации нет, считаем текущую страницу последней
             }
 
+            var items_container = $parsed_html.find(v);
+             if (items_container.length === 0 && typeof original_response_str === 'string') {
+                items_container = $(v, html_content_str);
+            }
 
-            $(v + (object.quantity || ''), str).each(function (i, html_item) {
-                var t1 = t ? $(html_item).find(t) : $(html_item);
-                var u1 = l ? $(html_item).find(l) : $(html_item);
-                var i1 = th ? $(html_item).find(th) : $(html_item);
-                var m1 = m ? $(html_item).find(m) : $(html_item);
+            items_container.each(function (i, html_item) {
+                var $html_item = $(html_item); // Работаем с jQuery объектом элемента
+                var t1 = t ? $html_item.find(t) : $html_item;
+                var u1 = l ? $html_item.find(l) : $html_item;
+                var i1 = th ? $html_item.find(th) : $html_item;
+                var m1 = m ? $html_item.find(m) : $html_item;
                 
                 var tt, uu, ii, mm;
 
@@ -234,7 +288,7 @@
                 tt = tt.trim();
                 if (current_setup.list.title.filter) {
                     var title_match = tt.match(new RegExp(current_setup.list.title.filter));
-                    tt = title_match ? (title_match[1] || title_match[0]) : tt;
+                    tt = title_match ? (title_match[1] !== undefined ? title_match[1] : title_match[0]) : tt;
                 }
 
                 switch (current_setup.list.link.attrName) {
@@ -248,7 +302,7 @@
                 }
                 if (current_setup.list.link.filter) {
                     var link_match = uu.match(new RegExp(current_setup.list.link.filter));
-                    uu = link_match ? (link_match[1] || link_match[0]) : uu;
+                    uu = link_match ? (link_match[1] !== undefined ? link_match[1] : link_match[0]) : uu;
                 }
 
                 switch (current_setup.list.thumb.attrName) {
@@ -257,12 +311,13 @@
                     default: ii = i1.attr(current_setup.list.thumb.attrName);
                 }
                 ii = (ii || "").trim();
+                 if (ii.startsWith('//')) ii = 'https:' + ii; // для URL вида //example.com/img.jpg
                 if (ii.indexOf('http') === -1 && ii) {
                     ii = base_url + (ii.startsWith('/') ? ii : '/' + ii);
                 }
                 if (current_setup.list.thumb.filter) {
                     var thumb_match = ii.match(new RegExp(current_setup.list.thumb.filter));
-                    ii = thumb_match ? (thumb_match[1] || thumb_match[0]) : ii;
+                    ii = thumb_match ? (thumb_match[1] !== undefined ? thumb_match[1] : thumb_match[0]) : ii;
                 }
                 if (!ii) ii = './img/img_broken.svg'; 
 
@@ -284,7 +339,7 @@
                     img: ii,
                     quantity: '', 
                     year: '', 
-                    rate: $(current_setup.list.m_time.selector, html_item).text().trim().replace(/\n/g, '').replace(/\S+\s+/g, ''),
+                    rate: $html_item.find(current_setup.list.m_time.selector).first().text().trim().replace(/\n/g, '').replace(/\s+/g, ' '),
                     episodes_info: mm.toUpperCase(),
                     update: '', 
                     score: '', 
@@ -294,7 +349,8 @@
             return {
                 card: card,
                 page: next_page_url_from_parser, 
-                total_pages: total_pages
+                total_pages: Math.max(temp_total_pages, object.page), // total_pages не может быть меньше текущей
+                page_base_for_next: page_base_for_next_request 
             };
         };
 
@@ -303,18 +359,25 @@
             var total_pages = 1;
             
             var site_favorites = json.filter(function (fp) {
-                return fp.website === object.setup.title;
+                return fp.website === (object.setup ? object.setup.title : '');
             });
             return {
                 card: site_favorites.reverse(),
                 page: page,
-                total_pages: total_pages
+                total_pages: total_pages,
+                page_base_for_next: undefined
             };
         };
 
         this.append = function (data, append) {
             var _this3 = this;
             
+            // Проверяем, что data и data.card существуют
+            if (!data || !data.card) {
+                Lampa.Noty.show("Нет данных для отображения.");
+                return;
+            }
+
             data.card.forEach(function (element) {
                 var card = Lampa.Template.get('card', {
                     title: element.title,
@@ -354,20 +417,26 @@
                 card.on('hover:focus', function () {
                     last = card[0];
                     scroll.update(card, true);
-                    info.find('.info__title').text(element.episodes_info || element.title); 
-                    info.find('.info__title-original').text(element.original_title || '');
-                    info.find('.info__rate span').text(element.rate || '');
-                    info.find('.info__create').text(element.year || ''); 
-                    info.find('.info__rate').toggleClass('hide', !(element.rate));
-                    
-                    var max_row_index = Math.ceil(items.length / scroll.render().find('.card').width() === 0 ? 7 : Math.floor(scroll.render().width() / (card.width() + parseInt(card.css('margin-right'))))) -1; 
-                    var current_item_index = items.indexOf(card);
-                    var items_per_row_approx = Math.floor(scroll.render().width() / (card.width() + parseInt(card.css('margin-right'), 10) * 2));
-                    if (items_per_row_approx <= 0) items_per_row_approx = 1; 
-
-                    if (current_item_index >= 0 && Math.ceil((current_item_index + 1) / items_per_row_approx) >= max_row_index) {
-                         if (data.page) _this3.next(data.page); 
+                    if(info) { // Проверка, что info существует
+                        info.find('.info__title').text(element.episodes_info || element.title); 
+                        info.find('.info__title-original').text(element.original_title || '');
+                        info.find('.info__rate span').text(element.rate || '');
+                        info.find('.info__create').text(element.year || ''); 
+                        info.find('.info__rate').toggleClass('hide', !(element.rate));
                     }
+                    
+                    // Логика подгрузки при фокусе (для стрелок)
+                    // var visible_cards = Math.floor(scroll.render().height() / card.outerHeight(true));
+                    // var items_per_row = Math.max(1, Math.floor(scroll.render().width() / card.outerWidth(true)));
+                    // var focus_index = items.indexOf(card);
+                    // if (focus_index >= items.length - (visible_cards * items_per_row / 2)) { // Если фокус на нижней половине видимых элементов
+                    //      if (!waitload && object.data && object.data.page) {
+                    //          _this3.next(object.data.page);
+                    //      } else if (!waitload && object.page < total_pages) {
+                    //          _this3.next(object.url);
+                    //      }
+                    // }
+
 
                     if (element.img && element.img !== './img/img_broken.svg') Lampa.Background.change(cardImgBackground(element.img));
                     if (Lampa.Helper) Lampa.Helper.show('jaja_detail', 'Нажмите (ОК) для просмотра или удерживайте (ОК) для доп. опций.', card);
@@ -384,11 +453,11 @@
                         });
 
                         var detail_cors = cors;
-                        if (object.setup.datatype !== 'json') detail_cors = '';
+                        if (object.setup && object.setup.datatype !== 'json') detail_cors = '';
 
                         network["native"](detail_cors + element.url, function (str_detail) {
                             Lampa.Modal.close();
-                            if (object.setup.datatype === 'text' && typeof str_detail === 'object' && str_detail.contents) {
+                            if (object.setup && object.setup.datatype === 'text' && typeof str_detail === 'object' && str_detail.contents) {
                                 str_detail = str_detail.contents; 
                             }
                             
@@ -405,7 +474,7 @@
                             Lampa.Modal.close();
                             Lampa.Noty.show(network.errorDecode(a, c));
                         }, false, {
-                            dataType: object.setup.datatype 
+                            dataType: object.setup ? object.setup.datatype : 'text' 
                         });
                     } else {
                         Lampa.Noty.show("Действие для этого типа ссылки не определено.");
@@ -413,7 +482,7 @@
                 });
 
                 card.on('hover:long', function () {
-                    if (element.url.indexOf('jable.tv') !== -1) {
+                    if (element.url.indexOf('jable.tv') !== -1 && object.setup) { // Проверяем object.setup
                         Lampa.Modal.open({
                             title: '',
                             html: Lampa.Template.get('modal_loading'),
@@ -448,7 +517,7 @@
                                 var model_name = $('.placeholder,img', html_link).attr('title') || $(html_link).text().trim();
                                 var model_url = $(html_link).attr('href');
                                 if (model_name && model_url) {
-                                    if (model_url.indexOf('http') === -1) model_url = object.setup.link + model_url;
+                                    if (model_url.indexOf('http') === -1 && object.setup.link) model_url = object.setup.link + model_url;
                                     archiveMenu.push({
                                         title: model_name + ' - Все видео',
                                         url: model_url,
@@ -504,9 +573,10 @@
                 items.push(card);
             });
         };
-
-        this.build = function (data) {
+        
+        this.build = function (data_for_build) { // Переименовал для ясности
             var _this2 = this;
+            // HTML для кнопок и info-панели
             var viewsort = '<div class="full-start__button selector view--sort"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Сортировать</span></div>';
             var viewcategory = '<div class="full-start__button selector view--category"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Категории</span></div>';
             var viewtags = '<div class="full-start__button selector view--tags"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg>   <span>Теги</span></div>';
@@ -529,7 +599,7 @@
             info.find('.open--favorite').on('hover:enter hover:click', function () {
                 Lampa.Activity.push({
                     url: '',
-                    title: object.setup.title + ' - Коллекция', 
+                    title: (object.setup ? object.setup.title : 'JaJa') + ' - Коллекция', 
                     component: 'jaja',
                     quantity: '',
                     setup: object.setup, 
@@ -539,12 +609,12 @@
             });
             info.find('.open--find').on('hover:enter hover:click', function () {
                 Lampa.Input.edit({
-                    title: object.setup.title + ' - Поиск видео',
+                    title: (object.setup ? object.setup.title : 'JaJa') + ' - Поиск видео',
                     value: '',
                     free: true,
                     nosave: true
                 }, function (new_value) {
-                    if (new_value) {
+                    if (new_value && object.setup && object.setup.search) { // Проверка object.setup.search
                         var searchurl = object.setup.search.url.replace('#msearchword', encodeURIComponent(new_value));
                         Lampa.Activity.push({
                             url: searchurl,
@@ -574,7 +644,7 @@
                         Lampa.Activity.push({
                             url: a.config.category[0].url,
                             title: a.config.title + ' - ' + a.config.category[0].title,
-                            quantity: a.config.category[0].quantity,
+                            quantity: a.config.category[0].quantity || '',
                             component: 'jaja',
                             setup: a.config,
                             page: 1
@@ -585,29 +655,60 @@
             };
 
             scroll.render().addClass('layer--wheight').data('mheight', info);
-            if (data.card.length) {
+            
+            if (data_for_build && data_for_build.card && data_for_build.card.length) { 
                 html.append(info);
-                scroll.minus();
+                scroll.minus(); 
                 html.append(scroll.render());
-                this.append(data); 
+                
+                this.append(data_for_build); 
                 scroll.append(body);
+
+                if (data_for_build.total_pages !== undefined && data_for_build.total_pages >= 1) {
+                    total_pages = data_for_build.total_pages;
+                } else if (!data_for_build.card.length) { 
+                    total_pages = 0;
+                }
+
+                var scroll_element = scroll.render();
+                scroll_element.on('scroll.jaja_autonext', function() { 
+                    var element = $(this);
+                    if (element[0].scrollHeight - element.scrollTop() - element.outerHeight() < 350) { 
+                         if (!waitload) { 
+                            if (object.data && object.data.page) {
+                                _this2.next(object.data.page);
+                            } 
+                            else if (object.page < total_pages && object.url) { 
+                                _this2.next(object.url); 
+                            }
+                        }
+                    }
+                });
                 this.activity.loader(false);
                 this.activity.toggle();
-                if (data.total_pages !== undefined) {
-                    total_pages = data.total_pages;
-                }
-            } else {
+
+            } else { 
                 html.append(scroll.render()); 
                 _this2.empty(); 
+                this.activity.loader(false); 
             }
         };
-
+        
         this.empty = function () {
-            var empty = new Lampa.Empty();
-            scroll.append(empty.render()); 
-            this.start = empty.start; 
+            var empty = Lampa.Template.get('empty', {descr: 'Здесь пусто'}); // Используем стандартный шаблон empty
+            if (scroll && scroll.render) { // Проверка, что scroll существует
+                scroll.append(empty); // Добавляем в scroll
+                scroll.render().find('.empty__img').remove(); // Удаляем картинку, если она есть, чтобы текст был виднее
+            } else {
+                html.append(empty); // Если scroll не готов, добавляем в html
+            }
+            // this.start = empty.start; // Lampa.Empty не имеет start метода обычно
             this.activity.loader(false);
-            this.activity.toggle();
+            if (!Lampa.Activity.active() || Lampa.Activity.active().component !== 'jaja' || (Lampa.Activity.active().activity && Lampa.Activity.active().activity.component !== 'jaja')) {
+                 // Не вызываем toggle если активити уже не это или вообще нет активного
+            } else {
+                this.activity.toggle();
+            }
         };
 
         var FAVORITE_RADIOS_KEY = 'favorite_jaja'; 
@@ -644,7 +745,18 @@
         }
 
         this.start = function () {
-            if (Lampa.Activity.active().activity !== this.activity) return;
+            // Проверка, что текущее активное активити - это именно то, которое мы запускаем
+            // Это предотвращает ошибки, если start вызывается для уже неактивного компонента
+            if (!this.activity || !Lampa.Activity.active() || Lampa.Activity.active().activity !== this.activity) {
+                 if (Lampa.Activity.active() && Lampa.Activity.active().component === this.activity.component) {
+                    // Если компонент тот же, но объект activity другой (например, после replace),
+                    // то можно обновить this.activity
+                    this.activity = Lampa.Activity.active().activity;
+                 } else {
+                    return;
+                 }
+            }
+
             var _this = this;
             Lampa.Controller.add('content', {
                 toggle: function () {
@@ -657,6 +769,14 @@
                 },
                 right: function () {
                     if (Navigator.canmove('right')) Navigator.move('right');
+                    else if (info && info.find('.selector').length > 0) { // Если есть кнопки в info
+                        // Если справа от карточек больше некуда, но есть кнопки в info, переходим на них
+                        var firstButton = info.find('.selector:visible:first');
+                        if (firstButton.length) {
+                            Lampa.Controller.collectionSet(info);
+                            Navigator.move('left'); // Чтобы сфокусироваться на первой кнопке (или right если они справа)
+                        }
+                    }
                     else _this.selectGroup(); 
                 },
                 up: function () {
@@ -678,7 +798,7 @@
                     if (Navigator.canmove('down')) Navigator.move('down');
                     else if (info && info.find('.selector.focus').length > 0) { 
                          Lampa.Controller.collectionSet(scroll.render()); 
-                         Lampa.Controller.collectionFocus(last || false, scroll.render());
+                         Lampa.Controller.collectionFocus(last || items[0] || false, scroll.render());
                     }
                 },
                 back: function () {
@@ -691,15 +811,21 @@
         this.pause = function () { };
         this.stop = function () { };
         this.render = function () { return html; };
+        
         this.destroy = function () {
             network.clear();
-            scroll.destroy();
+            if (scroll && scroll.render()){
+                scroll.render().off('scroll.jaja_autonext');
+            }
+            if (scroll) scroll.destroy(); // Проверка scroll перед destroy
+
             if (info) info.remove();
-            html.remove();
-            body.remove();
+            if (html) html.remove(); // Проверка html
+            if (body) body.remove(); // Проверка body
+
             network = null; items = null; html = null; body = null; info = null; last = null;
-            // Lampa.Template.remove('button_category_jaja'); // Закомментировано, т.к. Lampa.Template.remove может отсутствовать
-            // Lampa.Template.remove('info_web_jaja');      // Закомментировано
+            // Lampa.Template.remove('button_category_jaja'); 
+            // Lampa.Template.remove('info_web_jaja');      
         };
     }
 
@@ -825,10 +951,10 @@
                 { url: 'https://jable.tv/tags/temptation/?lang=en', title: '# Искушение', quantity: '' },
                 { url: 'https://jable.tv/tags/sex-beside-husband/?lang=en', title: '# Секс рядом с мужем', quantity: '' },
                 { url: 'https://jable.tv/tags/rainy-day/?lang=en', title: '# Дождливый день', quantity: '' },
-                { url: 'https://jable.tv/tagstr/?lang=en', title: '# Измена', quantity: '' },
+                { url: 'https://jable.tv/tags/ntr/?lang=en', title: '# Измена', quantity: '' }, // Исправлено с tagstr/ на tags/ntr/ - предполагая, что это НТР
                 { url: 'https://jable.tv/tags/love-potion/?lang=en', title: '# Любовное зелье', quantity: '' },
-                { url: 'https://jable.tv/tags/hidden-cam/?lang=en', title: '# Утечка', quantity: '' },
-                { url: 'https://jable.tv/tags/kinship/?lang=en', title: '# Инцест', quantity: '' },
+                { url: 'https://jable.tv/tags/hidden-cam/?lang=en', title: '# Утечка', quantity: '' }, 
+                { url: 'https://jable.tv/tags/incest/?lang=en', title: '# Инцест', quantity: '' }, // Исправлено с inc__t/ на incest/
                 { url: 'https://jable.tv/tags/hypnosis/?lang=en', title: '# Гипноз', quantity: '' },
                 { url: 'https://jable.tv/tags/giant/?lang=en', title: '# Гигант', quantity: '' },
                 { url: 'https://jable.tv/tags/black/?lang=en', title: '# Черный', quantity: '' },
@@ -842,7 +968,7 @@
                 { url: 'https://jable.tv/tags/club-hostess-and-sex-worker/?lang=en', title: '# Секс-работница', quantity: '' },
                 { url: 'https://jable.tv/tags/private-teacher/?lang=en', title: '# Частный учитель', quantity: '' },
                 { url: 'https://jable.tv/tags/ol/?lang=en', title: '# ОЛ', quantity: '' },
-                { url: 'https://jable.tv/tagsurse/?lang=en', title: '# Медсестра', quantity: '' },
+                { url: 'https://jable.tv/tags/nurse/?lang=en', title: '# Медсестра', quantity: '' }, // Исправлено с tagsurse/ на tags/nurse/
                 { url: 'https://jable.tv/tags/idol/?lang=en', title: '# Идол', quantity: '' },
                 { url: 'https://jable.tv/tags/housewife/?lang=en', title: '# Домохозяйка', quantity: '' },
                 { url: 'https://jable.tv/tags/fugitive/?lang=en', title: '# Беглец', quantity: '' },
@@ -889,7 +1015,7 @@
                 return {
                     title: cat.title,
                     url: cat.url,
-                    quantity: cat.quantity,
+                    quantity: cat.quantity || '', 
                     setup: sourceConfig 
                 };
             }),
