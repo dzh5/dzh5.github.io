@@ -72,7 +72,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {
 //JaJa 18+
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {});
 //Сиси клубничка
-//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
 //Онлайн Lampa
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
@@ -227,6 +227,7 @@ Lampa.Controller.listener.follow('toggle', function(e) {
 });
 	
 })();
+
 
 
 
