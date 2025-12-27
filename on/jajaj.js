@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     function jaja(object) {
-        var network = new Lampa.Network();
+        var network = new Lampa.Reguest();
         var scroll = new Lampa.Scroll({
             mask: true,
             over: true,
@@ -2022,4 +2022,5 @@
     if (!window.plugin_jaja_ready) startjaja();
 
 })();
+
 
