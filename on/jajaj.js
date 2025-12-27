@@ -358,7 +358,7 @@
             data.card.forEach(function (element) {
                 //console.log(element)
                 var mytitle = element.title.replace('/', ' ');
-                if (mytitle.indexOf(' ') != -1) mytitle = mytitle.split(' ')[0]
+                if (mytitle.indexOf(' ' != -1)) mytitle = mytitle.split(' ')[0]
                 var card = Lampa.Template.get('card', {
                     title: element.title,
                     release_year: ''
@@ -2022,5 +2022,6 @@
     if (!window.plugin_jaja_ready) startjaja();
 
 })();
+
 
 
