@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     function jaja(object) {
-        var network = new Lampa.Reguest();
+        var network = new Lampa.Network();
         var scroll = new Lampa.Scroll({
             mask: true,
             over: true,
@@ -19,7 +19,7 @@
         var PC_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36";
         var UA = "Mozilla/5.0";
         var UC_UA = "Mozilla/5.0 (Linux; U; Android 9; zh-CN; MI 9 Build/PKQ1.181121.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 UCBrowser/12.5.5.1035 Mobile Safari/537.36";
-        var IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1";;
+        var IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1";
         
         var activity = {
             url: '',
@@ -358,7 +358,7 @@
             data.card.forEach(function (element) {
                 //console.log(element)
                 var mytitle = element.title.replace('/', ' ');
-                if (mytitle.indexOf(' ' != -1)) mytitle = mytitle.split(' ')[0]
+                if (mytitle.indexOf(' ') != -1) mytitle = mytitle.split(' ')[0]
                 var card = Lampa.Template.get('card', {
                     title: element.title,
                     release_year: ''
@@ -1589,7 +1589,7 @@
 	quantity: ''
 },
 {
-	url: 'https://jable.tv/tagstr/?lang=en',
+	url: 'https://jable.tv/tags/ntr/?lang=en',
 	title: '# Измена',
 	quantity: ''
 },
@@ -1674,7 +1674,7 @@
 	quantity: ''
 },
 {
-	url: 'https://jable.tv/tagsurse/?lang=en',
+	url: 'https://jable.tv/tags/nurse/?lang=en',
 	title: '# Медсестра',
 	quantity: ''
 },
@@ -2022,3 +2022,4 @@
     if (!window.plugin_jaja_ready) startjaja();
 
 })();
+
