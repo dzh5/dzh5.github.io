@@ -67,6 +67,8 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/podbor.js'], function () 
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
 //Аудио-дорожки и субтитры в плеере
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/track.js'], function () {});
+//Отключение dcma (ограничение контента)
+Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/free.js'], function () {});
 //Стильный интерфейс
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/interface.js'], function () {});
 //JaJa 18+
