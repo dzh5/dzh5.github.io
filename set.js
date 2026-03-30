@@ -76,7 +76,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {
 //Сиси клубничка
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
 //Онлайн Lampa
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/mult.js'], function () {});
 //Телевизор
