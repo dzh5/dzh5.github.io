@@ -54,7 +54,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sources.js'], function ()
 //Коллекции
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/collections.js'], function () {});
 //TorServer из списка
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/torrserver.js'], function () {});
 //Синхронизация тайм-кодов 
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/timecode.js'], function () {});
 //Горячие кнопки в плеере
@@ -62,7 +62,7 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/hotkeys.js'], function ()
 //КиноПоиск, Filmix источник
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/kp.js'], function () {});
 //Подборки
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/podbor.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/podbor.js'], function () {});
 //Рейтинг IMDB и Кинопоиск
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/rating.js'], function () {});
 //Аудио-дорожки и субтитры в плеере
@@ -74,13 +74,13 @@ Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/free.js'], function () {}
 //JaJa 18+
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/jajaj.js'], function () {});
 //Сиси клубничка
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/sisis.js'], function () {});
 //Онлайн Lampa
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/online.js'], function () {});
 //Мультфильмы
 //Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/mult.js'], function () {});
 //Телевизор
-Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/iptv.js'], function () {});
+//Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/iptv.js'], function () {});
 //Документалки, Мультики, Концерты
 Lampa.Utils.putScriptAsync(['https://dzh5.github.io/on/new-cat.js'], function () {});
 //Клуюничка BWA
